@@ -31,6 +31,13 @@ Sarah 负责设备、材料、故障和配件。Mike 负责工作台、工具和
 
 用户数据与凭据始终在本机维护。修改仓库源码时，检查 Git 暂存区，避免提交真实设备信息、聊天和个人资料。
 
+## Git 分支與推送
+
+- 所有開發提交一律建立在 `tom83615` 分支。
+- 只可推送至 GitHub 使用者 `tom83615` 名下的倉庫。
+- `git@github.com:AFangTeam/PrintLab.git` 僅作為讀取用 upstream；絕對禁止向 `github.com/AFangTeam` 推送。
+- 推送前確認目前分支為 `tom83615`，且目的地是 `github.com/tom83615`。
+
 ## 设计与打印
 
 遵循 `Context/image-to-print.md`，新外形两次选图后进入正式模型。真实模型按选定外形比较，接口、公差、装入路径、壁厚和承力分别检查。保留可编辑源，试模与成品共用接口参数，详见 `Context/cad-master-design.md`。

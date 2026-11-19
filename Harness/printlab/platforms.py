@@ -40,15 +40,8 @@ def protect_directory(path):
         return
     identity = subprocess.check_output(['whoami', '/user', '/fo', 'csv', '/nh'], text=True, encoding='ascii', errors='replace')
     sid = next(csv.reader(identity.splitlines()))[1]
-    # Replace the directory DACL, including explicit entries inherited from
-    # an existing installation or supplied by Windows temporary-directory APIs.
-    command = (
-        '$ErrorActionPreference="Stop"; '
-        '$acl = New-Object System.Security.AccessControl.DirectorySecurity; '
-        '$acl.SetSecurityDescriptorSddlForm($env:PRINTLAB_PRIVATE_DACL); '
-        '[System.IO.Directory]::SetAccessControl($env:PRINTLAB_PRIVATE_PATH, $acl)'
-    )
-    subprocess.run(['powershell', '-NoProfile', '-Command', command], check=True,
-                   capture_output=True, env={**os.environ,
-                       'PRINTLAB_PRIVATE_PATH': str(path.resolve()),
-                       'PRINTLAB_PRIVATE_DACL': f'D:P(A;OICI;FA;;;{sid})(A;OICI;FA;;;SY)'})
+    # Replace inherited permissions without requiring SeSecurityPrivilege,
+    # which ordinary Windows desktop users do not have.
+    subprocess.run(['icacls', str(path.resolve()), '/inheritance:r', '/grant:r',
+                    f'*{sid}:(OI)(CI)F', '*S-1-5-18:(OI)(CI)F'], check=True,
+                   capture_output=True)

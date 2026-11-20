@@ -333,6 +333,38 @@ def check(pid, jid, *, client=None, inspector=None):
             raise core.WorkflowError('独立刀路检查失败')
         return value
     inspection = probe('gcode', '刀路与启动指令', file_checks, '刀路、载料和温度指令检查通过', '刀路、启动指令或用料数据未通过检查')
+    if job.get('printer_provider') == 'official_studio':
+        from . import confirmation
+        binding = core.studio_device_binding()
+        record('identity', '本機 Studio 印表機身份', bool(binding and job.get('studio_device_binding') == binding),
+               '任務綁定的 Studio 名稱、機型與序號一致', '本機 Studio 印表機身份缺失或已變更')
+        facts = {}
+        def exact_facts():
+            if not fingerprint:
+                raise core.WorkflowError('Task fingerprint is unavailable')
+            observed = confirmation.resolve(jd, job, fingerprint)
+            required = ('device_ready', 'routing_verified', 'material_loaded', 'plate_clear', 'print_authorized')
+            missing = [key for key in required if not observed.get(key, {}).get('value') or not observed.get(key, {}).get('fresh')]
+            if missing:
+                raise core.WorkflowError('Missing fresh exact-task observations: ' + ', '.join(missing))
+            return observed
+        facts = probe('manual_observations', '本次 Studio 任務核對', exact_facts,
+                      '設備、料路、裝料、清板與授權都已按此任務核實',
+                      '缺少本次任務的即時設備／料路／裝料／清板／授權確認') or {}
+        plate = core.read_json(core.ROOT / 'Library/Devices/X2D/device.json', {}).get('user_confirmed', {}).get('build_plate_description')
+        record('plate_type', '打印板类型', plate == job.get('requested_bed_type') == job.get('curr_bed_type'),
+               '切片與已確認的打印板類型一致', '切片板型與已確認的打印板類型不符')
+        probe('active_receipts', '歷史發送結果', lambda: (bambuddy.ensure_no_active_dispatches(jd), True)[1],
+              '沒有其他活動或結果不明的發送記錄', '有其他正在執行或結果不明的記錄，需先對帳')
+        blockers = [c for c in checks if c['status'] == 'blocked']
+        return {'project_id':entry['project_id'],'job_id':jid,'fingerprint':fingerprint,'checked_at':core.now(),
+                'ready':not blockers,'checks':checks,'blockers':blockers,'materials':quantities,
+                'transport':{'kind':'bambu_studio_manual','manual':True,'independent_dispatch_verified':False,
+                             'message':'Windows 使用者在官方 Studio 手動核對與發送；此預檢不控制印表機。'},
+                'device':{'name':(binding or {}).get('studio_printer_name'),
+                          'model':(binding or {}).get('studio_printer_model'),'state':'user_verified_at_task'},
+                'device_facts':facts,'plate_confirmation_required':True,'executed':False,'automatic_start':False,
+                'quantity_note':'Spoolman 餘量是台帳估算；實際已裝材料和料路需在官方 Studio 當次核對。'}
     own_client = client is None
     try:
         client = client or bambuddy.Client()

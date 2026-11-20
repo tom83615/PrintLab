@@ -60,6 +60,19 @@ def test_pagination_and_identity_dedup(monkeypatch):
     assert len(history.pages(Client(), 'archives', 1)) == 3
 
 
+def test_openspoolman_history_is_linked_not_imported(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, 'ROOT', tmp_path)
+    monkeypatch.setattr(core, 'config', lambda: {'printer_id': None,
+        'openspoolman_url': 'https://openspoolman2.local'})
+
+    result = history.view()
+
+    assert result['state'] == 'external'
+    assert result['provider'] == 'openspoolman'
+    assert result['items'] == []
+    assert result['source_url'] == 'https://openspoolman2.local/print_history'
+
+
 def test_archive_photo_is_verified_cached_and_rejects_paths(tmp_path, monkeypatch):
     import io
     from PIL import Image

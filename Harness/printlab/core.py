@@ -79,6 +79,29 @@ def config():
     return read_json(ROOT / "Runtime/config.json", {})
 
 
+def selected_printer_id():
+    """Return the selected service ID or a stable local Studio serial binding."""
+    cfg = config()
+    if type(cfg.get('printer_id')) is int and cfg['printer_id'] > 0:
+        return cfg['printer_id']
+    if all(isinstance(cfg.get(key), str) and cfg[key].strip() for key in
+           ('studio_printer_name', 'studio_printer_model', 'studio_printer_serial')):
+        return 'studio:' + cfg['studio_printer_serial'].strip()
+    return None
+
+
+def printer_provider():
+    return 'bambuddy' if type(config().get('printer_id')) is int and config()['printer_id'] > 0 else 'official_studio'
+
+
+def studio_device_binding():
+    cfg = config()
+    if printer_provider() != 'official_studio' or selected_printer_id() is None:
+        return None
+    return {key: cfg[key].strip() for key in
+            ('studio_printer_name', 'studio_printer_model', 'studio_printer_serial')}
+
+
 def fts_declaration():
     confirmed = read_json(ROOT / "Library/Devices/X2D/device.json", {}).get("user_confirmed", {})
     value = confirmed.get("fts_installed")
@@ -277,7 +300,7 @@ def new_project(name, kind="functional", brief="", summary_text=""):
 
 
 def context(pid=None):
-    from . import shop, bambuddy
+    from . import shop, supplies
     paths = [ROOT / x for x in ["AGENTS.md", "Context/profile.md", "Context/workflow.md", "Library/Devices/X2D/device.json", "Library/Devices/X2D/installed.md", "Context/lessons.md"]]
     for rel in ("Context/image-to-print.md", "Context/agent-policy.json", "Context/taste.md", "Context/team.md", "Context/onboarding.json"):
         if (ROOT / rel).is_file():
@@ -303,7 +326,7 @@ def context(pid=None):
             sessions = sorted((x for x in (p / "Sessions").glob("*.md") if x.name.lower() != "readme.md" and not x.is_symlink()), key=lambda x: x.stat().st_mtime, reverse=True)
             paths += sessions[:1]
     result = {"project_id": read_json(p / "project.json")["id"] if pid else None, "loaded": [], "missing": [], "documents": [],
-              "shopping": shop.view(pid), "materials": bambuddy.inventory()}
+              "shopping": shop.view(pid), "materials": supplies.inventory()}
     from . import onboarding
     result['onboarding'] = onboarding.view(inventory=result['materials'])
     from . import taste
@@ -445,7 +468,15 @@ def print_configuration_issues(job):
     issues = []
     if job.get("printer_id") is None:
         issues.append("未绑定实际打印机")
+    if job.get('printer_provider') == 'official_studio':
+        binding = studio_device_binding()
+        if binding is None or job.get('studio_device_binding') != binding:
+            issues.append('官方 Studio 印表機身份未設定或與任務不符')
+        elif job.get('sliced_printer_model') and binding['studio_printer_model'].casefold() != str(job['sliced_printer_model']).casefold():
+            issues.append('切片機型與本機 Studio 印表機機型不符')
     mapping = job.get("mapping", {})
+    if job.get('printer_provider') == 'official_studio' and mapping.get('transport') != 'bambu_studio':
+        issues.append('未選擇官方 Bambu Studio 手動交接路線')
     if mapping.get("routing_verified") is not True or not mapping.get("ams_mapping") or not mapping.get("extruder_mapping"):
         issues.append("实际耗材和挤出机路线尚未核验")
     if not machine_profiles.single_nozzle_model(job.get('sliced_printer_model')) and (mapping.get("fts_installed") is not False or fts_declaration() is not False):
@@ -594,7 +625,12 @@ def slice_project(pid, machine, process, filaments, revision=None, plate=1, mapp
             source = derived
         out = jd / "job.gcode.3mf"
         command = [slicer, "--load-settings", ";".join(map(str, copied[:2])), "--load-filaments", ";".join(map(str, copied[2:])), "--arrange", "0" if preserve_layout else "1", "--slice", "1", "--export-3mf", str(out), str(source)]
-        job = {"id": jid, "project_id": read_json(p / "project.json")["id"], "revision": revision, "state": "slicing", "created_at": now(), "plate": plate, "mapping": mapping or {}, "source_hashes": revision_files(p, revision), "profile_hashes": {str(x.relative_to(jd)): digest(x) for x in (jd / "Profiles").iterdir()}, "slicer_path": slicer, "slicer_sha256": digest(Path(slicer)), "printer_id": config().get("printer_id"), "bambuddy_url": config().get("bambuddy_url"), "artifact": "job.gcode.3mf"}
+        provider = printer_provider()
+        identity = studio_device_binding() if provider == 'official_studio' else None
+        job = {"id": jid, "project_id": read_json(p / "project.json")["id"], "revision": revision, "state": "slicing", "created_at": now(), "plate": plate, "mapping": mapping or {}, "source_hashes": revision_files(p, revision), "profile_hashes": {str(x.relative_to(jd)): digest(x) for x in (jd / "Profiles").iterdir()}, "slicer_path": slicer, "slicer_sha256": digest(Path(slicer)), "printer_id": selected_printer_id(), "printer_provider": provider,
+                "studio_device_binding": identity,
+                "bambuddy_url": config().get("bambuddy_url") if provider == 'bambuddy' else None,
+                "artifact": "job.gcode.3mf"}
         job["requested_bed_type"] = bed_type
         job["preserve_layout"] = preserve_layout
         if input_inspection is not None:
@@ -662,12 +698,17 @@ def job_fingerprint(p, jd, job):
     actual_sha = digest(safe_path(jd, job["artifact"]))
     if actual_sha != job.get("artifact_sha256"):
         raise WorkflowError("Sliced file changed; approval is stale")
-    if job.get("printer_id") != config().get("printer_id"):
+    if job.get("printer_id") != selected_printer_id():
         raise WorkflowError("Target printer changed; re-slice for the current device")
-    if job.get("bambuddy_url") != config().get("bambuddy_url"):
+    if job.get('printer_provider') == 'official_studio':
+        if job.get('studio_device_binding') != studio_device_binding():
+            raise WorkflowError('Studio printer identity changed; prepare a new task')
+    elif job.get("bambuddy_url") != config().get("bambuddy_url"):
         raise WorkflowError("Printer service endpoint changed; approval is stale")
     value = {"source": current_source, "profiles": job["profile_hashes"], "artifact": actual_sha,
              "printer_id": job["printer_id"], "bambuddy_url": job.get("bambuddy_url"), "mapping": job["mapping"], "plate": job["plate"], "revision": job["revision"], "slicer_sha256": job.get("slicer_sha256"), "requested_bed_type": job.get("requested_bed_type"), "curr_bed_type": job.get("curr_bed_type")}
+    if job.get('printer_provider') == 'official_studio':
+        value.update(printer_provider='official_studio', studio_device_binding=job.get('studio_device_binding'))
     if job.get("input_hashes"):
         value["inputs"] = job["input_hashes"]
         value["slice_input"] = job.get("slice_input")
@@ -685,8 +726,8 @@ def approve(pid, jid, confirmation="", plate_clear=False, confirmation_event_id=
         raise WorkflowError("Explicit build-plate-clear confirmation is required")
     if not confirmation_facts and (not confirmation or not any(t in confirmation.lower() for t in ("确认打印", "开始打印", "approve print", "start print"))):
         raise WorkflowError("Record the user's explicit print confirmation, not design approval")
-    if config().get("printer_id") is None:
-        raise WorkflowError("Configure and verify the target printer before approval")
+    if selected_printer_id() is None:
+        raise WorkflowError("Configure and verify the target printer or bind its Studio name/model/serial before approval")
     with lock("printer"):
         if confirmation_event_id:
             from . import confirmation as confirmation_module
@@ -770,7 +811,7 @@ def retry_job(pid, jid, note, mapping=None):
                 shutil.copy2(source, copied)
         if digest(target) != old["artifact_sha256"]:
             raise WorkflowError("Sliced bytes changed while copying retry")
-        preserve = {key:old[key] for key in ("project_id", "revision", "plate", "source_hashes", "profile_hashes", "slicer_path", "slicer_sha256", "printer_id", "bambuddy_url", "artifact", "artifact_sha256", "requested_bed_type", "curr_bed_type", "estimates", "sliced_printer_model", "sliced_filament_types", "input_hashes", "slice_input") if key in old}
+        preserve = {key:old[key] for key in ("project_id", "revision", "plate", "source_hashes", "profile_hashes", "slicer_path", "slicer_sha256", "printer_id", "printer_provider", "studio_device_binding", "bambuddy_url", "artifact", "artifact_sha256", "requested_bed_type", "curr_bed_type", "estimates", "sliced_printer_model", "sliced_filament_types", "input_hashes", "slice_input") if key in old}
         job = {**preserve, "id":new_id, "created_at":now(), "updated_at":now(), "mapping":mapping if mapping is not None else old.get("mapping", {}),
                "retry_of":{"job_id":jid,"artifact_sha256":old["artifact_sha256"],"fingerprint":original_fingerprint,"reason":note.strip()},
                "root_attempt_id":old.get("root_attempt_id",jid)}
@@ -853,4 +894,4 @@ def doctor():
         inspector = inspection.self_test()
     except (WorkflowError, OSError) as error:
         inspector = {"available": False, "error": str(error), "fix": "Run the workspace Python with scripts/install_inspector.py", "executed": False}
-    return {"root": str(ROOT), "tools": {k: {"path": str(v) if v else None, "available": bool(v and v.is_file()), "verification": "file_exists_only"} for k, v in required.items()}, "offline_inspector": inspector, "printer_configured": cfg.get("printer_id") is not None, "context": context().get("loaded"), "missing_context": context().get("missing")}
+    return {"root": str(ROOT), "tools": {k: {"path": str(v) if v else None, "available": bool(v and v.is_file()), "verification": "file_exists_only"} for k, v in required.items()}, "offline_inspector": inspector, "printer_configured": selected_printer_id() is not None, "context": context().get("loaded"), "missing_context": context().get("missing")}

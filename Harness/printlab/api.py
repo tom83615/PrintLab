@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import __version__, bambuddy, core, shop, history
+from . import __version__, bambuddy, core, shop, history, supplies
 from .prepared_api import router as prepared_router
 
 @asynccontextmanager
@@ -78,8 +78,8 @@ def print_history():
 def onboarding_status():
     from . import onboarding
     with ThreadPoolExecutor(max_workers=2) as pool:
-        device = pool.submit(bambuddy.device)
-        inventory = pool.submit(bambuddy.inventory)
+        device = pool.submit(supplies.device)
+        inventory = pool.submit(supplies.inventory)
         return onboarding.view(device.result(), inventory.result())
 
 
@@ -115,7 +115,7 @@ def shopping(project: str | None = None):
 
 @app.get("/api/device")
 def device():
-    return bambuddy.device()
+    return supplies.device()
 
 
 @app.get("/api/overview")
@@ -123,18 +123,21 @@ def overview():
     from . import onboarding
     projects = core.list_projects()
     with ThreadPoolExecutor(max_workers=2) as pool:
-        a, b = pool.submit(bambuddy.device), pool.submit(bambuddy.inventory)
+        a, b = pool.submit(supplies.device), pool.submit(supplies.inventory)
         device, inventory = a.result(), b.result()
     counts = {s: sum(p.get("status") == s for p in projects) for s in ("designing", "awaiting_review", "printing", "completed")}
     counts["total"] = len(projects)
     counts["active"] = sum(p.get("status") in {"preparing", "running", "printing", "paused", "dispatching", "submitted"} for p in projects)
     actions = [{"title": p["name"], "detail": "模型待确认" if p["status"] == "awaiting_review" else "打印结束，等待实物检查", "project_id": p["id"]} for p in projects if p.get("status") in {"awaiting_review", "awaiting_physical_review"}]
+    config = core.config()
     if device["state"] != "online" or device.get("stale"):
-        actions.append({"title": "设备连接待核验", "detail": device["message"]})
+        title = "已讀取槽位快照" if device["state"] == "snapshot" else "設備連接待核驗"
+        actions.append({"title": title, "detail": device["message"]})
     return {"projects": projects, "counts": counts, "device": device, "inventory": inventory,
             "onboarding": onboarding.view(device, inventory),
-            "bambuddy_url": core.config().get("bambuddy_url", "http://127.0.0.1:8017"),
-            "updated_at": core.now(), "library_count": len(core.library()["documents"]), "action_items": actions}
+            "bambuddy_url": config.get("bambuddy_url", "http://127.0.0.1:8017"),
+            "bambuddy_printer_configured": type(config.get("printer_id")) is int and config["printer_id"] > 0,
+            "supply_sources": supplies.sources(), "updated_at": core.now(), "library_count": len(core.library()["documents"]), "action_items": actions}
 
 
 def artifact_response(path: Path):

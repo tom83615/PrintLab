@@ -3,7 +3,7 @@ import copy
 import httpx
 import pytest
 
-from printlab import core, material_intake
+from printlab import core, material_intake, supplies
 
 
 class InventoryClient:
@@ -87,3 +87,71 @@ def test_input_validation_and_post_registration_edits(client):
     with pytest.raises(core.WorkflowError, match='changed'):
         register(client)
     assert client.posts == 1
+
+
+class Spoolman:
+    def __init__(self):
+        self.rows = []
+        self.requests = []
+
+    def client(self, **kwargs):
+        def handle(request):
+            self.requests.append((request.method, request.url.path))
+            if request.method == 'GET' and request.url.path.endswith('/filament/7'):
+                return httpx.Response(200, json={'id': 7, 'name': 'PLA White', 'material': 'PLA',
+                                                 'weight': 1000, 'vendor': {'name': 'Bambu Lab'}})
+            if request.method == 'GET' and request.url.path.endswith('/spool/100'):
+                return httpx.Response(200, json=self.rows[0])
+            if request.method == 'GET' and request.url.path.endswith('/spool'):
+                return httpx.Response(200, json=self.rows)
+            if request.method == 'POST' and request.url.path.endswith('/spool'):
+                payload = request.read()
+                import json
+                body = json.loads(payload)
+                row = {'id': 100, **body, 'filament': {'id': body['filament_id']}, 'archived': False}
+                self.rows.append(row)
+                return httpx.Response(200, json={'id': 100})
+            return httpx.Response(404)
+        return httpx.Client(base_url=kwargs.pop('base_url'), transport=httpx.MockTransport(handle), **kwargs)
+
+
+@pytest.fixture
+def spoolman(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, 'ROOT', tmp_path)
+    monkeypatch.setattr(core, 'config', lambda: {'spoolman_url': 'https://spoolman.local'})
+    service = Spoolman()
+    monkeypatch.setattr(supplies, 'http_client', service.client)
+    return service
+
+
+def spoolman_input(**overrides):
+    return {'spoolman_filament_id': 7, 'label_weight': 1000, 'remaining_weight': 720,
+            'storage_location': 'Cabinet', **overrides}
+
+
+def test_spoolman_preview_is_read_only_and_requires_confirmed_weight(spoolman):
+    result = material_intake.register(spoolman_input(), 'User confirmed', 'spoolman-1', preview=True)
+    assert result['state'] == 'preview'
+    assert result['provider'] == 'spoolman'
+    assert not any(method == 'POST' for method, _ in spoolman.requests)
+    with pytest.raises(core.WorkflowError, match='remaining_weight'):
+        material_intake.register({'spoolman_filament_id': 7}, 'User confirmed', 'spoolman-2', preview=True)
+    assert not any(method == 'POST' for method, _ in spoolman.requests)
+
+
+def test_spoolman_registration_reads_back_and_replay_is_idempotent(spoolman):
+    first = material_intake.register(spoolman_input(), 'User confirmed', 'spoolman-1')
+    replay = material_intake.register(spoolman_input(), 'User confirmed', 'spoolman-1')
+    assert first['state'] == 'registered' and first['spool']['id'] == 100
+    assert replay['replayed'] is True
+    assert sum(method == 'POST' for method, _ in spoolman.requests) == 1
+    assert not any(method in {'PUT', 'PATCH', 'DELETE'} for method, _ in spoolman.requests)
+
+
+def test_spoolman_weight_and_retry_identity_are_validated(spoolman):
+    with pytest.raises(core.WorkflowError, match='cannot exceed'):
+        material_intake.register(spoolman_input(remaining_weight=1001), 'User confirmed', 'bad-weight')
+    material_intake.register(spoolman_input(), 'User confirmed', 'spoolman-1')
+    with pytest.raises(core.WorkflowError, match='another spool'):
+        material_intake.register(spoolman_input(remaining_weight=600), 'User confirmed', 'spoolman-1')
+    assert sum(method == 'POST' for method, _ in spoolman.requests) == 1

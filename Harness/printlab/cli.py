@@ -6,7 +6,7 @@ import sys
 import httpx
 from pathlib import Path
 
-from . import bambuddy, core, shop
+from . import bambuddy, core, shop, supplies
 
 
 def parser():
@@ -56,6 +56,11 @@ def parser():
     device_update.add_argument('--source', required=True)
     device_update.add_argument('--expect-sha', required=True)
     workspace_commands.add_parser('connection')
+    studio_device = workspace_commands.add_parser('studio-device', help='Bind Windows manual Studio handoffs to a verified printer identity')
+    studio_device.add_argument('--name', required=True, help='Exact printer name shown in Bambu Studio')
+    studio_device.add_argument('--model', required=True, help='Exact printer model shown in Bambu Studio')
+    studio_device.add_argument('--serial', required=True, help='Serial number verified in official Studio device details')
+    studio_device.add_argument('--expect-sha', required=True, help='Current Runtime/config.json SHA, or missing')
     profiles = workspace_commands.add_parser('profiles', help='List installed official machine presets')
     profiles.add_argument('--model')
     profile = workspace_commands.add_parser('profile', help='Record a matching official machine preset and source hashes')
@@ -67,6 +72,7 @@ def parser():
     connect.add_argument('--expect-sha', required=True)
     intake = sub.add_parser('material-intake', help='Register one user-confirmed spool; does not load or print')
     intake.add_argument('--file', required=True, help='JSON describing one physical spool')
+    intake.add_argument('--preview', action='store_true', help='Validate a Spoolman intake without writing')
     intake.add_argument('--source', required=True, help='User confirmation of owning this spool')
     intake.add_argument('--request-id', required=True, help='Stable ID for this physical spool and intake operation')
     constraints = sub.add_parser('constraints', help='Read or capture project-specific device and material facts')
@@ -184,6 +190,11 @@ def parser():
     r = sub.add_parser("reconcile")
     r.add_argument("project")
     r.add_argument("job")
+    r.add_argument('--outcome', choices=['printing', 'completed', 'failed', 'cancelled'],
+                   help='Record a user-observed Windows Studio result; does not contact or control a printer')
+    r.add_argument('--task-name', help='Exact task name visible in official Studio, e.g. J...gcode')
+    r.add_argument('--evidence', help='What was observed for this exact task')
+    r.add_argument('--source', help='Where and when the observation was made')
     sub.add_parser("status")
     sub.add_parser("materials", help="Read shared live filament quantities; never resets the full-spool baseline")
     sub.add_parser("doctor")
@@ -271,6 +282,9 @@ def main(argv=None):
             elif a.workspace_command == 'profile':
                 from . import machine_profiles
                 result = machine_profiles.adopt(a.name, expected)
+            elif a.workspace_command == 'studio-device':
+                result = workspace.configure_studio_device(a.name, a.model, a.serial,
+                    None if a.expect_sha == 'missing' else a.expect_sha)
             else:
                 result = workspace.configure_connection(a.url, a.printer_id, expected)
         elif a.command == 'constraints':
@@ -283,11 +297,12 @@ def main(argv=None):
                 result = constraints.capture(a.project, a.source, None if a.expect_sha == 'missing' else a.expect_sha)
         elif a.command == 'material-intake':
             from . import material_intake
-            result = material_intake.register(json.loads(Path(a.file).read_text(encoding='utf-8')), a.source, a.request_id)
+            result = material_intake.register(json.loads(Path(a.file).read_text(encoding='utf-8')), a.source, a.request_id,
+                                              preview=a.preview)
         elif a.command == 'onboarding':
             from . import onboarding
             if a.onboarding_command == 'status':
-                result = onboarding.view(bambuddy.device(), bambuddy.inventory()) if a.refresh else onboarding.view()
+                result = onboarding.view(supplies.device(), supplies.inventory()) if a.refresh else onboarding.view()
             elif a.onboarding_command == 'discover':
                 result = onboarding.discover()
             elif a.onboarding_command == 'adopt-device':
@@ -376,12 +391,19 @@ def main(argv=None):
             else:
                 result = studio_bridge.capability()
         elif a.command == "reconcile":
-            with core.lock("printer"):
-                result = bambuddy.reconcile(a.project, a.job)
+            manual = (a.outcome, a.task_name, a.evidence, a.source)
+            if any(value is not None for value in manual) and not all(value is not None for value in manual):
+                raise core.WorkflowError('Manual reconciliation requires --outcome, --task-name, --evidence and --source together')
+            if a.outcome:
+                result = bambuddy.reconcile(a.project, a.job, manual_outcome=a.outcome,
+                    expected_task=a.task_name, evidence=a.evidence, source=a.source)
+            else:
+                with core.lock("printer"):
+                    result = bambuddy.reconcile(a.project, a.job)
         elif a.command == "status":
-            result = {"device": bambuddy.device(), "projects": core.list_projects()}
+            result = {"device": supplies.device(), "projects": core.list_projects()}
         elif a.command == "materials":
-            result = bambuddy.inventory()
+            result = supplies.inventory()
         elif a.command == "review":
             result = core.review(a.project, a.note, a.outcome)
         elif a.command == "handoff":

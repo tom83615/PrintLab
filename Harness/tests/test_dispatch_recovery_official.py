@@ -63,6 +63,76 @@ def test_official_support_route_still_checks_the_physical_nozzle(workspace):
         bambuddy.validate_ready(live,{**mapping,'extruder_mapping':[1]})
 
 
+def manual_studio_job(workspace):
+    p, jd = workspace
+    config = core.config()
+    config.pop('printer_id', None)
+    config.update(spoolman_url='https://spoolman.local', openspoolman_url='https://openspoolman.local',
+                  studio_printer_name='Test H2C', studio_printer_model='Bambu Lab X2D',
+                  studio_printer_serial='TEST-SERIAL')
+    core.write_json(core.ROOT/'Runtime/config.json', config)
+    job = core.read_json(jd/'job.json')
+    job.update(printer_id='studio:TEST-SERIAL', printer_provider='official_studio', bambuddy_url=None,
+               studio_device_binding=core.studio_device_binding(), sliced_printer_model='Bambu Lab X2D')
+    job['mapping'].update(transport='bambu_studio', material='PLA', color='FFFFFFFF')
+    core.write_json(jd/'job.json', job)
+    return job
+
+
+def test_manual_studio_binds_identity_and_requires_all_five_fresh_facts(workspace):
+    from printlab import confirmation
+    job = manual_studio_job(workspace)
+    fingerprint = core.job_fingerprint(*workspace, job)
+    assert job['printer_id'] == 'studio:TEST-SERIAL'
+    config = core.config(); config['studio_printer_serial'] = 'CHANGED'; core.write_json(core.ROOT/'Runtime/config.json', config)
+    with pytest.raises(core.WorkflowError, match='Target printer changed'):
+        core.job_fingerprint(*workspace, job)
+    config['studio_printer_serial'] = 'TEST-SERIAL'; core.write_json(core.ROOT/'Runtime/config.json', config)
+    facts = {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True}
+    event = confirmation.record('P001','Jtest',facts,'Synthetic exact-task confirmation','unit test')
+    approval = core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    assert approval['fingerprint'] == fingerprint
+    result = official.submit('P001','Jtest',True,
+        client_factory=lambda:pytest.fail('manual Studio must not contact Bambuddy'),
+        inspector=lambda *args:{'ok':True})
+    assert result['reserved'] and result['executed'] is False
+    receipt = core.read_json(workspace[1]/'dispatch.json')
+    assert receipt['route'] == 'manual_windows_studio' and receipt['command_sent'] is False
+
+
+@pytest.mark.parametrize('missing', ['device_ready','routing_verified','material_loaded','plate_clear','print_authorized'])
+def test_manual_studio_rejects_missing_exact_task_fact(workspace, missing):
+    from printlab import confirmation
+    manual_studio_job(workspace)
+    facts = {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True}
+    facts.pop(missing)
+    event = confirmation.record('P001','Jtest',facts,'Synthetic exact-task confirmation','unit test')
+    with pytest.raises(core.WorkflowError):
+        core.approve('P001','Jtest',confirmation_event_id=event['id'])
+
+
+def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(workspace):
+    from printlab import confirmation
+    manual_studio_job(workspace)
+    event = confirmation.record('P001','Jtest',
+        {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True},
+        'Synthetic exact-task confirmation','unit test')
+    core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    official.submit('P001','Jtest',True,inspector=lambda *args:{'ok':True})
+    with pytest.raises(core.WorkflowError,match='does not match'):
+        official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='wrong.gcode',
+                           evidence='synthetic',source='unit test',client=pytest.fail)
+    result = official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='Jtest.gcode',
+                                evidence='synthetic completion observation',source='unit test',client=pytest.fail)
+    assert result['state'] == 'completed' and not result['replayed']
+    replay = official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='Jtest.gcode',
+                                evidence='synthetic completion observation',source='unit test',client=pytest.fail)
+    assert replay['replayed']
+    with pytest.raises(core.WorkflowError,match='terminal'):
+        official.reconcile('P001','Jtest',manual_outcome='failed',expected_task='Jtest.gcode',
+                           evidence='synthetic mismatch',source='unit test',client=pytest.fail)
+
+
 def test_history_recovery_preserves_error_and_never_resends(workspace):
     native_job(workspace)
     approval=core.approve('P001','Jtest','确认打印',True)

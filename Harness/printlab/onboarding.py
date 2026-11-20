@@ -6,7 +6,7 @@ import platform
 import hashlib
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from . import bambuddy, core, workspace
+from . import bambuddy, core, supplies, workspace
 
 
 STATE = 'Context/onboarding.json'
@@ -246,7 +246,8 @@ def view(device=None, inventory=None):
     selected_device_matches = bool(binding and binding.get('printer_id') == cfg['printer_id']
                                    and binding.get('bambuddy_url') == cfg['bambuddy_url'])
     questions = []
-    if core.config().get('printer_id') is None:
+    external_slots = bool(supplies.sources().get('openspoolman_url'))
+    if cfg['printer_id'] is None and not (external_slots and card.get('user_confirmed', {}).get('model')):
         questions.append({'id': 'printer', 'text': '你使用哪些打印机？请选择这次要连接的一台。'})
     for key, text in [('cloud_needs', '你现在怎样使用 Handy 和 Studio？有哪些连接方式需要保留？'),
                       ('additional_materials', '除了已装载和已登记的耗材，你还有哪些材料？'),
@@ -261,7 +262,12 @@ def view(device=None, inventory=None):
     for role in roles:
         if role['status'] != 'introduced':
             next_actions.append({'kind': 'role', 'role': role['role'], 'text': f"完成 {role['title']} 的创建与首次介绍"})
-    if card.get('verification_status') != 'connected_readonly' or not selected_device_matches:
+    if external_slots:
+        next_actions.append({'kind': 'device', 'text': 'OpenSpoolMan 槽位供設計參考；核對實機噴嘴、列印板和供料路線'})
+        if core.printer_provider() == 'official_studio' and core.studio_device_binding() is None:
+            next_actions.append({'kind': 'studio_device',
+                'text': '在 Runtime/config.json 記錄官方 Studio 顯示的印表機名稱、機型與序號，才能綁定手動列印任務'})
+    elif card.get('verification_status') != 'connected_readonly' or not selected_device_matches:
         next_actions.append({'kind': 'device', 'text': '核对设备身份、打印板、喷嘴与实际供料连接'})
     return {**value, 'workspace': str(core.ROOT), 'platform': platform.system(), 'roles': roles,
             'questions': questions, 'next_actions': next_actions,

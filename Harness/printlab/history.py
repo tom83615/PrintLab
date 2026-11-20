@@ -16,7 +16,7 @@ import zipfile
 
 import httpx
 
-from . import bambuddy, core
+from . import bambuddy, core, supplies
 
 _lock = threading.Lock()
 PAGE_SIZE = 100
@@ -211,6 +211,10 @@ def view(force=False, client_factory=None):
     with _lock:
         cached = core.read_json(cache_path, {})
         pid = core.config().get('printer_id')
+        if type(pid) is not int and (source := supplies.sources().get('openspoolman_url')):
+            return {'state': 'external', 'provider': 'openspoolman', 'stale': False, 'items': [],
+                    'source_url': source + '/print_history',
+                    'message': '在 OpenSpoolMan 查看它已記錄的列印；這些記錄未匯入 PrintLab。'}
         if type(pid) is not int:
             return {'state': 'unconfigured', 'stale': False, 'items': [],
                     'message': '连接 Bambuddy 并配置打印机后，这里会显示已捕获的打印历史。'}

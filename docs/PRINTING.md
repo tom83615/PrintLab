@@ -7,6 +7,7 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 | 路線 | 當前範圍 |
 | --- | --- |
 | 官方 Studio，由 Codex 操作介面 | Agent 開啟具體切片包，核對機型、板型、材料與發送選項，使用 PrintLab 的批准與單次預約記錄，點選一次發送後讀回設備。需要當前 Codex 具備桌面控制能力。 |
+| Windows 官方 Studio 手動交接 | 無需 Bambuddy；任務綁定本機記錄的 Studio 名稱、機型與序號。使用者當次核對設備就緒、噴嘴/料槽路線、材料與清板，記錄任務確認後由使用者在 Bambu Studio 發送。沒有即時遙測時，結果保持未知，須以同一任務名稱記錄觀察結果。 |
 | 工作台按鈕呼叫本機發送助手 | 中文 Studio 02.08.02.61、X2D、0.4 mm、單主料 PLA/PETG、AMS 左主噴嘴、紋理 PEI、單盤。需要 macOS 14+、使用者登入且桌面解鎖、輔助功能與螢幕讀取權限。 |
 | 工作台按鈕呼叫 Bambuddy 佇列 | Mac/Windows 共用 HTTP 發送程式碼，當前接入 A1、A1 mini、P1S、X1 Carbon 的 AMS 路線。需綁定 `bambuddy_queue`、讀回正確機型、可用儲存卡、IDLE 與具體材料；文件、排隊、啟動及異常對賬使用原任務記錄。軟體模擬已通過，實際設備接受與首層待現場驗證。 |
 | 歷史原生 MCP 發送 | 發佈首版未提供可執行客戶端。來源和獨立安裝邊界見 DEPENDENCIES.md。 |
@@ -35,6 +36,25 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 使用者選擇啟用系統權限後，再執行 `./Harness/bin/printlab studio-bridge permissions`，按 macOS 提示授予專用助手權限。隨後重跑 `capability` 檢查實際狀態。`Runtime/config.json` 的 `studio_printer_name` 必須與 Studio 設備名一致。Agent 應讀取視窗中的準確名稱，並核對 Studio 所選設備與目標設備的序列號。Bambuddy 中的別名可能不同，不能直接代填。缺少名稱時，`capability` 會報告設定缺項。
 
 任務超出支援範圍時，按具體提示核對並使用官方 Studio 介面工作流。首次設定完成後，使用者仍需對實際設備、材料與列印結果進行驗證。
+
+### Windows without Bambuddy
+
+先在 Studio 設備頁核對印表機名稱、機型和序號，再讀本機設定哈希並綁定身份。此設定只記錄目標身份，不修改 Handy、Bambu Cloud 或 Studio 登入。
+
+```powershell
+.\Harness\bin\printlab.ps1 workspace connection
+.\Harness\bin\printlab.ps1 workspace studio-device --name 'Studio 顯示名稱' --model 'Bambu Lab H2C' --serial 'Studio 顯示的序號' --expect-sha '上一步返回的 SHA256'
+```
+
+準備具體列印任務後，在官方 Studio 當次確認並記錄同一任務的五項事實：`device_ready`、`routing_verified`、`material_loaded`、`plate_clear`、`print_authorized`。`routing_verified` 和 `device_ready` 必須來自 Studio/設備的當次畫面核對，不能從 OpenSpoolMan 快照推定。接著以該事件批准，`submit --execute` 只建立 60 秒有效的單次交接回執；使用者再於 Studio 開啟回執指出的確切檔案並自行發送。
+
+沒有 Bambuddy 遙測時，`reconcile` 不會查詢印表機，也不會重送。使用者觀察到這個確切任務後，可記錄結果：
+
+```powershell
+.\Harness\bin\printlab.ps1 reconcile 專案ID 作業ID --outcome completed --task-name '作業ID.gcode' --evidence '在 Studio/設備畫面觀察到此任務完成' --source '觀察位置與日期'
+```
+
+可用結果為 `printing`、`completed`、`failed` 或 `cancelled`。完成只會進入待實物檢查，不代表實物已驗收。任務結果不明時不要再送一次。
 
 ## 遠程使用
 

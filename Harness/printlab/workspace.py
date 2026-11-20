@@ -143,7 +143,27 @@ def connection():
     path = core.safe_path(core.ROOT, 'Runtime/config.json', require_file=False)
     cfg = core.config()
     return {'sha256': core.digest(path) if path.is_file() else None,
-            'bambuddy_url': cfg.get('bambuddy_url'), 'printer_id': cfg.get('printer_id')}
+            'bambuddy_url': cfg.get('bambuddy_url'), 'printer_id': cfg.get('printer_id'),
+            'spoolman_url': cfg.get('spoolman_url'), 'openspoolman_url': cfg.get('openspoolman_url'),
+            'studio_printer_name': cfg.get('studio_printer_name'),
+            'studio_printer_model': cfg.get('studio_printer_model'),
+            'studio_printer_serial': cfg.get('studio_printer_serial')}
+
+
+def configure_studio_device(name, model, serial, expected_sha256):
+    """Bind the Windows manual Studio workflow to a user-verified local device."""
+    name = required_text(name, 'Studio printer name', 200)
+    model = required_text(model, 'Studio printer model', 200)
+    serial = required_text(serial, 'Studio printer serial', 100)
+    if any(ch in serial for ch in '\r\n\x00'):
+        raise core.WorkflowError('Studio printer serial contains invalid characters')
+    path = core.safe_path(core.ROOT, 'Runtime/config.json', require_file=False)
+    with core.lock('studio-device-config'):
+        check_version(path, expected_sha256)
+        cfg = core.config()
+        cfg.update(studio_printer_name=name, studio_printer_model=model, studio_printer_serial=serial)
+        core.write_json(path, cfg)
+    return connection()
 
 
 def configure_connection(url, printer_id, expected_sha256):

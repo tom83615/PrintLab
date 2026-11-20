@@ -17,7 +17,9 @@
 
 ## 核對設備與耗材
 
-在使用者的獨立 Bambuddy 中接入設備，憑據放 `Runtime/private/bambuddy.json`，操作見 `BAMBUDDY_SETUP.md`。既有服務先讀取設定。列表發現使用只讀 API。
+已使用 Spoolman 和 OpenSpoolMan 的工作區，按 [連接指南](CONNECTIONS.md) 設定兩個服務網址，執行 `onboarding status --refresh` 讀回庫存與槽位。設備目前的網路模式和官方應用連接可保留。OpenSpoolMan 的 `updated_at` 是 PrintLab 讀取時間，`source_timestamp` 保持未知；不可當成即時遙測。未知重量維持未知，同一卷被多個槽位引用時會列出衝突。槽位快照不能替代實機身分、噴嘴與列印板核對。
+
+使用 Bambuddy 作為資料來源時，在使用者的獨立 Bambuddy 中接入設備，憑據放 `Runtime/private/bambuddy.json`，操作見 `BAMBUDDY_SETUP.md`。既有服務先讀取設定。列表發現使用只讀 API。
 
 ```bash
 ./Harness/bin/printlab onboarding discover
@@ -44,7 +46,23 @@
 {"user_confirmed":{"model":"實際型號","build_plate_description":"實際列印板"}}
 ```
 
-已裝載材料從即時狀態讀取，其他現有料卷儲存在 Bambuddy 庫存。使用者確認要登記一卷後使用 `material-intake`，支援材料、品牌、系列、顏色、產品號、存放位置及已知標籤克數。需要該服務的 `inventory:read` 和 `inventory:update` 權限。首次權限不足時給出對應權限項，保留其他應用的憑據。
+### Spoolman 庫存
+
+先比對現有庫存和 Spoolman 的耗材目錄，核對品牌、材質和顏色。一份 JSON 對應一卷實物，`spoolman_filament_id` 是耗材品項 ID，和實際料卷 ID 不同。只有確認該卷淨餘量後才填 `remaining_weight`。Spoolman 若已知初始重量，漏填餘量會預設為滿卷，所以 PrintLab 會要求核對餘量再寫入。目錄品項沒有初始重量時，可以保留未知。以下數字是格式示例，登記時使用實際值。
+
+```json
+{"spoolman_filament_id":1,"remaining_weight":750,"storage_location":"材料櫃"}
+```
+
+```bash
+./Harness/bin/printlab material-intake --file spool.json --source '使用者確認的料卷事實' --request-id 同一卷的穩定錄入標識 --preview
+```
+
+資料核對完成且使用者要求登記這一卷時，移除 `--preview`，保留相同的請求標識。PrintLab 只建立該品項的一卷；不建立或改寫耗材目錄、不更新耗用量、不綁 AMS。結果不明時沿用同一個請求標識讀回，避免重複登記。
+
+### Bambuddy 庫存
+
+使用 Bambuddy 來源時，已裝載材料從即時狀態讀取，其他現有料卷儲存在 Bambuddy 庫存。使用者確認要登記一卷後使用 `material-intake`，支援材料、品牌、系列、顏色、產品號、存放位置及已知標籤克數。需要該服務的 `inventory:read` 和 `inventory:update` 權限。首次權限不足時給出對應權限項，保留其他應用的憑據。
 
 ```json
 {"material":"PLA","brand":"使用者確認品牌","color_name":"白色","storage_location":"材料櫃"}

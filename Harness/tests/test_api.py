@@ -2,7 +2,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
-from printlab import core, bambuddy
+from printlab import core, bambuddy, supplies
+from printlab import api
 from printlab.api import app
 
 
@@ -33,3 +34,27 @@ def test_unconfigured_is_not_live(tmp_path, monkeypatch):
     assert result["state"] == "unconfigured"
     assert result["printer"] is None
     assert result["updated_at"] is None
+
+
+def test_overview_reports_each_configured_provider_and_snapshot_state(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, 'ROOT', tmp_path)
+    monkeypatch.setattr(core, 'config', lambda: {
+        'printer_id': None,
+        'spoolman_url': 'https://spoolman.local',
+        'openspoolman_url': 'https://openspoolman2.local',
+    })
+    monkeypatch.setattr(supplies, 'device', lambda: {
+        'source': 'openspoolman', 'state': 'snapshot', 'stale': True,
+        'updated_at': '2026-11-20T00:00:00+00:00', 'message': 'snapshot only',
+    })
+    monkeypatch.setattr(supplies, 'inventory', lambda: {
+        'source': 'spoolman', 'state': 'online', 'items': [], 'updated_at': '2026-11-20T00:00:00+00:00',
+    })
+
+    result = api.overview()
+
+    assert result['supply_sources']['spoolman_url'] == 'https://spoolman.local'
+    assert result['supply_sources']['openspoolman_url'] == 'https://openspoolman2.local'
+    assert result['device']['source'] == 'openspoolman'
+    assert result['device']['state'] == 'snapshot'
+    assert result['inventory']['source'] == 'spoolman'

@@ -80,6 +80,26 @@ def test_device_facts_and_connection_path_validation(root):
         workspace.configure_connection('http://localhost:8017', 1, core.digest(target))
 
 
+def test_studio_printer_binding_preserves_provider_settings_and_is_version_checked(root):
+    initial = {'spoolman_url': 'https://spoolman.local', 'openspoolman_url': 'https://openspoolman2.local',
+               'bambuddy_url': 'https://legacy.local'}
+    config_path = root / 'Runtime/config.json'
+    core.write_json(config_path, initial)
+    expected = core.digest(config_path)
+
+    result = workspace.configure_studio_device('Bambu Lab H2C', 'Bambu Lab H2C', '01P00A000000000', expected)
+
+    assert result['studio_printer_name'] == 'Bambu Lab H2C'
+    assert result['studio_printer_model'] == 'Bambu Lab H2C'
+    assert result['studio_printer_serial'] == '01P00A000000000'
+    assert core.selected_printer_id() == 'studio:01P00A000000000'
+    assert core.config()['spoolman_url'] == initial['spoolman_url']
+    assert core.config()['openspoolman_url'] == initial['openspoolman_url']
+    assert core.config()['bambuddy_url'] == initial['bambuddy_url']
+    with pytest.raises(core.WorkflowError, match='changed'):
+        workspace.configure_studio_device('Other', 'Bambu Lab H2C', '01P00A000000000', expected)
+
+
 def test_role_reservation_is_exclusive_and_alias_does_not_duplicate(root):
     host()
     def reserve(request):

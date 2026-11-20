@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from printlab import bambuddy, constraints, core, workspace
+from printlab import bambuddy, constraints, core, supplies, workspace
 
 
 @pytest.fixture
@@ -65,3 +65,22 @@ def test_nonfinite_coordinate_cannot_produce_known_build_space(project):
     workspace.update_device({'user_confirmed': {'model': 'A1',
         'printable_area': ['0x0', '10x0', 'nanx10', '0x10'], 'printable_height': 20}}, 'Fixture', None)
     assert constraints.build_envelope(project)['known'] is False
+
+
+def test_context_uses_spoolman_and_openspoolman_sources_without_bambuddy(project, monkeypatch):
+    core.write_json(core.ROOT / 'Runtime/config.json', {
+        'spoolman_url': 'https://spoolman.local',
+        'openspoolman_url': 'https://openspoolman2.local',
+    })
+    inventory = {'source': 'spoolman', 'state': 'online', 'updated_at': core.now(),
+                 'items': [{'id': 8, 'material': 'PETG', 'remaining_weight': 500}]}
+    monkeypatch.setattr(supplies, 'inventory', lambda: inventory)
+    monkeypatch.setattr(supplies, 'device', lambda: {'source': 'openspoolman', 'state': 'snapshot', 'updated_at': core.now()})
+
+    result = core.context(project)
+
+    assert result['materials']['source'] == 'spoolman'
+    current = result['manufacturing_context']['current']
+    assert current['material_source']['provider'] == 'spoolman'
+    assert current['target']['spoolman_url'] == 'https://spoolman.local'
+    assert current['target']['openspoolman_url'] == 'https://openspoolman2.local'

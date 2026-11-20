@@ -32,7 +32,11 @@ Python 版本不夠時，安裝 Python 3.11 或更新版，用絕對路徑執行
 ./Harness/bin/printlab context P001
 ```
 
-## 連接 Bambuddy 和印表機
+## 選擇設備和庫存來源
+
+已在使用 Spoolman 和 OpenSpoolMan 時，可以沿用它們做庫存管理與槽位查閱。按 [連接指南](CONNECTIONS.md) 設定來源；以下步驟只適用於選擇 Bambuddy 的工作區。
+
+### 連接 Bambuddy 和印表機
 
 開始前完成 [首次設定訪談](FIRST_RUN.md)。
 

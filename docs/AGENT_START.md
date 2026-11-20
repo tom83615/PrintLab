@@ -78,7 +78,7 @@ Runtime/venv/bin/python scripts/verify_onboarding.py
 | --- | --- | --- |
 | 概念圖與選圖 | 宿主可用的圖像生成或使用者提供的參考圖 | 能生成/讀取圖片並儲存選擇證據 |
 | CAD 與預覽 | Text-to-CAD、適用的 CadQuery/Blender 環境 | 實際匯出、單位/尺寸檢查與預覽 |
-| 材料與設備 | 獨立 Bambuddy、使用者設備和 API 憑據 | `status` 與 `materials` 讀回正確設備和來源 |
+| 材料與設備 | Spoolman 與 OpenSpoolMan，或獨立 Bambuddy 與對應憑據 | `status` 與 `materials` 讀回正確設備和來源 |
 | 正式切片 | 官方 Bambu Studio 與本機設定 | 實際切片、板型/材料映射和時間用量檢查 |
 | 發送助手 | 支援範圍內的設備/Studio、助手和系統權限 | `studio-bridge capability` 返回實際結果 |
 

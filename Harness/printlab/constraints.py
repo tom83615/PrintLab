@@ -6,7 +6,7 @@ import json
 import math
 from pathlib import Path
 
-from . import bambuddy, core, workspace
+from . import core, supplies, workspace
 
 
 CONTRACT = 'Review/manufacturing-context.json'
@@ -56,7 +56,7 @@ def current(pid, inventory=None):
             basis = 'official_configuration'
         device[output] = {'value': value, 'basis': basis if value is not None else 'unknown',
                           'source': workspace.DOCUMENTS['device']}
-    inventory = inventory if inventory is not None else bambuddy.inventory()
+    inventory = inventory if inventory is not None else supplies.inventory()
     owned = [{key: item.get(key) for key in ('id', 'brand', 'material', 'subtype', 'color_name',
               'rgba', 'material_number', 'storage_location', 'possible_duplicate_ids')}
              for item in inventory.get('items', []) if not item.get('archived_at')]
@@ -64,7 +64,7 @@ def current(pid, inventory=None):
     cfg = workspace.connection()
     inputs = {name: _file(core.ROOT, workspace.DOCUMENTS[name]) for name in ('profile', 'taste', 'device')}
     inputs.update({name: _file(project, name) for name in PROJECT_INPUTS})
-    material_source = {'state': inventory.get('state'), 'observed_at': inventory.get('updated_at'),
+    material_source = {'provider': inventory.get('source', 'bambuddy'), 'state': inventory.get('state'), 'observed_at': inventory.get('updated_at'),
                        'sha256': _hash(owned) if inventory.get('state') == 'online' else None}
     missing = [key for key in ('model', 'nozzle_diameter_mm', 'build_plate', 'printable_area', 'printable_height')
                if device[key]['value'] is None]
@@ -79,7 +79,9 @@ def current(pid, inventory=None):
     if official and not profile_matches:
         missing.append('official_profile_model_mismatch')
     return {'project_id': core.read_json(project / 'project.json')['id'], 'device': device,
-            'target': {key: cfg[key] for key in ('printer_id', 'bambuddy_url')},
+            'target': {key: cfg.get(key) for key in
+                       ('printer_id', 'bambuddy_url', 'spoolman_url', 'openspoolman_url',
+                        'studio_printer_name', 'studio_printer_model', 'studio_printer_serial')},
             'device_verification': card.get('verification_status', 'unconfigured'),
             'official_profile': official, 'official_profile_changed': profile_changed,
             'owned_materials': owned, 'material_source': material_source, 'inputs': inputs,
@@ -100,7 +102,8 @@ def view(pid, inventory=None):
         if saved['facts']['target'] != live['target']:
             changed.append('target_printer')
         previous_materials = saved['facts']['material_source'].get('sha256')
-        if live['material_source']['sha256'] is not None and previous_materials != live['material_source']['sha256']:
+        if live['material_source']['sha256'] is not None and (previous_materials != live['material_source']['sha256']
+                or saved['facts']['material_source'].get('provider', 'bambuddy') != live['material_source']['provider']):
             changed.append('owned_materials')
     return {'status': 'not_recorded' if saved is None else 'needs_refresh' if changed else 'recorded',
             'snapshot_sha256': core.digest(path) if path.is_file() else None,

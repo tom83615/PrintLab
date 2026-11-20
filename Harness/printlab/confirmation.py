@@ -6,7 +6,8 @@ import re
 import uuid
 from . import core
 
-FACTS = {'print_authorized', 'plate_clear', 'material_loaded', 'design_selected', 'colors_selected'}
+FACTS = {'print_authorized', 'plate_clear', 'material_loaded', 'device_ready', 'routing_verified',
+         'design_selected', 'colors_selected'}
 
 
 def _age(stamp):
@@ -40,7 +41,7 @@ def record(pid, jid, facts, quote, source, confirmed_at=None):
         if confirmed_at is not None:
             event['confirmed_at']=confirmed_at
         core.write_json(jd / 'Confirmations' / (event['id']+'.json'), event)
-        if any(facts.get(k) is False for k in ('print_authorized','plate_clear')):
+        if any(facts.get(k) is False for k in ('print_authorized','plate_clear','material_loaded','device_ready','routing_verified')):
             previous=core.read_json(jd/'approval.json')
             if previous:
                 core.write_json(jd/'ApprovalHistory'/(uuid.uuid4().hex+'.json'), previous)
@@ -75,7 +76,7 @@ def resolve(jd, job, fingerprint, event_id=None):
             if name in FACTS:
                 facts[name] = {'value':value,'quote':row.get('quote'),'source':row.get('source'),
                                'recorded_at':row.get('confirmed_at') or row.get('recorded_at'),'event_id':row.get('id')}
-    for name in ('plate_clear','print_authorized'):
+    for name in ('plate_clear','print_authorized','material_loaded','device_ready','routing_verified'):
         fact = facts.get(name)
         if fact:
             age = _age(fact['recorded_at'])
@@ -90,6 +91,10 @@ def approval_facts(pid, jid, event_id):
     facts = resolve(jd,job,fingerprint,event_id)
     if any(not facts.get(k,{}).get('value') or not facts.get(k,{}).get('fresh') for k in ('print_authorized','plate_clear')):
         raise core.WorkflowError('Current exact-task print authorization and cleared-plate facts are required')
+    if job.get('printer_provider') == 'official_studio':
+        required = ('device_ready', 'routing_verified', 'material_loaded')
+        if any(not facts.get(k,{}).get('value') or not facts.get(k,{}).get('fresh') for k in required):
+            raise core.WorkflowError('Manual Studio approval requires fresh exact-task printer, route and loaded-material checks')
     return facts
 
 
@@ -127,9 +132,15 @@ def card(pid, jid=None, device=None):
             missing.append({'key':'plate_clear','label':'本次打印板已清空','needs_user':True})
         if not facts.get('print_authorized',{}).get('value') or not facts.get('print_authorized',{}).get('fresh'):
             missing.append({'key':'print_authorized','label':'允许这一个具体任务开始打印','needs_user':True})
+        if job.get('printer_provider') == 'official_studio':
+            for key, label in (('device_ready', '在官方 Studio 核對目標印表機就緒'),
+                               ('routing_verified', '在官方 Studio 核對實際噴嘴與料槽路線'),
+                               ('material_loaded', '核對任務材料已實際裝載')):
+                if not facts.get(key,{}).get('value') or not facts.get(key,{}).get('fresh'):
+                    missing.append({'key':key,'label':label,'needs_user':True})
     if device is None:
-        from . import bambuddy
-        device=bambuddy.device()
+        from . import supplies
+        device=supplies.device()
     routes=[]
     mapping=job.get('mapping',{})
     raw=(device or {}).get('printer') or {}
@@ -153,4 +164,5 @@ def card(pid, jid=None, device=None):
             'routes':routes,'facts':facts,'missing':missing,'already_dispatched':dispatched,
             'can_approve':not missing and not dispatched and job.get('state') in {'awaiting_approval','approved'},
             'device_fresh':fresh_device,'observed_at':(device or {}).get('updated_at'),
-            'device_note':'设备状态只用于核对；软件与下发安全门仍需实时检查。'}
+            'studio_device_binding':job.get('studio_device_binding'),
+            'device_note':'槽位快照不代表即時遙測；手動 Studio 列印須記錄當次設備、料路、裝料與清板核對。'}

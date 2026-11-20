@@ -57,7 +57,7 @@ PrintLab provides context through files and commands. Available models and tools
 ## The workbench
 
 - Project gallery, 3D model previews, and design revisions.
-- Device status, filament inventory, and captured print history from Bambuddy.
+- Spoolman inventory and OpenSpoolMan slot snapshots, or device status, inventory, and captured history from Bambuddy.
 - Reference collections, personal preferences, and image-selection records.
 - Shared parts lists, stock, and purchasing records.
 - Prepared print packages, material mappings, estimates, task-specific confirmations, and execution receipts.
@@ -72,7 +72,7 @@ For a new shape, the default workflow first selects one concept image, then one 
 
 ## Supported environment
 
-Mac requires macOS 14+, with Apple Silicon recommended. Windows provides native PowerShell setup, command-line tools, and the browser workbench. The general workbench runs independently. Device status and print history use a separately installed Bambuddy service.
+Mac requires macOS 14+, with Apple Silicon recommended. Windows provides native PowerShell setup, command-line tools, and the browser workbench. The general workbench runs independently. Choose Spoolman and OpenSpoolMan for inventory and planning, or a separately installed Bambuddy service for live device telemetry and integrated history.
 
 The Mac automated sending helper targets **X2D, Chinese Bambu Studio 02.08.02.61, 0.4 mm, one main AMS filament, the left main nozzle, and one Textured PEI plate**. Other printers, software versions, and multi-material routes need verification in the user's environment. [Printing and compatibility](docs/PRINTING.md)
 

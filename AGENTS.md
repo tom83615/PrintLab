@@ -21,7 +21,7 @@ Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和
 
 初始化生成 `Context/team.md`，保留實際團隊說明。可恢復的首次設定、角色入口及讀回證據儲存在 `Context/onboarding.json`。按 `docs/ONBOARDING.md` 查詢已有聊天、建立缺少的 Mike 和 Sarah，讀回實際首條介紹與共用資料。已有 Sara 入口接續為同一角色。使用者的安裝請求已經明確包含自動建隊時直接執行，宿主能力缺失時記錄真實待辦。專案分工繼續寫 `Review/team.md`。
 
-共同文件的追加使用 `workspace note`，設備確認使用 `workspace device`，均帶當前哈希並在衝突後重讀。使用者確認的庫存通過 `material-intake` 登記到 Bambuddy。生圖前執行 `constraints capture 專案ID` 儲存本次設備材料及需求來源；CAD 和切片前通過 `context` 檢查變化，按實際影響更新設計資料。未知欄位保留待核實。
+共同文件的追加使用 `workspace note`，設備確認使用 `workspace device`，均帶當前哈希並在衝突後重讀。使用者確認的庫存通過 `material-intake` 登記到工作區設定的庫存來源（Spoolman 或 Bambuddy）。生圖前執行 `constraints capture 專案ID` 儲存本次設備材料及需求來源；CAD 和切片前通過 `context` 檢查變化，按實際影響更新設計資料。未知欄位保留待核實。
 
 - `Context/` 存流程、偏好和經驗，偏好依據使用者明確回饋。
 - `Project/` 存需求、源模型、候選、正式版本、切片、回執和實物覆盤。
@@ -30,6 +30,14 @@ Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和
 - `Runtime/` 存本機設定、憑據、緩存與第三方執行環境。
 
 使用者資料與憑據始終在本機維護。修改倉庫原始碼時，檢查 Git 暫存區，避免提交真實設備資訊、聊天和個人資料。
+
+## OpenSpec 開發變更流程
+
+- 修改程式碼前，先在 `openspec/changes/` 建立一份或多份對應的 OpenSpec change，完成並檢視 proposal、specs 與 tasks；OpenSpec 文件未就緒前不得修改程式碼。
+- 每個 change 對應一組範圍一致的程式修改。工作範圍彼此獨立時分開建立 change；同一範圍的後續工作沿用既有 change，不重複建立。
+- 實作時依 tasks 推進，若需求或範圍改變，先更新 OpenSpec artifacts，再繼續修改程式碼。
+- commit 前，所有納入該 commit 的 OpenSpec change 必須完成並 archive；archive 產生的規格更新與封存記錄，必須和對應程式碼放在同一個 commit。未完成或未 archive 的 change 不得與程式碼一同 commit。
+- 純文件編輯不要求建立 OpenSpec；若文件變更伴隨程式碼修改，仍須遵循以上流程。
 
 ## Git 分支與推送
 

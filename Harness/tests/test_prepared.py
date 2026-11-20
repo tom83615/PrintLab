@@ -102,6 +102,29 @@ def test_registration_and_check_never_approve_or_send(setup):
     assert prepared.catalogue()['items'][0]['title'] == 'V1.1 左手柄'
 
 
+def test_spoolman_and_openspoolman_manual_studio_preflight_never_connects_or_authorizes(setup, monkeypatch):
+    from printlab import bambuddy
+    p, jd, job, _client, inspector, _write_archive, _settings = setup
+    config = core.config()
+    config.pop('printer_id', None)
+    config.update(spoolman_url='https://spoolman.local', openspoolman_url='https://openspoolman.local',
+                  studio_printer_name='Synthetic Studio', studio_printer_model='Bambu Lab X2D',
+                  studio_printer_serial='SYNTHETIC-SERIAL')
+    core.write_json(core.ROOT/'Runtime/config.json', config)
+    job.update(printer_id='studio:SYNTHETIC-SERIAL', printer_provider='official_studio',
+               studio_device_binding=core.studio_device_binding(), sliced_printer_model='Bambu Lab X2D',
+               bambuddy_url=None)
+    core.write_json(jd/'job.json', job)
+    monkeypatch.setattr(bambuddy, 'Client', lambda **kwargs:pytest.fail('manual preflight must not contact Bambuddy'))
+    reg(setup)
+    result = prepared.check('P001','Jone',inspector=inspector)
+    assert result['transport']['kind'] == 'bambu_studio_manual'
+    assert result['executed'] is False and result['automatic_start'] is False
+    assert not result['ready']
+    assert 'manual_observations' in {row['id'] for row in result['blockers']}
+    assert not (jd/'approval.json').exists() and not (jd/'dispatch.json').exists()
+
+
 def test_no_automatic_discovery_or_implicit_authorization(setup):
     assert prepared.catalogue()['items'] == []
     with pytest.raises(core.WorkflowError, match='尚未加入'):

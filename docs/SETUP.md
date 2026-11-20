@@ -45,8 +45,8 @@ Python 版本不夠時，安裝 Python 3.11 或更新版，用絕對路徑執行
 1. 使用者從 Bambuddy 原專案獨立安裝，按上游說明執行服務並添加自己的印表機。它管理設備連接、庫存和歷史。
 2. 在 Bambuddy 設定中建立只讀 API key，讀取其印表機 ID。寫入 `Runtime/private/bambuddy.json` 的 `read_api_key`，保持文件權限 600。需要實際發送時，才設定具有相應權限的 `write_api_key`。
 3. 編輯 `Runtime/config.json`，填寫 `bambuddy_url` 和 `printer_id`。預設 URL 是 `http://127.0.0.1:8017`，應按自己實際安裝的地址調整。
-4. 更新 `Library/Devices/X2D/device.json`，核實型號、噴嘴、板型、AMS/外掛以及 FTS 情況。該目錄沿用首版 X2D 的設備卡路徑，填寫內容必須對應自己的機器。
-5. 執行 `./Harness/bin/printlab status` 和 `./Harness/bin/printlab materials`，確認設備身分、即時狀態和材料映射。把核驗結果寫入 `Library/Devices/X2D/installed.md`。
+4. 更新 `Library/Devices/H2C/device.json`，核實型號、噴嘴、板型、AMS/外掛以及 FTS 情況。填寫內容必須對應自己的機器。
+5. 執行 `./Harness/bin/printlab status` 和 `./Harness/bin/printlab materials`，確認設備身分、即時狀態和材料映射。把核驗結果寫入 `Library/Devices/H2C/installed.md`。
 
 以上下載、安裝、設定檢查和故障修復可以由具備本機終端能力的 Agent 執行。登入、密鑰授權、macOS 權限選擇和實體裝料由使用者在實際介面或設備上完成，再讓 Agent 讀取結果繼續。
 

@@ -24,8 +24,8 @@ def test_cancelled_failed_state_never_bypasses_upstream_gate_or_uploads(workspac
 
 def test_x2d_missing_external_storage_never_uploads_via_ftps(workspace):
     p,jd=workspace
-    card=core.read_json(core.ROOT/'Library/Devices/X2D/device.json');card['model']='X2D'
-    core.write_json(core.ROOT/'Library/Devices/X2D/device.json',card)
+    card=core.read_json(core.ROOT/'Library/Devices/H2C/device.json');card['model']='X2D'
+    core.write_json(core.ROOT/'Library/Devices/H2C/device.json',card)
     core.approve('P001','Jtest','确认打印',True)
     device=SimulatedBambuddy()
     with pytest.raises(core.WorkflowError,match='external storage'):

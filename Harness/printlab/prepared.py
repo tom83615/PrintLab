@@ -351,7 +351,7 @@ def check(pid, jid, *, client=None, inspector=None):
         facts = probe('manual_observations', '本次 Studio 任務核對', exact_facts,
                       '設備、料路、裝料、清板與授權都已按此任務核實',
                       '缺少本次任務的即時設備／料路／裝料／清板／授權確認') or {}
-        plate = core.read_json(core.ROOT / 'Library/Devices/X2D/device.json', {}).get('user_confirmed', {}).get('build_plate_description')
+        plate = core.read_json(core.DEVICE_CARD, {}).get('user_confirmed', {}).get('build_plate_description')
         record('plate_type', '打印板类型', plate == job.get('requested_bed_type') == job.get('curr_bed_type'),
                '切片與已確認的打印板類型一致', '切片板型與已確認的打印板類型不符')
         probe('active_receipts', '歷史發送結果', lambda: (bambuddy.ensure_no_active_dispatches(jd), True)[1],
@@ -413,7 +413,7 @@ def check(pid, jid, *, client=None, inspector=None):
             else:
                 record('route', '颜色、材料与供料路线', False, '', '文件或实时数据未通过，无法核验供料')
                 record('quantity', '耗材余量', False, '', '实时数据不足，无法核验余量')
-            physical_plate = core.read_json(core.ROOT / 'Library/Devices/X2D/device.json', {}).get('user_confirmed', {}).get('build_plate_description')
+            physical_plate = core.read_json(core.DEVICE_CARD, {}).get('user_confirmed', {}).get('build_plate_description')
             record('plate_type', '打印板类型', physical_plate == job.get('requested_bed_type') == job.get('curr_bed_type'), '切片与已确认的打印板类型一致，仍需确认板面干净', '切片板型与当前设备卡不一致或未确认')
         def queue_check():
             rows = client.get('queue/')

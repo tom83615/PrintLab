@@ -17,7 +17,7 @@ def plan(*, model=None, feeding='unknown', permission='unknown', keep_cloud=Fals
         raise core.WorkflowError('Invalid route preference')
     source = 'explicit_argument'
     if not model:
-        card = core.read_json(core.ROOT / 'Library/Devices/X2D/device.json', {})
+        card = core.read_json(core.DEVICE_CARD, {})
         model = card.get('user_confirmed', {}).get('model') or card.get('model')
         source = 'device_card_not_live'
     result = {

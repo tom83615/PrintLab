@@ -377,7 +377,7 @@ def preflight(p, jd, job, approval, client, *, native=False, official=False):
                 raise core.WorkflowError("Original confirmation expired; recording a new approval does not refresh it")
     status = client.get(f"printers/{job['printer_id']}/status")
     verify_machine_identity(client, job)
-    device_card = core.read_json(core.ROOT / "Library/Devices/X2D/device.json", {})
+    device_card = core.read_json(core.DEVICE_CARD, {})
     model = device_card.get("model") or device_card.get("user_confirmed", {}).get("model") or job.get("sliced_printer_model", "")
     if not native and not official and "X2D" in str(model).upper() and status.get("sdcard") is not True:
         raise core.WorkflowError("X2D queue/FTPS route has no verified external storage; prepare an explicitly approved native internal-storage route, never automatically fall back or resend")

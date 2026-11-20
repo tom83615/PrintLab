@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-21
+goal: 設備卡路徑與實際已設定機型一致，所有讀取與 UI 入口可繼續使用。
+skip_specs: true

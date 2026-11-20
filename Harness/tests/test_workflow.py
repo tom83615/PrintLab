@@ -17,7 +17,7 @@ def workspace(tmp_path, monkeypatch):
     monkeypatch.setattr(slicer_guard, 'official_templates', lambda: templates)
     monkeypatch.setattr(core, "ROOT", tmp_path)
     core.write_json(tmp_path / "Runtime/config.json", {"printer_id": 7})
-    core.write_json(tmp_path / "Library/Devices/X2D/device.json", {"user_confirmed": {"fts_installed": False, "fts_confirmation_quote": "Synthetic test operator explicitly confirms no FTS", "fts_confirmation_date": "2026-10-25"}})
+    core.write_json(tmp_path / "Library/Devices/H2C/device.json", {"user_confirmed": {"fts_installed": False, "fts_confirmation_quote": "Synthetic test operator explicitly confirms no FTS", "fts_confirmation_date": "2026-10-25"}})
     core.new_project("Route validation fixture")
     p = core.project_path("P001")
     (p / "Design/v001").mkdir()
@@ -335,7 +335,7 @@ def test_null_fts_accepted_only_with_explicit_user_absence_and_bound_route(works
     bambuddy.validate_ready(status, mapping)
     with pytest.raises(core.WorkflowError, match="bind"):
         bambuddy.validate_ready(status, {k: v for k, v in mapping.items() if k != "fts_installed"})
-    core.write_json(core.ROOT / "Library/Devices/X2D/device.json", {"user_confirmed": {}})
+    core.write_json(core.ROOT / "Library/Devices/H2C/device.json", {"user_confirmed": {}})
     with pytest.raises(core.WorkflowError, match="explicit dated user confirmation"):
         bambuddy.validate_ready(status, mapping)
 
@@ -344,7 +344,7 @@ def test_changed_fts_declaration_invalidates_existing_approval(workspace):
     p, jd = workspace
     approve(workspace)
     job = core.read_json(jd / "job.json")
-    core.write_json(core.ROOT / "Library/Devices/X2D/device.json", {"user_confirmed": {"fts_installed": True, "fts_confirmation_quote": "Synthetic operator installed FTS", "fts_confirmation_date": "2026-10-26"}})
+    core.write_json(core.ROOT / "Library/Devices/H2C/device.json", {"user_confirmed": {"fts_installed": True, "fts_confirmation_quote": "Synthetic operator installed FTS", "fts_confirmation_date": "2026-10-26"}})
     with pytest.raises(core.WorkflowError, match="hardware declaration changed"):
         core.job_fingerprint(p, jd, job)
 

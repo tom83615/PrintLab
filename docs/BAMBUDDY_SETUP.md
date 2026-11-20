@@ -8,7 +8,7 @@ PrintLab 通過 HTTP API 讀取獨立執行的 Bambuddy。當前適配驗證版�
 2. 按 Bambuddy 的添加印表機流程填寫自己的設備資訊，等待狀態與材料讀回。網路模式、韌體與開發者模式按自己機型核對，具體路線見連接指南。[添加印表機](https://wiki.bambuddy.cool/getting-started/first-printer/) · [連接方式](CONNECTIONS.md)
 3. 為 PrintLab 新建專用 API key，啟用讀取狀態權限，用於設備、庫存和 Bambuddy 已儲存歷史。填寫到本機 `Runtime/private/bambuddy.json` 的 `read_api_key`。已有 API key、帳號雲登入、同步設定與其他應用權限按使用者現有用途保留。雲訪問和模型匯入各自按實際功能設定，見 [同步排查](SYNC_TROUBLESHOOTING.md)。
 4. 讀取印表機 ID，寫入 `Runtime/config.json` 的 `printer_id`。設備型號、噴嘴、列印板與實際供料路線寫入設備檔案。
-5. 執行 `printlab status` 和 `printlab materials`。核對目標機器、在線狀態、資料更新時間和槽位。首次連接結果寫入自己的 `Library/Devices/X2D/installed.md`。
+5. 執行 `printlab status` 和 `printlab materials`。核對目標機器、在線狀態、資料更新時間和槽位。首次連接結果寫入自己的 `Library/Devices/H2C/installed.md`。
 
 需要通過 Bambuddy 發送具體任務時，再按所選通道設定獨立寫入憑據。官方 Studio 通道的控制條件見列印指南。[列印能力](PRINTING.md)
 

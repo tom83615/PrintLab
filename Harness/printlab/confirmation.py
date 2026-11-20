@@ -103,7 +103,7 @@ def card(pid, jid=None, device=None):
     project = core.read_json(p/'project.json')
     if not jid:
         jid = (core.current_attempt(p, project) or {}).get('id')
-    plate = core.read_json(core.ROOT/'Library/Devices/X2D/device.json',{}).get('user_confirmed',{}).get('build_plate_description')
+    plate = core.read_json(core.DEVICE_CARD,{}).get('user_confirmed',{}).get('build_plate_description')
     if not jid:
         return {'project_id':project['id'],'project_name':project['name'],'revision':project.get('current_revision'),
                 'job_id':None,'plate_type':plate,'missing':[{'key':'slice','label':'尚未准备具体切片任务','needs_user':False}],

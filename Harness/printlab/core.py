@@ -20,6 +20,10 @@ from pathlib import Path
 from urllib.parse import quote, urlparse
 
 ROOT = Path(os.environ.get("PRINTLAB_ROOT", Path(__file__).resolve().parents[2])).expanduser().resolve()
+DEVICE_CARD_PATH = "Library/Devices/H2C/device.json"
+DEVICE_INSTALLED_PATH = "Library/Devices/H2C/installed.md"
+DEVICE_CARD = ROOT / DEVICE_CARD_PATH
+DEVICE_INSTALLED = ROOT / DEVICE_INSTALLED_PATH
 PROJECT_DIRS = ("Sources", "Design", "Exports", "Preview", "Print", "Review", "Sessions")
 PUBLIC_DIRS = {"Sources", "Design", "Exports", "Preview", "Print", "Review", "Sessions"}
 
@@ -103,7 +107,7 @@ def studio_device_binding():
 
 
 def fts_declaration():
-    confirmed = read_json(ROOT / "Library/Devices/X2D/device.json", {}).get("user_confirmed", {})
+    confirmed = read_json(DEVICE_CARD, {}).get("user_confirmed", {})
     value = confirmed.get("fts_installed")
     # A missing/null machine field alone never establishes that hardware is absent.
     if type(value) is not bool or not confirmed.get("fts_confirmation_quote") or not confirmed.get("fts_confirmation_date"):
@@ -301,7 +305,7 @@ def new_project(name, kind="functional", brief="", summary_text=""):
 
 def context(pid=None):
     from . import shop, supplies
-    paths = [ROOT / x for x in ["AGENTS.md", "Context/profile.md", "Context/workflow.md", "Library/Devices/X2D/device.json", "Library/Devices/X2D/installed.md", "Context/lessons.md"]]
+    paths = [ROOT / x for x in ["AGENTS.md", "Context/profile.md", "Context/workflow.md", DEVICE_CARD_PATH, DEVICE_INSTALLED_PATH, "Context/lessons.md"]]
     for rel in ("Context/image-to-print.md", "Context/agent-policy.json", "Context/taste.md", "Context/team.md", "Context/onboarding.json"):
         if (ROOT / rel).is_file():
             paths.append(ROOT / rel)
@@ -481,7 +485,7 @@ def print_configuration_issues(job):
         issues.append("实际耗材和挤出机路线尚未核验")
     if not machine_profiles.single_nozzle_model(job.get('sliced_printer_model')) and (mapping.get("fts_installed") is not False or fts_declaration() is not False):
         issues.append("直连路线需绑定用户明确确认的无 FTS 配置")
-    card = read_json(ROOT / 'Library/Devices/X2D/device.json', {})
+    card = read_json(DEVICE_CARD, {})
     model = card.get('user_confirmed', {}).get('model') or card.get('model')
     if model and job.get('sliced_printer_model') and machine_profiles.model_id(model) != machine_profiles.model_id(job['sliced_printer_model']):
         issues.append('切片机型与已选设备档案不一致')
@@ -880,7 +884,7 @@ def library():
                     if first and first[0].startswith("# "):
                         title = first[0][2:]
                 rows.append({"path": rel, "title": title, "category": "/".join(p.relative_to(ROOT).parts[:3]), "url": "/api/documents/" + quote(rel, safe="/")})
-    card = ROOT / "Library/Devices/X2D/installed.md"
+    card = DEVICE_INSTALLED
     return {"documents": rows, "device_card": card.read_text(encoding="utf-8") if card.exists() else "本机配置尚未核验。"}
 
 

@@ -13,7 +13,7 @@ from printlab import core, prepared, slicer_guard
 def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(core, 'ROOT', tmp_path)
     core.write_json(tmp_path / 'Runtime/config.json', {'printer_id': 7})
-    core.write_json(tmp_path / 'Library/Devices/X2D/device.json', {'user_confirmed': {
+    core.write_json(tmp_path / 'Library/Devices/H2C/device.json', {'user_confirmed': {
         'fts_installed': False, 'fts_confirmation_quote': 'Synthetic no FTS',
         'fts_confirmation_date': '2026-11-07', 'build_plate_description': 'Textured PEI Plate'}})
     core.new_project('Prepared fixture')

@@ -43,7 +43,7 @@ def test_saved_permission_does_not_trigger_another_permission_question():
 
 
 def test_unknown_feeding_never_assumes_ams():
-    core.write_json(core.ROOT / 'Library/Devices/X2D/device.json', {'model': 'A1', 'ams': [{}]})
+    core.write_json(core.ROOT / 'Library/Devices/H2C/device.json', {'model': 'A1', 'ams': [{}]})
     result = dispatch_plan.plan()
     assert result['preferred_route'] is None
     assert result['next_step'] == 'confirm_missing_facts'

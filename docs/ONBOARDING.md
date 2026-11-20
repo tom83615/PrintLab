@@ -31,7 +31,7 @@
 ./Harness/bin/printlab materials
 ```
 
-只有一臺符合使用者描述的設備時可直接採用，多臺且用途不明確時詢問目標。`adopt-device` 記錄實際身分和讀回時間，保留使用者確認欄位。歷史路徑 `Library/Devices/X2D/device.json` 可以儲存使用者自己的型號。出現身分衝突時核對舊設備與新選擇。
+只有一臺符合使用者描述的設備時可直接採用，多臺且用途不明確時詢問目標。`adopt-device` 記錄實際身分和讀回時間，保留使用者確認欄位。當前設備卡位於 `Library/Devices/H2C/device.json`。出現身分衝突時核對舊設備與新選擇。
 
 按已安裝官方 Studio 設定及使用者實際設備核對可用空間、噴嘴、列印板與供料連接。軟體模板的可選能力與現場已安裝設備分別記錄。通過 `workspace device --file 確認欄位.json --source 事實出處 --expect-sha 當前哈希` 追加使用者確認。文件示例如下，數值必須來自本機事實。
 

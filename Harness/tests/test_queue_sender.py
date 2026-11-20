@@ -18,7 +18,7 @@ def queue_setup(setup, monkeypatch):
     write_archive()
     job['artifact_sha256'] = core.digest(directory / job['artifact'])
     core.write_json(directory / 'job.json', job)
-    core.write_json(core.ROOT / 'Library/Devices/X2D/device.json', {
+    core.write_json(core.ROOT / 'Library/Devices/H2C/device.json', {
         'model': 'A1', 'user_confirmed': {'build_plate_description': 'Textured PEI Plate'}})
     core.write_json(core.ROOT / 'Runtime/private/bambuddy.json', {'write_api_key': 'synthetic-test-only'})
     base.live.update(state='IDLE', awaiting_plate_clear=False, sdcard=True, ams_extruder_map={})

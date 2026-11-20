@@ -21,7 +21,7 @@ def write_new(path, value, private=False):
 
 
 def main():
-    for folder in ('Project', 'Runtime/private', 'Runtime/logs', 'Library/Devices/X2D',
+    for folder in ('Project', 'Runtime/private', 'Runtime/logs', 'Library/Devices/H2C',
                    'Library/Materials', 'Library/References', 'Library/Shopping',
                    'Library/Taste/Selections', 'Library/Prepared', 'Context'):
         (ROOT / folder).mkdir(parents=True, exist_ok=True)
@@ -38,12 +38,12 @@ def main():
         'studio_printer_name': None, 'tailscale_ip': None,
     })
     write_new(ROOT / 'Runtime/private/bambuddy.json', {'read_api_key': '', 'write_api_key': ''}, private=True)
-    write_new(ROOT / 'Library/Devices/X2D/device.json', {
+    write_new(ROOT / 'Library/Devices/H2C/device.json', {
         'schema_version': 1, 'name': '待配置的拓竹打印机', 'model': None,
         'verification_status': 'unconfigured', 'user_confirmed': {},
         'installed': {}, 'unverified': ['机型、喷嘴、打印板、供料连接与材料待核对'],
     })
-    installed = ROOT / 'Library/Devices/X2D/installed.md'
+    installed = ROOT / 'Library/Devices/H2C/installed.md'
     if not installed.exists():
         installed.write_text('# 本机设备\n\n尚未连接。按 docs/SETUP.md 核对设备与耗材。\n', encoding="utf-8")
     print('工作空间已初始化，现有配置与项目已保留。')

@@ -15,7 +15,7 @@ DOCUMENTS = {
     'taste': 'Context/taste.md',
     'lessons': 'Context/lessons.md',
     'team': 'Context/team.md',
-    'device': 'Library/Devices/X2D/device.json',
+    'device': core.DEVICE_CARD_PATH,
 }
 
 

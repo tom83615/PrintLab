@@ -13,7 +13,7 @@ DEVICE={'state':'online','stale':False,'updated_at':'test','printer':{'ams':[{'i
 
 def test_card_remembers_answers_and_structured_quote_needs_no_magic_phrase(workspace):
     p,jd=workspace
-    device_path=core.ROOT/'Library/Devices/X2D/device.json'
+    device_path=core.ROOT/'Library/Devices/H2C/device.json'
     data=core.read_json(device_path);data['user_confirmed']['build_plate_description']='Textured PEI Plate';core.write_json(device_path,data)
     event=confirmation.record('P001','Jtest',{'plate_clear':True,'material_loaded':True},'已经清空装好','test-session-A')
     card=confirmation.card('P001','Jtest',DEVICE)

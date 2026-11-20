@@ -8,7 +8,7 @@
 4. 電腦和印表機能否在同一網路通信？目前用雲連接還是 LAN Only？是否已使用 Bambu Studio、Bambuddy？是否需要保留 Handy 雲列印、帳號歷史和 MakerWorld 收藏？現有帳號使用國內站還是國際站？
 5. 常做的物品、尺寸/強度/表面優先級、是否接受配件、多色耗時與耗料，以及支撐材料偏好。
 
-把設備事實寫入 `Library/Devices/X2D/device.json`（沿用歷史路徑，內容填寫自己的型號），工具版本及驗證寫入 `installed.md`，偏好寫入 `Context/profile.md`。未知欄位不寫成已驗證。IP、訪問碼和 API key 僅儲存在本機受限設定中，不寫入共享文件。
+把 H2C 設備事實寫入 `Library/Devices/H2C/device.json`，工具版本及驗證寫入 `Library/Devices/H2C/installed.md`，偏好寫入 `Context/profile.md`。未知欄位不寫成已驗證。IP、訪問碼和 API key 僅儲存在本機受限設定中，不寫入共享文件。
 
 任務小組開始每件作品時讀取同一設備與材料記錄，並重新讀即時狀態。當前自動發送適配仍是 PRINTING.md 的特定 X2D/Mac 組合；填入其他機型並不會自動獲得切片與發送支援。
 

@@ -1,4 +1,4 @@
-# PrintLab · Codex 工作入口
+# PrintLab · Agent workspace guide
 
 本倉庫面向 Mac / Windows、Codex 與拓竹印表機。執行使用者當前要求，先核對事實和專案狀態，再選最簡單可行的方法。
 
@@ -8,7 +8,7 @@
 
 工作區根目錄為當前 checkout。CLI 是 `./Harness/bin/printlab`，每次用當前 `--help` 確認參數。已有模型、工具環境和使用者設定優先接續。
 
-## 每次接手
+The workspace root is this checkout. The Mac CLI is `./Harness/bin/printlab`; Windows uses `Harness/bin/printlab.ps1`. Check current `--help` before choosing arguments. Continue existing models, environments and user configuration.
 
 1. 讀 `Context/profile.md`、`Context/workflow.md`、`Context/agent-policy.json`、`Context/taste.md` 和 `Library/Devices/X2D/device.json`。初始化後這些文件纔會齊備。
 2. 目標專案讀 `project.json`、`brief.md`、`decisions.md` 和 `latest_session` 指向的交接。`printlab context 專案` 彙集同一份資料。

@@ -186,7 +186,11 @@ def parser():
     so.add_argument('project')
     so.add_argument('job')
     bridge = sub.add_parser('studio-bridge', help='Build or inspect the official Studio helper')
-    bridge.add_argument('action', choices=['build', 'capability', 'permissions'])
+    bridge.add_argument('action', choices=['build', 'capability', 'permissions', 'windows', 'inspect', 'recover', 'open-panel', 'open-file'])
+    bridge.add_argument('--studio-pid', type=int, help='Exact running Studio process ID from windows')
+    bridge.add_argument('--window-title', help='Exact window title from windows; never a fuzzy match')
+    bridge.add_argument('--file', help='Explicit sliced .gcode.3mf to open in a separate Studio instance')
+    bridge.add_argument('--sha256', help='Expected SHA-256 of the slice to open')
     r = sub.add_parser("reconcile")
     r.add_argument("project")
     r.add_argument("job")
@@ -197,6 +201,11 @@ def parser():
     r.add_argument('--source', help='Where and when the observation was made')
     sub.add_parser("status")
     sub.add_parser("materials", help="Read shared live filament quantities; never resets the full-spool baseline")
+    route = sub.add_parser('dispatch-plan', help='Read-only route advice before configuring permissions; never sends')
+    route.add_argument('--model', help='Actual printer model; defaults to saved device card')
+    route.add_argument('--feeding', choices=['ams', 'external', 'unknown'], default='unknown')
+    route.add_argument('--bambuddy-permission', choices=['unknown', 'granted', 'declined'], default='unknown')
+    route.add_argument('--keep-cloud', action='store_true', help='User explicitly wants to preserve cloud functions')
     sub.add_parser("doctor")
     r = sub.add_parser("review")
     r.add_argument("project")
@@ -388,6 +397,16 @@ def main(argv=None):
                 result = {'app_path': str(studio_bridge.build_helper()), 'printed': False}
             elif a.action == 'permissions':
                 result = studio_bridge.setup_permissions()
+            elif a.action == 'windows':
+                result = studio_bridge.window_status()
+            elif a.action in {'inspect', 'recover'}:
+                result = studio_bridge.observe_window(a.studio_pid, a.window_title, recover=a.action == 'recover')
+            elif a.action == 'open-panel':
+                result = studio_bridge.open_preview_panel(a.studio_pid, a.window_title)
+            elif a.action == 'open-file':
+                if not a.file:
+                    raise core.WorkflowError('open-file requires --file and --sha256')
+                result = studio_bridge.open_preview_file(a.file, a.sha256)
             else:
                 result = studio_bridge.capability()
         elif a.command == "reconcile":
@@ -441,6 +460,10 @@ def main(argv=None):
                 result = shop.supplier(a.item, a.status, a.url, a.evidence, a.expect)
             else:
                 result = shop.fulfill(a.project, a.note, a.expect)
+        elif a.command == 'dispatch-plan':
+            from . import dispatch_plan
+            result = dispatch_plan.plan(model=a.model, feeding=a.feeding,
+                permission=a.bambuddy_permission, keep_cloud=a.keep_cloud)
         elif a.command == 'history-recover':
             from . import preview_recovery
             result = preview_recovery.recover(printer_id=a.printer_id, cache_dir=a.cache_dir,
@@ -459,7 +482,11 @@ def main(argv=None):
             return 2
         return 2 if a.command == "native-inspect" and result.get("ok") is False else 0
     except (core.WorkflowError, OSError, ValueError, httpx.HTTPError) as exc:
-        print(json.dumps({"error": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        failure = {"error": str(exc)}
+        for field in ('code', 'stage'):
+            if isinstance(getattr(exc, field, None), str):
+                failure[field] = getattr(exc, field)
+        print(json.dumps(failure, ensure_ascii=False), file=sys.stderr)
         return 2
 
 

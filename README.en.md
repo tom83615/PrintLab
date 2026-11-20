@@ -1,4 +1,4 @@
-# PrintLab
+# PrintLab — English documentation
 
 English · [繁體中文（台灣）](README.md)
 

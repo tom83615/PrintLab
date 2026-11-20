@@ -1,6 +1,6 @@
 # PrintLab
 
-English · [简体中文](README.md)
+English · [繁體中文（台灣）](README.md)
 
 Turn an idea into something you can hold.
 

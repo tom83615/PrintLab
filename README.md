@@ -1,30 +1,30 @@
 # PrintLab
 
-简体中文 · [English](README.en.md)
+繁體中文（台灣） · [English](README.en.md)
 
-把一个想法，接着做成一件拿得起来的东西。
+把一個想法，接著做成一件拿得起來的東西。
 
-PrintLab 是阿方（Eric）在 E41 视频中使用的 3D 打印工作台与协作流程，面向 **Mac / Windows + Codex + 拓竹打印机**。你描述需求，Codex 协助选外形、建立模型、比较切片，再把版本、材料、打印记录和实物反馈保存在同一个工作空间。
+PrintLab 是阿方（Eric）在 E41 影片中使用的 3D 列印工作台與協作流程，面向 **Mac / Windows + Codex + 拓竹印表機**。你描述需求，Codex 協助選外形、建立模型、比較切片，再把版本、材料、列印記錄和實物回饋儲存在同一個工作區。
 
-## 历史与收藏的同步范围
+## 歷史與收藏的同步範圍
 
-当前发布版汇总 Bambuddy 已捕获的打印记录，并展示本地维护的灵感收藏。安装前的 Bambu Cloud 历史和 MakerWorld 账号收藏导入已排除在本轮开发范围外。需要保留 Handy、云打印和账号收藏的使用者，应在安装时明确这些需求，按同步排查核对已有功能。
+當前發佈版彙總 Bambuddy 已捕獲的列印記錄，並展示本機維護的靈感收藏。安裝前的 Bambu Cloud 歷史和 MakerWorld 帳號收藏匯入已排除在本輪開發範圍外。需要保留 Handy、雲列印和帳號收藏的使用者，應在安裝時明確這些需求，按同步排查核對已有功能。
 
-已有档案缺图时，可用 `printlab history-recover` 从 Mac Studio 缓存或明确绑定的本地 PNG / 3MF 恢复。
+已有檔案缺圖時，可用 `printlab history-recover` 從 Mac Studio 緩存或明確綁定的本機 PNG / 3MF 恢復。
 
-[模型预览恢复](docs/PREVIEW_RECOVERY.md) · [历史与收藏来源说明](docs/SYNC_TROUBLESHOOTING.md)
+[模型預覽恢復](docs/PREVIEW_RECOVERY.md) · [歷史與收藏來源說明](docs/SYNC_TROUBLESHOOTING.md)
 
-## 从这里开始
+## 從這裡開始
 
-把仓库链接和下面这段话发给具有本机终端、文件读写能力的 Codex 或其他 Agent。
+把倉庫連結和下面這段話發給具有本機終端、文件讀寫能力的 Codex 或其他 Agent。
 
-> 请帮我安装 https://github.com/AFangTeam/PrintLab 。先读 README.md、AGENTS.md 和 docs/AGENT_START.md，在本机建立长期工作空间，启动工作台并运行入门验收。自动建立 Sarah · 3D 打印顾问和 Mike · 工作流设计师两个独立聊天，全部绑定同一工作空间，让它们读取共同资料并分别介绍自己。了解我的打印机、材料与使用习惯，按 docs/ONBOARDING.md 接续配置，记录实际建立状态。第一件作品确定后再建立任务小组。第三方工具从原项目独立安装。需要设备信息、登录或系统权限时告诉我具体操作。最后给我工作空间路径、工作台地址、角色入口、验证结果和下一步。
+> 請幫我安裝 https://github.com/AFangTeam/PrintLab 。先讀 README.md、AGENTS.md 和 docs/AGENT_START.md，在本機建立長期工作區，啟動工作台並執行入門驗收。自動建立 Sarah · 3D 列印顧問和 Mike · 工作流設計師兩個獨立聊天，全部綁定同一工作區，讓它們讀取共同資料並分別介紹自己。瞭解我的印表機、材料與使用習慣，按 docs/ONBOARDING.md 接續設定，記錄實際建立狀態。第一件作品確定後再建立任務小組。第三方工具從原專案獨立安裝。需要設備資訊、登入或系統權限時告訴我具體操作。最後給我工作區路徑、工作台地址、角色入口、驗證結果和下一步。
 
-仓库内提供原创 [PrintLab Skill](.agents/skills/printlab/SKILL.md)。支持仓库 `.agents/skills` 的 Agent 可在此工作空间加载；其他宿主按自身技能安装规则安装该目录，技能仍需指向实际工作台。首次设备信息按 [配置访谈](docs/FIRST_RUN.md) 收集。
+倉庫內提供原創 [PrintLab Skill](.agents/skills/printlab/SKILL.md)。支援倉庫 `.agents/skills` 的 Agent 可在此工作區載入；其他宿主按自身技能安裝規則安裝該目錄，技能仍需指向實際工作台。首次設備資訊按 [設定訪談](docs/FIRST_RUN.md) 收集。
 
-观众的聊天、网页操作与分工示例见 [交互指南](docs/GETTING_STARTED.md)。Agent 的执行步骤与完成标准见 [接手指南](docs/AGENT_START.md)。
+觀眾的聊天、網頁操作與分工示例見 [交互指南](docs/GETTING_STARTED.md)。Agent 的執行步驟與完成標準見 [接手指南](docs/AGENT_START.md)。
 
-想自己安装，可以使用 Python 3.11+ 与 Node.js 22+，在终端执行以下命令。
+想自己安裝，可以使用 Python 3.11+ 與 Node.js 22+，在終端執行以下命令。
 
 ```bash
 git clone https://github.com/AFangTeam/PrintLab.git
@@ -33,9 +33,9 @@ bash scripts/setup.sh
 bash scripts/start.sh
 ```
 
-打开 <http://127.0.0.1:8018>。安装程序生成空工作空间与本机配置，重复运行会保留已有配置。系统 Python 版本较旧时，用 `PRINTLAB_PYTHON=/你的/python3路径 bash scripts/setup.sh` 指定解释器。详细步骤见 [安装指南](docs/SETUP.md)。
+開啟 <http://127.0.0.1:8018>。安裝程序生成空工作區與本機設定，重複執行會保留已有設定。系統 Python 版本較舊時，用 `PRINTLAB_PYTHON=/你的/python3路徑 bash scripts/setup.sh` 指定解釋器。詳細步驟見 [安裝指南](docs/SETUP.md)。
 
-也可以从 [Release](https://github.com/AFangTeam/PrintLab/releases/latest) 下载 `PrintLab.zip`。解压得到 `PrintLab/` 文件夹，在 Codex 中打开，或执行以下命令。
+也可以從 [Release](https://github.com/AFangTeam/PrintLab/releases/latest) 下載 `PrintLab.zip`。解壓得到 `PrintLab/` 資料夾，在 Codex 中開啟，或執行以下命令。
 
 ```bash
 curl -fL -o PrintLab.zip https://github.com/AFangTeam/PrintLab/releases/latest/download/PrintLab.zip
@@ -45,46 +45,46 @@ bash scripts/setup.sh
 bash scripts/start.sh
 ```
 
-Windows 用户在 PowerShell 中运行以下命令。安装 Python 3.11+ 和 Node.js 22+ 后，打开仓库目录。
+Windows 使用者在 PowerShell 中執行以下命令。安裝 Python 3.11+ 和 Node.js 22+ 後，開啟倉庫目錄。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1
 ```
 
-Windows 的工具路径、验证命令和官方 Studio 交接见 [Windows 指南](docs/WINDOWS.md)。
+Windows 的工具路徑、驗證命令和官方 Studio 交接見 [Windows 指南](docs/WINDOWS.md)。
 
-## 这支队伍怎样配合
+## 這支團隊怎樣配合
 
-- **Sarah · 3D 打印顾问** 了解你的设备、材料和常见故障，帮助核对配件与耗材。购物清单可以跨项目汇总。实际加购物车由你授权后，交给具备浏览器操作能力的 Codex 完成。
-- **Mike · 工作流设计师** 维护工具连接、工作台和共用规则，处理安装、版本、接口与流程问题。
-- **任务小组 · 作品名称** 每件作品开一个对话，保存需求、选图、源模型、切片与反馈，后续会话接着同一项目继续。
+- **Sarah · 3D 列印顧問** 瞭解你的設備、材料和常見故障，幫助核對配件與耗材。購物清單可以跨專案彙總。實際加購物車由你授權後，交給具備瀏覽器操作能力的 Codex 完成。
+- **Mike · 工作流設計師** 維護工具連接、工作台和共用規則，處理安裝、版本、介面與流程問題。
+- **任務小組 · 作品名稱** 每件作品開一個對話，儲存需求、選圖、源模型、切片與回饋，後續會話接著同一專案繼續。
 
-角色可直接从 [角色提示词](docs/ROLES.md) 复制。工作台通过文件和命令向 Codex 提供上下文，具体模型与工具能力取决于使用者当前安装的 Codex 环境。
+角色可直接從 [角色提示詞](docs/ROLES.md) 複製。工作台通過文件和命令向 Codex 提供上下文，具體模型與工具能力取決於使用者當前安裝的 Codex 環境。
 
-## 工作台里有什么
+## 工作台裡有什麼
 
-- 项目图册、真实 3D 模型预览和设计版本。
-- Bambuddy 提供的设备、材料与已捕获打印历史。
-- 灵感收藏、个人偏好和每轮选图记录。
-- 跨项目配件清单、库存与采购记录。
-- 已准备的打印包、材料映射、时间和用量，以及绑定具体任务的确认与回执。
+- 專案圖冊、真實 3D 模型預覽和設計版本。
+- Bambuddy 提供的設備、材料與已捕獲列印歷史。
+- 靈感收藏、個人偏好和每輪選圖記錄。
+- 跨專案配件清單、庫存與採購記錄。
+- 已準備的列印包、材料映射、時間和用量，以及綁定具體任務的確認與回執。
 
-首次安装会显示空项目和未连接设备。按安装指南连接自己的设备后，页面展示相应数据。
+首次安裝會顯示空專案和未連接設備。按安裝指南連接自己的設備後，頁面展示相應資料。
 
-## 从需求到实物
+## 從需求到實物
 
-描述用途与尺寸 → 选外形 → 确认三视图 → 实际 CAD → 对照修改 → 配色与材料 → 切片比较 → 确认这一版打印 → 实物反馈。
+描述用途與尺寸 → 選外形 → 確認三視圖 → 實際 CAD → 對照修改 → 配色與材料 → 切片比較 → 確認這一版列印 → 實物回饋。
 
-新外形默认先选单张方案，再从同一方案的四套三视图中选一套。小改动按影响范围处理，已有决定接续使用。Text-to-CAD 提供建模和查看能力，尺寸、接口和实际装配仍逐项检查。完整步骤在 [工作流](Context/workflow.md)。
+新外形預設先選單張方案，再從同一方案的四套三視圖中選一套。小改動按影響範圍處理，已有決定接續使用。Text-to-CAD 提供建模和查看能力，尺寸、介面和實際裝配仍逐項檢查。完整步驟在 [工作流](Context/workflow.md)。
 
-## 支持范围
+## 支援範圍
 
-Mac 使用 macOS 14+，推荐 Apple Silicon。Windows 提供原生 PowerShell 安装、命令行与浏览器工作台。通用工作台可独立启动，设备状态与历史依赖单独安装的 Bambuddy。Mac 自动发送助手对应 **X2D、中文 Bambu Studio 02.08.02.61、0.4 mm、单主料 AMS、左主喷嘴、纹理 PEI 单盘**。其他机型、软件版本和多材料路线需要 Codex 按现场情况核对，详见 [兼容性与打印](docs/PRINTING.md)。
+Mac 使用 macOS 14+，推薦 Apple Silicon。Windows 提供原生 PowerShell 安裝、命令列與瀏覽器工作台。通用工作台可獨立啟動，設備狀態與歷史依賴單獨安裝的 Bambuddy。Mac 自動發送助手對應 **X2D、中文 Bambu Studio 02.08.02.61、0.4 mm、單主料 AMS、左主噴嘴、紋理 PEI 單盤**。其他機型、軟體版本和多材料路線需要 Codex 按現場情況核對，詳見 [相容性與列印](docs/PRINTING.md)。
 
-本仓库提供工作台源码、原创流程文档、角色提示词和空项目模板。第三方项目、模型权重、Bambu 软件和插件从各自官方来源独立获取。你自己的作品保存在本机 `Project/`。第三方来源及职责见 [依赖说明](docs/DEPENDENCIES.md)。
+本倉庫提供工作台原始碼、原創流程文件、角色提示詞和空專案模板。第三方專案、模型權重、Bambu 軟體和外掛程式從各自官方來源獨立獲取。你自己的作品儲存在本機 `Project/`。第三方來源及職責見 [依賴說明](docs/DEPENDENCIES.md)。
 
-## 开发与验证
+## 開發與驗證
 
 ```bash
 Runtime/venv/bin/python scripts/verify_onboarding.py
@@ -93,12 +93,12 @@ node --test Harness/tests/native-inspection.test.mjs
 cd Harness/studio && npm run build
 ```
 
-测试使用临时工作空间与合成设备。已安装设备的只读检查需显式设置 `PRINTLAB_LIVE_TEST=1`。发布版验证记录见 [验证说明](docs/VERIFICATION.md)。
+測試使用臨時工作區與合成設備。已安裝設備的只讀檢查需顯式設定 `PRINTLAB_LIVE_TEST=1`。發佈版驗證記錄見 [驗證說明](docs/VERIFICATION.md)。
 
-## 使用许可与署名
+## 使用許可與署名
 
-PrintLab 原创源码和文档采用 **PolyForm Noncommercial 1.0.0**。允许在许可规定的非商业用途下使用、修改和再发布，再发布须附上许可及 `NOTICE.txt` 中的署名声明。商业用途需要另行取得 AFangTeam 授权。
+PrintLab 原創原始碼和文件採用 **PolyForm Noncommercial 1.0.0**。允許在許可規定的非商業用途下使用、修改和再發布，再發布須附上許可及 `NOTICE.txt` 中的署名聲明。商業用途需要另行取得 AFangTeam 授權。
 
-原作者为 **AFangTeam / 阿方（Eric）**，项目地址为 <https://github.com/AFangTeam/PrintLab>。许可全文见 [LICENSE.md](LICENSE.md)，署名要求见 [NOTICE.txt](NOTICE.txt)。独立安装的第三方软件遵循各自的许可。
+原作者為 **AFangTeam / 阿方（Eric）**，專案地址為 <https://github.com/AFangTeam/PrintLab>。許可全文見 [LICENSE.md](LICENSE.md)，署名要求見 [NOTICE.txt](NOTICE.txt)。獨立安裝的第三方軟體遵循各自的許可。
 
-当前机型与验证边界见 [支持范围](docs/MACHINE_SUPPORT.md)，发送与接续故障见 [排障指南](docs/TROUBLESHOOTING.md)。
+當前機型與驗證邊界見 [支援範圍](docs/MACHINE_SUPPORT.md)，發送與接續故障見 [排障指南](docs/TROUBLESHOOTING.md)。

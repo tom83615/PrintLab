@@ -1,20 +1,20 @@
-# 找回已有打印记录的模型预览
+# 找回已有列印記錄的模型預覽
 
-`printlab history-recover` 为 Bambuddy 已捕获的档案补图。指定设备后，工具逐页读取档案，匹配配置 ID 和明确板号，将 PNG 与关联表保存在当前工作空间。首次运行默认预演，检查报告后加 `--apply` 写入。
+`printlab history-recover` 為 Bambuddy 已捕獲的檔案補圖。指定設備後，工具逐頁讀取檔案，符合設定 ID 和明確板號，將 PNG 與關聯表儲存在當前工作區。首次執行預設預演，檢查報告後加 `--apply` 寫入。
 
-## 可用来源
+## 可用來源
 
-| 系统 | 来源 | 当前支持范围 |
+| 系統 | 來源 | 當前支援範圍 |
 | --- | --- | --- |
-| macOS | Studio 的 CFURL / WebKit 图片缓存 | 自动定位当前用户的 `~/Library/Caches/com.bambulab.bambu-studio`，也支持 `--cache-dir` 指定缓存根目录 |
-| Windows / macOS | 本地 PNG 或 3MF 与绑定清单 | `--manifest` 读取明确绑定的设备、档案、配置和板号，从 3MF 提取指定板 PNG |
-| 任意系统 | 从 Mac 复制的 CFURL / WebKit 缓存 | `--cache-dir` 读取上述已知格式；Windows 原生 Studio 缓存解析尚未实现 |
+| macOS | Studio 的 CFURL / WebKit 圖片緩存 | 自動定位當前使用者的 `~/Library/Caches/com.bambulab.bambu-studio`，也支援 `--cache-dir` 指定緩存根目錄 |
+| Windows / macOS | 本機 PNG 或 3MF 與綁定清單 | `--manifest` 讀取明確綁定的設備、檔案、設定和板號，從 3MF 提取指定板 PNG |
+| 任意系統 | 從 Mac 複製的 CFURL / WebKit 緩存 | `--cache-dir` 讀取上述已知格式；Windows 原生 Studio 緩存解析尚未實現 |
 
-缓存可能已被清理、只有 URL 或缺少图片本体，默认会报告 `not_found`。默认读取现存图片字节，联网请求限于配置的 Bambuddy 档案 GET 接口。缓存仍有官方图片 URL 时，可加 `--fetch-missing` 尝试补回图片本体，沿用旧脚本的下载能力。下载限定已识别的官方 HTTPS 图片域名、禁止跳转并限制图片大小，过期 URL 计入 `failed_downloads`。账号旧打印历史与 MakerWorld 账号收藏导入已排除在本轮开发范围外。
+緩存可能已被清理、只有 URL 或缺少圖片本體，預設會報告 `not_found`。預設讀取現存圖片字節，聯網請求限於設定的 Bambuddy 檔案 GET 介面。緩存仍有官方圖片 URL 時，可加 `--fetch-missing` 嘗試補回圖片本體，沿用舊腳本的下載能力。下載限定已識別的官方 HTTPS 圖片域名、禁止跳轉並限制圖片大小，過期 URL 計入 `failed_downloads`。帳號舊列印歷史與 MakerWorld 帳號收藏匯入已排除在本輪開發範圍外。
 
 ## Mac 操作
 
-先配置 Bambuddy 地址、专用读取凭据和设备 ID，按 [安装说明](SETUP.md) 完成基础连接。工作空间根目录执行以下命令。
+先設定 Bambuddy 地址、專用讀取憑據和設備 ID，按 [安裝說明](SETUP.md) 完成基礎連接。工作區根目錄執行以下命令。
 
 ```bash
 ./Harness/bin/printlab history --refresh
@@ -23,33 +23,33 @@
 ./Harness/bin/printlab history --refresh
 ```
 
-缓存只有图片链接时，可预演并应用下载结果。
+緩存只有圖片連結時，可預演並應用下載結果。
 
 ```bash
 ./Harness/bin/printlab history-recover --fetch-missing
 ./Harness/bin/printlab history-recover --fetch-missing --apply
 ```
 
-工具默认使用 `Runtime/config.json` 的 `printer_id`。多设备或缓存副本可显式指定。
+工具預設使用 `Runtime/config.json` 的 `printer_id`。多設備或緩存副本可顯式指定。
 
 ```bash
 ./Harness/bin/printlab history-recover --printer-id 2 --cache-dir "/Volumes/Backup/Studio cache"
 ./Harness/bin/printlab history-recover --printer-id 2 --cache-dir "/Volumes/Backup/Studio cache" --apply
 ```
 
-传入的目录应直接包含 `Cache.db` 或 `WebKit/NetworkCache/Version */Records`。版本目录自动枚举。数据库、缓存文件和 Studio 登录状态均保持原状。
+傳入的目錄應直接包含 `Cache.db` 或 `WebKit/NetworkCache/Version */Records`。版本目錄自動枚舉。資料庫、緩存文件和 Studio 登入狀態均保持原狀。
 
-旧脚本路径作为兼容入口保留，同样默认预演。
+舊腳本路徑作為相容入口保留，同樣預設預演。
 
 ```bash
 Runtime/venv/bin/python Harness/tools/recover_studio_covers.py --help
 ```
 
-## Windows 与本地文件操作
+## Windows 與本機文件操作
 
-从 Bambuddy 的对应档案确认 `id`、`printer_id`、`extra_data._print_data.raw_data.profile_id` 和 `plate_idx` 或 `plate_id`。清单中的数值须与档案完全一致。档案缺少配置 ID 或板号时，先寻找可核对的任务证据。相似标题不能用于绑定。
+從 Bambuddy 的對應檔案確認 `id`、`printer_id`、`extra_data._print_data.raw_data.profile_id` 和 `plate_idx` 或 `plate_id`。清單中的數值須與檔案完全一致。檔案缺少設定 ID 或板號時，先尋找可核對的任務證據。相似標題不能用於綁定。
 
-把下列内容保存为 `preview-bindings.json`。示例数值需要替换为自己的实际档案。文件相对路径以清单所在目录为基准，也支持本机绝对路径。Windows JSON 路径可以使用 `/`。
+把下列內容儲存為 `preview-bindings.json`。示例數值需要替換為自己的實際檔案。文件相對路徑以清單所在目錄為基準，也支援本機絕對路徑。Windows JSON 路徑可以使用 `/`。
 
 ```json
 {
@@ -72,32 +72,32 @@ Runtime/venv/bin/python Harness/tools/recover_studio_covers.py --help
 .\Harness\bin\printlab.ps1 history --refresh
 ```
 
-PNG 同样通过 `file` 提供。只使用有明确配置和板号来源的模型图片。清单表达使用者确认的关联，工具无法独立证明外部文件就是当次打印文件，因此导入后显示“原模型参考”。已经由 PrintLab 任务和切片包准确关联的图片继续优先显示为“切片模型预览”。Studio 缓存图片显示“配置板预览”，对应公开配置和板号，当次改动与配色仍需实际切片文件核对。
+PNG 同樣通過 `file` 提供。只使用有明確設定和板號來源的模型圖片。清單表達使用者確認的關聯，工具無法獨立證明外部文件就是當次列印文件，因此匯入後顯示“原模型參考”。已經由 PrintLab 任務和切片包準確關聯的圖片繼續優先顯示為“切片模型預覽”。Studio 緩存圖片顯示“設定板預覽”，對應公開設定和板號，當次改動與配色仍需實際切片文件核對。
 
-## 报告与冲突处理
+## 報告與衝突處理
 
-| 状态 | 含义与处理 |
+| 狀態 | 含義與處理 |
 | --- | --- |
-| `ready` | 预演找到一个有效候选，可加 `--apply` 保存 |
-| `recovered` | 图片与关联表已写入 |
-| `existing` | 已有有效关联，重复执行保持原条目和时间 |
-| `existing_unavailable` | 已有条目存在但匹配、图片或哈希校验失败，保留原条目供调查 |
-| `missing_identity` | 档案缺少配置 ID 或明确板号，或两个板号字段冲突 |
-| `not_found` | 没有可读取且匹配的图片 |
-| `conflict` | 同一匹配出现不同图片内容，或目标文件内容冲突，保留空位供核对 |
+| `ready` | 預演找到一個有效候選，可加 `--apply` 儲存 |
+| `recovered` | 圖片與關聯表已寫入 |
+| `existing` | 已有有效關聯，重複執行保持原條目和時間 |
+| `existing_unavailable` | 已有條目存在但符合、圖片或哈希校驗失敗，保留原條目供調查 |
+| `missing_identity` | 檔案缺少設定 ID 或明確板號，或兩個板號欄位衝突 |
+| `not_found` | 沒有可讀取且符合的圖片 |
+| `conflict` | 同一符合出現不同圖片內容，或目標文件內容衝突，保留空位供核對 |
 
-`issues` 提供缺少缓存数据库、缺少 WebKit 记录、损坏图片、无法读取来源、模糊缓存记录和清单不匹配计数，同时记录显式下载的成功与失败数量。先处理这些原因，再运行预演。报告省略签名 URL、原始缓存、账号令牌和本机来源路径。
+`issues` 提供缺少緩存資料庫、缺少 WebKit 記錄、損壞圖片、無法讀取來源、模糊緩存記錄和清單不符合計數，同時記錄顯式下載的成功與失敗數量。先處理這些原因，再執行預演。報告省略簽名 URL、原始緩存、帳號令牌和本機來源路徑。
 
-已有 `recovered-previews.json` 的旧数字键继续读取。新条目使用 `printer_id:archive_id`，同一档案编号在不同设备间独立保存。写入使用跨进程锁、原子图片替换和原子 JSON 提交，重试可复用内容哈希图片。中途失败最多留下尚未被引用的图片，下一次恢复可继续。
+已有 `recovered-previews.json` 的舊數字鍵繼續讀取。新條目使用 `printer_id:archive_id`，同一檔案編號在不同設備間獨立儲存。寫入使用跨進程鎖、原子圖片替換和原子 JSON 提交，重試可複用內容哈希圖片。中途失敗最多留下尚未被引用的圖片，下一次恢復可繼續。
 
-冲突处理时先备份关联表并核对源证据。工具自动保留已有条目，包括原模型参考。修正关联表属于显式的数据维护操作。
+衝突處理時先備份關聯表並核對源證據。工具自動保留已有條目，包括原模型參考。修正關聯表屬於顯式的資料維護操作。
 
-## 复用给 Agent 的步骤
+## 複用給 Agent 的步驟
 
-1. 核对当前工作空间、Bambuddy 设备 ID 和历史覆盖范围。
-2. Mac 优先预演本机缓存。Windows 使用有明确档案关联的本地 PNG / 3MF 清单。
-3. 检查缺失身份、冲突和读取失败，记录实际可恢复数量。
-4. 在补图授权内执行 `--apply`，随后再次运行，核对 `written` 为零及已有记录保留情况。
-5. 用 `history --refresh` 和工作台图册检查图片、标签与对应档案，分别记录恢复结果和未覆盖项。
+1. 核對當前工作區、Bambuddy 設備 ID 和歷史覆蓋範圍。
+2. Mac 優先預演本機緩存。Windows 使用有明確檔案關聯的本機 PNG / 3MF 清單。
+3. 檢查缺失身分、衝突和讀取失敗，記錄實際可恢復數量。
+4. 在補圖授權內執行 `--apply`，隨後再次執行，核對 `written` 為零及已有記錄保留情況。
+5. 用 `history --refresh` 和工作台圖冊檢查圖片、標籤與對應檔案，分別記錄恢復結果和未覆蓋項。
 
-原图和绑定表属于使用者的私人数据，位于 `Library/References/PrintHistory/`，发布 ZIP 只包含工具、说明与合成测试。
+原圖和綁定表屬於使用者的私人資料，位於 `Library/References/PrintHistory/`，發佈 ZIP 只包含工具、說明與合成測試。

@@ -1,21 +1,21 @@
-# Windows 安装与工作流
+# Windows 安裝與工作流
 
-Windows 版本提供浏览器工作台、项目与版本管理、中文资料、跨会话交接、材料与打印记录、购物清单和打印包管理。使用 Python 3.11+、Node.js 22+（含 npm）以及有本机终端和文件访问能力的 Codex。
+Windows 版本提供瀏覽器工作台、專案與版本管理、中文資料、跨會話交接、材料與列印記錄、購物清單和列印包管理。使用 Python 3.11+、Node.js 22+（含 npm）以及有本機終端和文件訪問能力的 Codex。
 
-## 安装与启动
+## 安裝與啟動
 
-从 Release 下载 `PrintLab.zip` 并解压，或克隆仓库。进入 PrintLab 文件夹，在 PowerShell 运行。
+從 Release 下載 `PrintLab.zip` 並解壓，或克隆倉庫。進入 PrintLab 資料夾，在 PowerShell 執行。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1
 ```
 
-打开 http://127.0.0.1:8018 。保持启动终端运行。独立工作空间需要其他端口时，在启动命令末尾加 `--port 18018`。执行策略参数仅对该进程生效。
+開啟 http://127.0.0.1:8018 。保持啟動終端執行。獨立工作區需要其他連接埠時，在啟動命令末尾加 `--port 18018`。執行策略參數僅對該進程生效。
 
-安装脚本优先使用 Python Launcher 的 `py -3`，也支持 PATH 中的 `python`。指定解释器时，先设置 `$env:PRINTLAB_PYTHON = 'C:\你的路径\python.exe'`。重复安装会保留已有配置。使用已下载 ZIP 时可以跳过 Git 安装。
+安裝腳本優先使用 Python Launcher 的 `py -3`，也支援 PATH 中的 `python`。指定解釋器時，先設定 `$env:PRINTLAB_PYTHON = 'C:\你的路徑\python.exe'`。重複安裝會保留已有設定。使用已下載 ZIP 時可以跳過 Git 安裝。
 
-## 验证与接续
+## 驗證與接續
 
 ```powershell
 .\Runtime\venv\Scripts\python.exe scripts/verify_onboarding.py
@@ -23,38 +23,38 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Harness\bin\printlab.ps1 d
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Harness\bin\printlab.ps1 context
 ```
 
-入门验收创建临时中文项目，通过独立进程检查项目、分工、交接和 API，成功输出 `ok: true`。Sarah、Mike 和任务小组共享同一工作空间，按接手指南建立入口与交接记录。其余文档的 `./Harness/bin/printlab` 命令在 Windows 中使用以上 PowerShell 入口，后面的子命令和参数相同。
+入門驗收建立臨時中文專案，通過獨立進程檢查專案、分工、交接和 API，成功輸出 `ok: true`。Sarah、Mike 和任務小組共享同一工作區，按接手指南建立入口與交接記錄。其餘文件的 `./Harness/bin/printlab` 命令在 Windows 中使用以上 PowerShell 入口，後面的子命令和參數相同。
 
-## 独立安装设计与打印工具
+## 獨立安裝設計與列印工具
 
-Bambu Studio、Blender、Text-to-CAD、Bambuddy 和可选建模依赖均从各自上游独立获取。按照上游 Windows 安装说明记录实际版本和可执行文件路径。来源见 [依赖说明](DEPENDENCIES.md)。
+Bambu Studio、Blender、Text-to-CAD、Bambuddy 和可選建模依賴均從各自上游獨立獲取。按照上游 Windows 安裝說明記錄實際版本和可執行文件路徑。來源見 [依賴說明](DEPENDENCIES.md)。
 
-独立安装步骤见 [Text-to-CAD](CAD_SETUP.md)、[Bambuddy](BAMBUDDY_SETUP.md) 和 [Bambu Studio](STUDIO_SETUP.md)。
+獨立安裝步驟見 [Text-to-CAD](CAD_SETUP.md)、[Bambuddy](BAMBUDDY_SETUP.md) 和 [Bambu Studio](STUDIO_SETUP.md)。
 
-在 `Runtime/config.json` 核对 `slicer_path`、`slicer_profiles_path`、`blender_path` 和 `cad_python`。安装程序会查找 PATH 与 Program Files 中的 Bambu Studio、Blender。JSON 中 Windows 路径可使用正斜杠，例如 `C:/Program Files/Bambu Studio/bambu-studio.exe`。切片配置目录通常为安装目录的 `resources/profiles`，应以实际安装为准。
+在 `Runtime/config.json` 核對 `slicer_path`、`slicer_profiles_path`、`blender_path` 和 `cad_python`。安裝程序會查找 PATH 與 Program Files 中的 Bambu Studio、Blender。JSON 中 Windows 路徑可使用正斜槓，例如 `C:/Program Files/Bambu Studio/bambu-studio.exe`。切片設定目錄通常為安裝目錄的 `resources/profiles`，應以實際安裝為準。
 
-需要 CadQuery 导出时，使用本机虚拟环境独立安装并检查实际导出。
+需要 CadQuery 匯出時，使用本機虛擬環境獨立安裝並檢查實際匯出。
 
 ```powershell
 .\Runtime\venv\Scripts\python.exe -m pip install cadquery trimesh numpy pillow
 ```
 
-MLX 图生模型路线适用于 Apple Silicon。Windows 的图生模型工具需按对应上游说明独立选择和验证。模型权重由使用者从原作者获取。
+MLX 圖生模型路線適用於 Apple Silicon。Windows 的圖生模型工具需按對應上游說明獨立選擇和驗證。模型權重由使用者從原作者獲取。
 
-## 通过官方 Studio 打印
+## 通過官方 Studio 列印
 
-Windows 的待打印页按任务绑定的通道处理。使用 `bambuddy_queue` 的适配机型可以通过工作台按钮发送，条件与当前验证范围见 PRINTING.md。官方 Studio 包按下面步骤交接，Mac 的专用窗口助手仍需 macOS。
+Windows 的待列印頁按任務綁定的通道處理。使用 `bambuddy_queue` 的適配機型可以通過工作台按鈕發送，條件與當前驗證範圍見 PRINTING.md。官方 Studio 包按下面步驟交接，Mac 的專用視窗助手仍需 macOS。
 
-1. 在 PrintLab 保存当前版本、切片包、设备、板型、材料映射和用量，确认具体作业及清板状态。
-2. 使用 `studio-copy 项目ID 作业ID` 准备官方 Studio 副本，按命令返回内容核对文件与任务记录。先查看当前 `--help`。
-3. 使用者或具备桌面控制能力的 Agent 在官方 Studio 打开该副本，核对设备、材料与发送选项。保存用户对具体文件的批准，在 Studio 发送一次，并把任务名、文件哈希、时间与回执写入项目 Session。
-4. 单次发送后读取设备状态与任务回执。回执不明确时先对账，再决定下一步。
-5. 保存首层、完成状态与实物反馈，继续相同项目。
+1. 在 PrintLab 儲存當前版本、切片包、設備、板型、材料映射和用量，確認具體作業及清板狀態。
+2. 使用 `studio-copy 專案ID 作業ID` 準備官方 Studio 副本，按命令返回內容核對文件與任務記錄。先查看當前 `--help`。
+3. 使用者或具備桌面控制能力的 Agent 在官方 Studio 開啟該副本，核對設備、材料與發送選項。儲存使用者對具體文件的批准，在 Studio 發送一次，並把任務名、文件哈希、時間與回執寫入專案 Session。
+4. 單次發送後讀取設備狀態與任務回執。回執不明確時先對賬，再決定下一步。
+5. 儲存首層、完成狀態與實物回饋，繼續相同專案。
 
-安装脚本会独立下载固定版本的公开文件检查器。`doctor` 实际运行文件检查，并报告依赖缺失或调用失败。Windows 的文件检查、官方预约和工作台 API 可运行。本候选版新增共用 Bambuddy 队列按钮适配；Mac Studio 助手继续仅在 macOS 使用。Windows 虚拟机中的新通道回归与实体发送验证尚待完成。
+安裝腳本會獨立下載固定版本的公開文件檢查器。`doctor` 實際執行文件檢查，並報告依賴缺失或呼叫失敗。Windows 的文件檢查、官方預約和工作台 API 可執行。本候選版新增共用 Bambuddy 佇列按鈕適配；Mac Studio 助手繼續僅在 macOS 使用。Windows 虛擬機中的新通道迴歸與實體發送驗證尚待完成。
 
-具体批准和回执约束见 [打印流程](PRINTING.md)。首次接入自己的打印机需现场验证设备、切片与发送。
+具體批准和回執約束見 [列印流程](PRINTING.md)。首次接入自己的印表機需現場驗證設備、切片與發送。
 
-## 虚拟机验证
+## 虛擬機驗證
 
-仓库的 Desktop VM verification 工作流在 GitHub 托管 Windows Server 2022、Windows Server 2025 与 macOS 环境执行安装、自动测试、独立进程交接和 Chromium 页面检查。每次运行保存测试结果、服务日志与截图。Windows 10/11 桌面、用户安装的 CAD/切片软件以及实体打印需要相应环境验证。具体已完成结果见 [验证记录](VERIFICATION.md)。
+倉庫的 Desktop VM verification 工作流在 GitHub 託管 Windows Server 2022、Windows Server 2025 與 macOS 環境執行安裝、自動測試、獨立進程交接和 Chromium 頁面檢查。每次執行儲存測試結果、服務日誌與截圖。Windows 10/11 桌面、使用者安裝的 CAD/切片軟體以及實體列印需要相應環境驗證。具體已完成結果見 [驗證記錄](VERIFICATION.md)。

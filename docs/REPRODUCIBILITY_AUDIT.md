@@ -1,55 +1,55 @@
-# 复刻体验审查（2026-11-12）
+# 復刻體驗審查（2026-11-12）
 
-审查源码：2491037bbff7c4d037e3e7b1c4c86e37e0e3aa72，版本 0.2.0。本文记录调查和待修复项，不表示问题已修复、重新完成虚拟机验收或已发布新版。
+審查原始碼：2491037bbff7c4d037e3e7b1c4c86e37e0e3aa72，版本 0.2.0。本文記錄調查和待修復項，不表示問題已修復、重新完成虛擬機驗收或已發佈新版。
 
-## 官方资料带来的发布要求
+## 官方資料帶來的發佈要求
 
-- [Agent Skills 规范](https://agentskills.io/specification)：独立技能以带 name、description 的 SKILL.md 为入口；兼容性、脚本、参考资料和资源应可找到。AGENTS.md 是仓库协作入口，不能代替可独立分发的 Skill。
-- [Skill 脚本指南](https://agentskills.io/skill-creation/using-scripts)：声明前提、固定工具版本、使用相对路径，把复杂操作收敛到可测试脚本。第三方工具可以引用独立安装，不必复制到本仓库。
-- [GitHub 仓库建议](https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories)：README、许可、贡献与问题报告入口共同构成使用体验。
-- [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)：发布物应对应明确 tag。本项目应额外验收实际下载的发布 ZIP，不能仅验收源码 checkout。
-- [GitHub 托管运行器](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners)：新的 VM 仍预装工具。因此云端绿色结果不等于裸机前提齐全，更不证明打印机硬件和桌面发送权限可用。
+- [Agent Skills 規範](https://agentskills.io/specification)：獨立技能以帶 name、description 的 SKILL.md 為入口；相容性、腳本、參考資料和資源應可找到。AGENTS.md 是倉庫協作入口，不能代替可獨立分發的 Skill。
+- [Skill 腳本指南](https://agentskills.io/skill-creation/using-scripts)：聲明前提、固定工具版本、使用相對路徑，把複雜操作收斂到可測試腳本。第三方工具可以引用獨立安裝，不必複製到本倉庫。
+- [GitHub 倉庫建議](https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories)：README、許可、貢獻與問題報告入口共同構成使用體驗。
+- [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)：發佈物應對應明確 tag。本專案應額外驗收實際下載的發佈 ZIP，不能僅驗收原始碼 checkout。
+- [GitHub 託管執行器](https://docs.github.com/en/actions/concepts/runners/github-hosted-runners)：新的 VM 仍預裝工具。因此雲端綠色結果不等於裸機前提齊全，更不證明印表機硬體和桌面發送權限可用。
 
-## 本仓库核验结果
+## 本倉庫核驗結果
 
-| 优先级 | 当前事实与证据 | 应完成的修改及验收 |
+| 優先級 | 當前事實與證據 | 應完成的修改及驗收 |
 | --- | --- | --- |
-| P0 | prepared.py 的 check 和 official.py 的 submit 默认调用 native.run_client；native.py 要求发布包没有的 Harness/native-client.mjs | 补上独立安装、可验证的检查通路；缺依赖时提前明确禁用发送。必须在不注入成功 inspector 的情况下走真实检查。不能跳过安全检查解堵 |
-| P0 | verify_browser.py 只访问空待打印列表和其他页面；verify_onboarding.py 只验收空工作空间、项目、交接与 API | 覆盖已准备任务、检查、按钮、后台预约与单次发送；仅模拟硬件与 GUI 边界，加入未配置、版本不符、重复点击、未知回执等失败场景 |
-| P0 | desktop.yml 在 checkout 源码上安装；独立 CAD、Bambuddy、Studio 安装没有进入完整验收 | 从候选发布 ZIP 在新目录安装，按文档走配置；区分真实依赖、模拟设备和实机待验证，保存错误、修复与结果 |
-| P1 | README、AGENT_START、角色提示词齐全，但仓库没有 SKILL.md | 提供原创 PrintLab Skill 入口，说明何时使用、实际仓库路径、初始化与接续步骤、打印授权边界；独立安装后验证能发现和触发 |
-| P1 | SETUP 将设备填写集中于步骤4；缺少结构化首次访谈 | 先问操作系统、Agent 能力、机型/固件、喷嘴/板型、AMS/外挂、材料与连接方式；未知保持未知。让设计小组读取同一设备档案 |
-| P1 | Text-to-CAD 仅有上游安装链接和历史版本；Python 使用范围依赖，只有前端有 package-lock.json | 提供已验证版本清单、对应安装步骤及最小导出验收；锁定可复现的 Python 依赖，仍允许有记录的升级 |
-| P1 | doctor 与文档已承认工具路径存在不足以证明可用 | 将版本、CLI 最小调用、配置、只读连通性和发送能力分开诊断；输出具体失败原因、修复命令及复验结果，不打印密钥 |
-| P1 | PRINTING 中官方界面、Mac助手、队列并列；Windows 文档限制与主打印表述不够一致 | 建立系统 × 机型 × 入口 × 验证级别矩阵；明确 ChatGPT 需要本机执行/桌面能力，手机网页、Handy、Studio 是不同入口；分别解释云与 LAN 路线的条件 |
-| P2 | 有许可、署名、更新提示；无问题表单和贡献说明 | 增加收集系统、版本、复现步骤、脱敏诊断的模板；说明备份、升级失败回退及用户数据保留 |
+| P0 | prepared.py 的 check 和 official.py 的 submit 預設呼叫 native.run_client；native.py 要求發佈包沒有的 Harness/native-client.mjs | 補上獨立安裝、可驗證的檢查通路；缺依賴時提前明確禁用發送。必須在不注入成功 inspector 的情況下走真實檢查。不能跳過安全檢查解堵 |
+| P0 | verify_browser.py 只訪問空待列印列表和其他頁面；verify_onboarding.py 只驗收空工作區、專案、交接與 API | 覆蓋已準備任務、檢查、按鈕、後臺預約與單次發送；僅模擬硬體與 GUI 邊界，加入未設定、版本不符、重複點選、未知回執等失敗場景 |
+| P0 | desktop.yml 在 checkout 原始碼上安裝；獨立 CAD、Bambuddy、Studio 安裝沒有進入完整驗收 | 從候選發佈 ZIP 在新目錄安裝，按文件走設定；區分真實依賴、模擬設備和實機待驗證，儲存錯誤、修復與結果 |
+| P1 | README、AGENT_START、角色提示詞齊全，但倉庫沒有 SKILL.md | 提供原創 PrintLab Skill 入口，說明何時使用、實際倉庫路徑、初始化與接續步驟、列印授權邊界；獨立安裝後驗證能發現和觸發 |
+| P1 | SETUP 將設備填寫集中於步驟4；缺少結構化首次訪談 | 先問作業系統、Agent 能力、機型/韌體、噴嘴/板型、AMS/外掛、材料與連接方式；未知保持未知。讓設計小組讀取同一設備檔案 |
+| P1 | Text-to-CAD 僅有上游安裝連結和歷史版本；Python 使用範圍依賴，只有前端有 package-lock.json | 提供已驗證版本清單、對應安裝步驟及最小匯出驗收；鎖定可復現的 Python 依賴，仍允許有記錄的升級 |
+| P1 | doctor 與文件已承認工具路徑存在不足以證明可用 | 將版本、CLI 最小呼叫、設定、只讀連通性和發送能力分開診斷；輸出具體失敗原因、修復命令及複驗結果，不列印密鑰 |
+| P1 | PRINTING 中官方介面、Mac助手、佇列並列；Windows 文件限制與主列印表述不夠一致 | 建立系統 × 機型 × 入口 × 驗證級別矩陣；明確 ChatGPT 需要本機執行/桌面能力，手機網頁、Handy、Studio 是不同入口；分別解釋雲與 LAN 路線的條件 |
+| P2 | 有許可、署名、更新提示；無問題表單和貢獻說明 | 增加收集系統、版本、復現步驟、脫敏診斷的模板；說明備份、升級失敗回退及使用者資料保留 |
 
-## 新版验收完成标准
+## 新版驗收完成標準
 
-1. 先产出候选 ZIP 和 SHA-256，VM 从该包开始，使用 README 命令，不使用维护者的私人路径和缓存环境。
-2. 工作台启动、重复安装保留配置、中文空格路径、实际网页操作及跨进程接续通过。
-3. 外部工具独立安装并记录版本；实际生成临时测试几何和导出，测试生成物不作为模型资源打包分享。
-4. 真实检查链不靠假的成功返回；硬件/GUI模拟边界明确，发一次、未知不重发等条件必须保留。
-5. 每项记录已验证、模拟验证、未验证、失败。Windows Server VM 不写成 Windows 10/11 实机验收。
-6. 打印机连接、真实 Studio 操作、出料与成品另行现场核验；安装/发布授权不当作实体打印授权。
-7. 发布 tag、ZIP、验证提交和文档一致；下载读回后核对 SHA-256。未完成步骤不能写进已验证范围。
+1. 先產出候選 ZIP 和 SHA-256，VM 從該包開始，使用 README 命令，不使用維護者的私人路徑和緩存環境。
+2. 工作台啟動、重複安裝保留設定、中文空格路徑、實際網頁操作及跨進程接續通過。
+3. 外部工具獨立安裝並記錄版本；實際生成臨時測試幾何和匯出，測試生成物不作為模型資源打包分享。
+4. 真實檢查鏈不靠假的成功返回；硬體/GUI模擬邊界明確，發一次、未知不重發等條件必須保留。
+5. 每項記錄已驗證、模擬驗證、未驗證、失敗。Windows Server VM 不寫成 Windows 10/11 實機驗收。
+6. 印表機連接、真實 Studio 操作、出料與成品另行現場核驗；安裝/發佈授權不當作實體列印授權。
+7. 發佈 tag、ZIP、驗證提交和文件一致；下載讀回後核對 SHA-256。未完成步驟不能寫進已驗證範圍。
 
-建议先修 P0，再完成 Skill 与首次配置；不以增加文档数量代替打通核心流程。
+建議先修 P0，再完成 Skill 與首次設定；不以增加文件數量代替打通核心流程。
 
-## 修复进展
+## 修復進展
 
-- `942917a`：公开上游 1.1.33 独立安装与 MCP 文件检查已替换缺失客户端的 inspect 路径；原生直接发送仍不提供。Python 和检查器下载依赖已锁定，新增标准 Skill 与首次设备访谈。
-- `dfea729`：真实文件检查接入工作台 API、批准、官方预约和模拟界面单次发送；新增从 git archive 候选 ZIP 全新安装验收及连接方式文档。
-- 本机从 dfea729 ZIP 全新安装通过，ZIP SHA-256 为 `9ff491b7f423733e4105adad2406eafbd33097b1e34b871b4e28b2798dfe6537`。完整软件测试保留设备/GUI模拟边界。
-- 新增固定版 Text-to-CAD 隔离安装/真实建模/STEP/STL 导出验收，首次运行发现 Agent 环境禁止自动拉起引擎，改为显式启动获准的独立服务。状态、缓存、启动器及进程通信目录均单独配置。
+- `942917a`：公開上游 1.1.33 獨立安裝與 MCP 文件檢查已替換缺失客戶端的 inspect 路徑；原生直接發送仍不提供。Python 和檢查器下載依賴已鎖定，新增標準 Skill 與首次設備訪談。
+- `dfea729`：真實文件檢查接入工作台 API、批准、官方預約和模擬介面單次發送；新增從 git archive 候選 ZIP 全新安裝驗收及連接方式文件。
+- 本機從 dfea729 ZIP 全新安裝通過，ZIP SHA-256 為 `9ff491b7f423733e4105adad2406eafbd33097b1e34b871b4e28b2798dfe6537`。完整軟體測試保留設備/GUI模擬邊界。
+- 新增固定版 Text-to-CAD 隔離安裝/真實建模/STEP/STL 匯出驗收，首次執行發現 Agent 環境禁止自動拉起引擎，改為顯式啟動獲准的獨立服務。狀態、緩存、啟動器及進程通信目錄均單獨設定。
 
-- `f0f8d87` 在 Mac、Windows Server 2022、Windows Server 2025 的全新安装、ZIP 安装、真实 CAD 建模和导出检查全部通过。[云端记录](https://github.com/AFangTeam/PrintLab/actions/runs/43092718752)
-- `644b6a6` 增加真实 Chromium 待打印按钮测试，本机已验证检查、清板、提交和刷新后保持单次发送记录。设备与桌面发送边界使用模拟对象，测试图片明确标为合成数据。后续 `d3ac171` 的 Mac 与 Windows Server 2025 浏览器步骤通过，但最新候选整体回归尚未完成。
-- 独立 Bambuddy `v1.2.5.7` 服务端在全新本机虚拟环境安装通过，真实 HTTP 客户端验证六个只读接口，临时 key 已撤销。已加入可复用安装验收脚本、配置指南和更新回退说明。
-- `50f7177` 增加官方 Studio 独立下载、SHA-256、真实切片和公开文件检查验收。本机固定版 `02.08.02.61` 已完成该检查，测试生成物保留在临时目录并清理。
-- 云端出现过 Mac 进程组清理权限异常。清理代码现在核对进程组是否已经退出，仍有存活成员时报告失败。增加三种确定性回归情况，本机完整测试为 377 通过、8 跳过。
-- Windows Server 2022 的 Bambuddy 安装和六个接口检查通过后，测试清理因 `bambuddy.db-shm` 被子进程占用失败。改为停止完整测试进程树，并在临时数据清理完成后才生成成功报告。本机复验通过，Windows 修复待云端读回。[发现问题的运行](https://github.com/AFangTeam/PrintLab/actions/runs/43094517244)
+- `f0f8d87` 在 Mac、Windows Server 2022、Windows Server 2025 的全新安裝、ZIP 安裝、真實 CAD 建模和匯出檢查全部通過。[雲端記錄](https://github.com/AFangTeam/PrintLab/actions/runs/43092718752)
+- `644b6a6` 增加真實 Chromium 待列印按鈕測試，本機已驗證檢查、清板、提交和重新整理後保持單次發送記錄。設備與桌面發送邊界使用模擬對象，測試圖片明確標為合成資料。後續 `d3ac171` 的 Mac 與 Windows Server 2025 瀏覽器步驟通過，但最新候選整體迴歸尚未完成。
+- 獨立 Bambuddy `v1.2.5.7` 服務端在全新本機虛擬環境安裝通過，真實 HTTP 客戶端驗證六個只讀介面，臨時 key 已撤銷。已加入可複用安裝驗收腳本、設定指南和更新回退說明。
+- `50f7177` 增加官方 Studio 獨立下載、SHA-256、真實切片和公開文件檢查驗收。本機固定版 `02.08.02.61` 已完成該檢查，測試生成物保留在臨時目錄並清理。
+- 雲端出現過 Mac 進程組清理權限異常。清理程式碼現在核對進程組是否已經退出，仍有存活成員時報告失敗。增加三種確定性迴歸情況，本機完整測試為 377 通過、8 跳過。
+- Windows Server 2022 的 Bambuddy 安裝和六個介面檢查通過後，測試清理因 `bambuddy.db-shm` 被子進程佔用失敗。改為停止完整測試進程樹，並在臨時資料清理完成後才生成成功報告。本機複驗通過，Windows 修復待雲端讀回。[發現問題的執行](https://github.com/AFangTeam/PrintLab/actions/runs/43094517244)
 
-最终回归已于 2026-11-12 通过。`5416518` 的 PR 合并预览在三台云端虚拟机完成全部验收，Windows 的 SQLite 清理失败通过有超时限制的重试修复。安装、CAD、Bambuddy、官方 Studio 切片和浏览器报告均已下载核对。[完整记录](VERIFICATION.md)
+最終迴歸已於 2026-11-12 通過。`5416518` 的 PR 合併預覽在三臺雲端虛擬機完成全部驗收，Windows 的 SQLite 清理失敗通過有超時限制的重試修復。安裝、CAD、Bambuddy、官方 Studio 切片和瀏覽器報告均已下載核對。[完整記錄](VERIFICATION.md)
 
-CAD 宿主插件与查看器、GUI 登录与权限、硬件连接及实物打印需使用者现场验证。具体系统和验证范围见上述记录。
+CAD 宿主外掛程式與查看器、GUI 登入與權限、硬體連接及實物列印需使用者現場驗證。具體系統和驗證範圍見上述記錄。

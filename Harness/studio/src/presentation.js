@@ -9,7 +9,7 @@ export function trustedBambuddyOrigin(referrer, currentOrigin) {
 export function estimateDuration(seconds) {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) return null;
   const minutes = Math.ceil(seconds / 60), hours = Math.floor(minutes / 60);
-  return hours ? `${hours} 小时${minutes % 60 ? ` ${minutes % 60} 分钟` : ''}` : `${minutes} 分钟`;
+  return hours ? `${hours} 小時${minutes % 60 ? ` ${minutes % 60} 分鐘` : ''}` : `${minutes} 分鐘`;
 }
 export function estimateWeight(grams) {
   return typeof grams === 'number' && Number.isFinite(grams) && grams >= 0 ? `${Number(grams.toFixed(2))} g` : null;
@@ -19,18 +19,18 @@ export function estimateWeight(grams) {
 // Not official RGB values or slicer material settings; stored colors take priority.
 const petgDisplayColors = {
   'Basic|Purple': ['#8660A8', '紫色'],
-  'Basic|Sunflower Yellow': ['#F2C62D', '向日葵黄'],
+  'Basic|Sunflower Yellow': ['#F2C62D', '向日葵黃'],
   'Basic|Hot Pink': ['#E64F91', '亮粉色'],
-  'Basic|Bright Green': ['#65C64A', '亮绿色'],
-  'Matte|Cyan': ['#49AFCA', '青蓝色'],
-  'Matte|Turquoise': ['#54A99E', '绿松石色'],
-  'Matte|Red': ['#C64A45', '红色'],
+  'Basic|Bright Green': ['#65C64A', '亮綠色'],
+  'Matte|Cyan': ['#49AFCA', '青藍色'],
+  'Matte|Turquoise': ['#54A99E', '綠松石色'],
+  'Matte|Red': ['#C64A45', '紅色'],
   'Matte|Caramel': ['#B78659', '焦糖色'],
 };
 export function materialDisplayColor(material) {
   const fallback = material.brand === 'Bambu Lab' && material.material === 'PETG'
     ? petgDisplayColors[`${material.subtype}|${material.color_name}`] : null;
-  const name = fallback?.[1] || material.color_name || '颜色待记录';
+  const name = fallback?.[1] || material.color_name || '顏色待記錄';
   const stored = [material.rgba, material.color_hex, material.color]
     .find(value => typeof value === 'string' && /^#?[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(value));
   if (stored) return {hex: '#' + stored.replace('#', '').slice(0, 6), name, approximate: false};
@@ -48,13 +48,13 @@ export function materialEnglishLabel(material) {
 }
 export function deviceRemainingLabel(slot) {
   const value = slot.reported_remaining_percent;
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return '设备余量未知';
-  return `${slot.fresh ? '设备报告' : '上次设备报告'} ${value}% · 可能滞后`;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return '設備餘量未知';
+  return `${slot.fresh ? '設備報告' : '上次設備報告'} ${value}% · 可能滯後`;
 }
 export function inventoryRemainingLabel(material) {
   const grams = material.estimated_remaining_weight ?? material.remaining_weight;
   const percent = material.estimated_remaining_percent ?? material.remaining_percent;
-  if (typeof grams !== 'number' || !Number.isFinite(grams) || grams < 0) return '账面估算不可用';
+  if (typeof grams !== 'number' || !Number.isFinite(grams) || grams < 0) return '賬面估算不可用';
   const pct = typeof percent === 'number' && Number.isFinite(percent) ? ` / ${Number(percent.toFixed(1))}%` : '';
-  return `台账估算 ${Number(grams.toFixed(1))} g${pct}`;
+  return `台帳估算 ${Number(grams.toFixed(1))} g${pct}`;
 }

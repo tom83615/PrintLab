@@ -33,38 +33,38 @@ final class PrintLabDelegate: NSObject, NSApplicationDelegate, WKNavigationDeleg
         let bar = NSMenu()
         let appItem = NSMenuItem();bar.addItem(appItem)
         let appMenu = NSMenu();appItem.submenu = appMenu
-        appMenu.addItem(withTitle:"关于 PrintLab", action:#selector(about), keyEquivalent:"")
+        appMenu.addItem(withTitle:"關於 PrintLab", action:#selector(about), keyEquivalent:"")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle:"隐藏 PrintLab", action:#selector(NSApplication.hide(_:)), keyEquivalent:"h")
-        let hideOthers=appMenu.addItem(withTitle:"隐藏其他",action:#selector(NSApplication.hideOtherApplications(_:)),keyEquivalent:"h")
+        appMenu.addItem(withTitle:"隱藏 PrintLab", action:#selector(NSApplication.hide(_:)), keyEquivalent:"h")
+        let hideOthers=appMenu.addItem(withTitle:"隱藏其他",action:#selector(NSApplication.hideOtherApplications(_:)),keyEquivalent:"h")
         hideOthers.keyEquivalentModifierMask=[.command,.option]
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle:"退出 PrintLab",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")
         let editItem=NSMenuItem();bar.addItem(editItem)
-        let edit=NSMenu(title:"编辑");editItem.submenu=edit
-        for (title,action,key) in [("撤销","undo:","z"),("剪切","cut:","x"),("复制","copy:","c"),("粘贴","paste:","v"),("全选","selectAll:","a")] {
+        let edit=NSMenu(title:"編輯");editItem.submenu=edit
+        for (title,action,key) in [("撤銷","undo:","z"),("剪下","cut:","x"),("複製","copy:","c"),("貼上","paste:","v"),("全選","selectAll:","a")] {
             edit.addItem(withTitle:title,action:Selector(action),keyEquivalent:key)
         }
         let viewItem=NSMenuItem();bar.addItem(viewItem)
         let view=NSMenu(title:"工作室");viewItem.submenu=view
-        for (index,pair) in [("总览","overview"),("项目图册","projects"),("购物清单","shop"),("资料与经验","library"),("设备与材料","device")].enumerated() {
+        for (index,pair) in [("總覽","overview"),("專案圖冊","projects"),("購物清單","shop"),("資料與經驗","library"),("設備與材料","device")].enumerated() {
             let item=view.addItem(withTitle:pair.0,action:#selector(goToSection(_:)),keyEquivalent:String(index+1))
             item.representedObject=pair.1;item.target=self
         }
         view.addItem(.separator())
-        let reload=view.addItem(withTitle:"重新载入",action:#selector(reload),keyEquivalent:"r");reload.target=self
-        let browser=view.addItem(withTitle:"在浏览器中打开",action:#selector(openInBrowser),keyEquivalent:"");browser.target=self
-        let folder=view.addItem(withTitle:"打开工作空间文件夹",action:#selector(openWorkspace),keyEquivalent:"");folder.target=self
+        let reload=view.addItem(withTitle:"重新載入",action:#selector(reload),keyEquivalent:"r");reload.target=self
+        let browser=view.addItem(withTitle:"在瀏覽器中開啟",action:#selector(openInBrowser),keyEquivalent:"");browser.target=self
+        let folder=view.addItem(withTitle:"開啟工作區資料夾",action:#selector(openWorkspace),keyEquivalent:"");folder.target=self
         let windowItem=NSMenuItem();bar.addItem(windowItem)
-        let winMenu=NSMenu(title:"窗口");windowItem.submenu=winMenu
+        let winMenu=NSMenu(title:"視窗");windowItem.submenu=winMenu
         winMenu.addItem(withTitle:"最小化",action:#selector(NSWindow.performMiniaturize(_:)),keyEquivalent:"m")
-        winMenu.addItem(withTitle:"关闭窗口",action:#selector(NSWindow.performClose(_:)),keyEquivalent:"w")
+        winMenu.addItem(withTitle:"關閉視窗",action:#selector(NSWindow.performClose(_:)),keyEquivalent:"w")
         NSApp.windowsMenu=winMenu
         NSApp.mainMenu=bar
     }
 
     @objc private func about() {
-        NSApp.orderFrontStandardAboutPanel(options:[.applicationName:"PrintLab",.applicationVersion:"1.0",.credits:NSAttributedString(string:"PrintLab by AFangTeam\n本机项目 · 模型共创 · 打印管理")])
+        NSApp.orderFrontStandardAboutPanel(options:[.applicationName:"PrintLab",.applicationVersion:"1.0",.credits:NSAttributedString(string:"PrintLab by AFangTeam\n本機專案 · 模型共創 · 列印管理")])
     }
     @objc private func goToSection(_ item:NSMenuItem) {
         guard let section=item.representedObject as? String else{return}
@@ -86,7 +86,7 @@ final class PrintLabDelegate: NSObject, NSApplicationDelegate, WKNavigationDeleg
         let destination=web.url.flatMap{internalURL($0) ? $0:nil} ?? home
         readinessGeneration+=1
         let generation=readinessGeneration
-        message("正在打开设计工作室", detail:"读取本机项目与材料…", retry:false)
+        message("正在開啟設計工作室", detail:"讀取本機專案與材料…", retry:false)
         checkReady(attempt:0,generation:generation,destination:destination)
     }
     private func checkReady(attempt:Int,generation:Int,destination:URL) {
@@ -104,15 +104,15 @@ final class PrintLabDelegate: NSObject, NSApplicationDelegate, WKNavigationDeleg
                     if attempt==0 {self.startExistingService("com.afang.printlab.studio")}
                     DispatchQueue.main.asyncAfter(deadline:.now()+0.5){self.checkReady(attempt:attempt+1,generation:generation,destination:destination)}
                 } else {
-                    self.message("工作室暂时无法连接",detail:"本机服务尚未就绪。请稍后重试，或打开 PrintLab 文件夹查看资料。",retry:true)
+                    self.message("工作室暫時無法連接",detail:"本機服務尚未就緒。請稍後重試，或開啟 PrintLab 資料夾查看資料。",retry:true)
                 }
             }
         }.resume()
     }
     private func message(_ title:String,detail:String,retry:Bool) {
-        let actions=retry ? "<a href='printlab://retry'>重新连接</a><a class='secondary' href='printlab://workspace'>打开工作空间</a>" : ""
+        let actions=retry ? "<a href='printlab://retry'>重新連接</a><a class='secondary' href='printlab://workspace'>開啟工作區</a>" : ""
         web.loadHTMLString("""
-        <!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>
+        <!doctype html><html lang="zh-TW"><meta charset="utf-8"><style>
         :root{color-scheme:light dark}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f8f5;color:#28332b}main{text-align:center;max-width:480px;padding:32px}h1{font-size:28px;font-weight:600}p{line-height:1.8;color:#757e73}a{display:inline-block;margin:24px 8px 0;padding:12px 24px;border-radius:8px;text-decoration:none;background:#456c4c;color:white}.secondary{background:#e6eddf;color:#456c4c}@media(prefers-color-scheme:dark){body{background:#191e1a;color:#e1e8dc}p{color:#a1aa9a}}
         </style><main><h1>\(title)</h1><p>\(detail)</p>\(actions)</main></html>
         """,baseURL:nil)
@@ -140,7 +140,7 @@ final class PrintLabDelegate: NSObject, NSApplicationDelegate, WKNavigationDeleg
         return nil
     }
     func webView(_ webView:WKWebView,didFailProvisionalNavigation navigation:WKNavigation!,withError error:Error) {
-        if (error as NSError).code != NSURLErrorCancelled {message("页面暂时无法打开",detail:"请通过“工作室 → 重新载入”再次连接。",retry:true)}
+        if (error as NSError).code != NSURLErrorCancelled {message("頁面暫時無法開啟",detail:"請通過“工作室 → 重新載入”再次連接。",retry:true)}
     }
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool {
         window.makeKeyAndOrderFront(nil);return true

@@ -1,38 +1,38 @@
-# 第三方工具与独立安装
+# 第三方工具與獨立安裝
 
-PrintLab 发布包保留原创工作台、流程、适配接口与项目模板。下面的程序、插件、源码、权重和技能由使用者从原作者渠道下载，各自遵守原许可。
+PrintLab 發佈包保留原創工作台、流程、適配介面與項目模板。下面的程序、外掛程式、原始碼、權重和技能由使用者從原作者渠道下載，各自遵守原許可。
 
-| 项目 | 在流程中的作用 | 获取与版本说明 |
+| 項目 | 在流程中的作用 | 獲取與版本說明 |
 | --- | --- | --- |
-| [Bambuddy](https://github.com/maziggy/bambuddy) | 设备、材料库存、队列与已捕获历史 | 按原项目安装指南独立运行。PrintLab 本地适配基线为 v1.2.5.7，当前上游接口需重新验证。通过独立 HTTP API 连接。 |
-| [Text-to-CAD](https://github.com/earthtojake/text-to-cad) | Codex 建模、模型查看、导出与制造检查 | 按原项目 `docs/install.md` 安装。本地历史验证基线为 0.8.2，当前上游入口已使用 `cad`，以实际 `--help` 为准。 |
-| [Bambu Studio](https://github.com/bambulab/BambuStudio) | 正式工程、切片与官方发送 | 从拓竹官方获取应用及其插件。首版发送助手的本地验证版本为 02.08.02.61。 |
-| [Blender](https://www.blender.org/download/) | 有机外形、同源预览和动画视图 | 从官网安装。原工作流使用 Blender 4.5 系列，当前安装需检查导出接口。 |
-| [CadQuery](https://github.com/CadQuery/cadquery) | 参数化结构和 STEP 桥接 | 在使用者虚拟环境中从 PyPI 安装。 |
-| [build123d](https://github.com/gumyr/build123d) | Text-to-CAD 的参数化几何能力 | 按 Text-to-CAD 原项目环境要求独立取得。 |
-| [bambu-printer-mcp](https://github.com/DMontgomery40/bambu-printer-mcp) | 独立离线切片检查；历史原生发送研究来源 | 安装脚本从 npm 独立下载固定 1.1.33，通过公开 MCP inspect_print_file 调用，不提供打印机凭据，不导入上游内部模块。历史原生发送仍不可用。 |
-| [Hunyuan3D-Swift](https://github.com/ZimengXiong/Hunyuan3D-Swift) / [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | 可选图生外形候选 | 代码和模型权重分别从原作者取得并检查许可。`image3d` 保留本地适配源码，需要自行准备对应隔离环境和来源清单。 |
+| [Bambuddy](https://github.com/maziggy/bambuddy) | 設備、材料庫存、佇列與已捕獲歷史 | 按原專案安裝指南獨立執行。PrintLab 本機適配基線為 v1.2.5.7，當前上游介面需重新驗證。通過獨立 HTTP API 連接。 |
+| [Text-to-CAD](https://github.com/earthtojake/text-to-cad) | Codex 建模、模型查看、匯出與製造檢查 | 按原專案 `docs/install.md` 安裝。本機歷史驗證基線為 0.8.2，當前上游入口已使用 `cad`，以實際 `--help` 為準。 |
+| [Bambu Studio](https://github.com/bambulab/BambuStudio) | 正式工程、切片與官方發送 | 從拓竹官方獲取應用及其外掛程式。首版發送助手的本機驗證版本為 02.08.02.61。 |
+| [Blender](https://www.blender.org/download/) | 有機外形、同源預覽和動畫視圖 | 從官網安裝。原工作流使用 Blender 4.5 系列，當前安裝需檢查匯出介面。 |
+| [CadQuery](https://github.com/CadQuery/cadquery) | 參數化結構和 STEP 橋接 | 在使用者虛擬環境中從 PyPI 安裝。 |
+| [build123d](https://github.com/gumyr/build123d) | Text-to-CAD 的參數化幾何能力 | 按 Text-to-CAD 原專案環境要求獨立取得。 |
+| [bambu-printer-mcp](https://github.com/DMontgomery40/bambu-printer-mcp) | 獨立離線切片檢查；歷史原生髮送研究來源 | 安裝腳本從 npm 獨立下載固定 1.1.33，通過公開 MCP inspect_print_file 呼叫，不提供印表機憑據，不匯入上游內部模塊。歷史原生髮送仍不可用。 |
+| [Hunyuan3D-Swift](https://github.com/ZimengXiong/Hunyuan3D-Swift) / [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | 可選圖生外形候選 | 程式碼和模型權重分別從原作者取得並檢查許可。`image3d` 保留本機適配原始碼，需要自行準備對應隔離環境和來源清單。 |
 
-## 许可归属
+## 許可歸屬
 
-核对过的上游许可包括 Text-to-CAD 的 MIT、Bambuddy 的 AGPL-3.0 和 bambu-printer-mcp 的 GPL-2.0。使用者应以自己下载版本的 LICENSE 为准。上游的许可与署名继续适用，PrintLab 的非商用许可只覆盖 PrintLab 原创部分。
+核對過的上游許可包括 Text-to-CAD 的 MIT、Bambuddy 的 AGPL-3.0 和 bambu-printer-mcp 的 GPL-2.0。使用者應以自己下載版本的 LICENSE 為準。上游的許可與署名繼續適用，PrintLab 的非商用許可只覆蓋 PrintLab 原創部分。
 
-旧原生客户端通过进程内载入 `bambu-printer-mcp` 内部模块工作。首版发布包移除了该客户端、上游补丁和相关运行环境，保留本项目的历史任务读回与独立检查逻辑。首版 `bambu_native` 发送返回明确的不可用原因，官方 Studio 工作流在 `PRINTING.md` 中说明。
+舊原生客戶端通過進程內載入 `bambu-printer-mcp` 內部模塊工作。首版發佈包移除了該客戶端、上游補丁和相關執行環境，保留本專案的歷史任務讀回與獨立檢查邏輯。首版 `bambu_native` 發送返回明確的不可用原因，官方 Studio 工作流在 `PRINTING.md` 中說明。
 
-## 工作台软件依赖
+## 工作台軟體依賴
 
-Python 包在 `Harness/pyproject.toml` 声明。网页依赖在 `Harness/studio/package.json` 与 `package-lock.json` 声明，包括 React、Three.js、Lucide、react-markdown 与 Vite。安装时由包管理器从 PyPI/npm 获取，下载的 `node_modules`、虚拟环境和构建产物保存在使用者本机。
+Python 包在 `Harness/pyproject.toml` 聲明。網頁依賴在 `Harness/studio/package.json` 與 `package-lock.json` 聲明，包括 React、Three.js、Lucide、react-markdown 與 Vite。安裝時由包管理器從 PyPI/npm 獲取，下載的 `node_modules`、虛擬環境和構建產物儲存在使用者本機。
 
-## 升级方法
+## 升級方法
 
-先阅读原项目新版本说明，在独立目录安装，验证 CLI/MCP、模型尺寸、导出和设备只读接口，再更新本机配置。保存实际版本和验证结果，已确认的打印任务继续绑定其原文件和参数。
+先閱讀原專案新版本說明，在獨立目錄安裝，驗證 CLI/MCP、模型尺寸、匯出和設備只讀介面，再更新本機設定。儲存實際版本和驗證結果，已確認的列印任務繼續綁定其原文件和參數。
 
-## 独立检查器与版本锁
+## 獨立檢查器與版本鎖
 
-工作台安装脚本会运行 `scripts/install_inspector.py`，从 npm 独立获取检查器及依赖，保存于被 Git 忽略的 `Runtime/third-party/bambu-inspector`。仓库仅保存下载清单与完整性校验，不分发第三方源代码、插件或模型。检查器保留其 GPL-2.0 许可。需要单独重装时使用工作台虚拟环境的 Python 执行该脚本。
+工作台安裝腳本會執行 `scripts/install_inspector.py`，從 npm 獨立獲取檢查器及依賴，儲存於被 Git 忽略的 `Runtime/third-party/bambu-inspector`。倉庫僅儲存下載清單與完整性校驗，不分發第三方原始碼、外掛程式或模型。檢查器保留其 GPL-2.0 許可。需要單獨重裝時使用工作台虛擬環境的 Python 執行該腳本。
 
-Python 依赖使用 `scripts/requirements.lock` 的版本和 SHA-256；前端与检查器分别使用自己的 package-lock.json。升级时更新锁文件并重跑跨平台验收，不能直接改为 latest。
+Python 依賴使用 `scripts/requirements.lock` 的版本和 SHA-256；前端與檢查器分別使用自己的 package-lock.json。升級時更新鎖文件並重跑跨平臺驗收，不能直接改為 latest。
 
-检查器下载清单将 `bambu-js` 的间接依赖 `basic-ftp` 固定为 6.2.6，清除旧版目录解析漏洞。该版本与检查器已有的直接依赖一致，检查器主版本仍为 1.1.33。此组合验证范围为本地 `inspect_print_file`，包括真实切片包检查。[上游漏洞记录](https://github.com/advisories/GHSA-c475-qrg2-pj4r)
+檢查器下載清單將 `bambu-js` 的間接依賴 `basic-ftp` 固定為 6.2.6，清除舊版目錄解析漏洞。該版本與檢查器已有的直接依賴一致，檢查器主版本仍為 1.1.33。此組合驗證範圍為本機 `inspect_print_file`，包括真實切片包檢查。[上游漏洞記錄](https://github.com/advisories/GHSA-c475-qrg2-pj4r)
 
-Text-to-CAD 的固定版本、Mac/Windows 安装命令、宿主接入和最小建模验收见 [CAD 安装指南](CAD_SETUP.md)。
+Text-to-CAD 的固定版本、Mac/Windows 安裝命令、宿主接入和最小建模驗收見 [CAD 安裝指南](CAD_SETUP.md)。

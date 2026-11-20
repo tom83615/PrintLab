@@ -1,39 +1,39 @@
-# 更新、备份与回退
+# 更新、備份與回退
 
-更新前记录当前 Release 标签和本机工具版本，结束文件编辑并停止工作台。正在打印或回执未知的任务，先保留记录并读取实际设备状态。
+更新前記錄當前 Release 標籤和本機工具版本，結束文件編輯並停止工作台。正在列印或回執未知的任務，先保留記錄並讀取實際設備狀態。
 
-## 保存数据
+## 儲存資料
 
-在当前工作空间执行。Windows 将解释器换成 `Runtime/venv/Scripts/python.exe`。
+在當前工作區執行。Windows 將解釋器換成 `Runtime/venv/Scripts/python.exe`。
 
 ```bash
 Runtime/venv/bin/python Harness/backup.py backup --verify
 ```
 
-成功结果包含快照位置、恢复验证目录和 `sha256: all_match`。备份含本机凭据，应存放在本人受限目录。该命令验证文件恢复和数据库完整性。Bambuddy 安装在工作空间外时，用 Bambuddy 自身备份功能另行保存它的数据。
+成功結果包含快照位置、恢復驗證目錄和 `sha256: all_match`。備份含本機憑據，應存放在本人受限目錄。該命令驗證文件恢復和資料庫完整性。Bambuddy 安裝在工作區外時，用 Bambuddy 自身備份功能另行儲存它的資料。
 
-另外保留当前版本的完整源码 ZIP。备份脚本只复制其清单列出的目录，环境和第三方安装需要按原版本重建。
+另外保留當前版本的完整原始碼 ZIP。備份腳本只複製其清單列出的目錄，環境和第三方安裝需要按原版本重建。
 
-## 升级
+## 升級
 
-Git 用户先用 `git status --short` 检查自己修改过的源码与流程文档，保存修改后切换到选定 Release 标签，再运行安装脚本。ZIP 用户将新版解压到独立目录，保留旧目录，迁移 `Project`、个人 `Library`、`Runtime/config.json` 和 `Runtime/private`。将自己修改过的 `Context` 与新版逐项合并，保留设备档案和用户明确决定。
+Git 使用者先用 `git status --short` 檢查自己修改過的原始碼與流程文件，儲存修改後切換到選定 Release 標籤，再執行安裝腳本。ZIP 使用者將新版解壓到獨立目錄，保留舊目錄，遷移 `Project`、個人 `Library`、`Runtime/config.json` 和 `Runtime/private`。將自己修改過的 `Context` 與新版逐項合併，保留設備檔案和使用者明確決定。
 
-Mac 运行 `bash scripts/setup.sh`。Windows 运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1`。初始化会保留已有配置。然后执行 `doctor`、`context` 和 `scripts/verify_onboarding.py`，核对项目数量、最近交接、设备身份和材料读取。
+Mac 執行 `bash scripts/setup.sh`。Windows 執行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup.ps1`。初始化會保留已有設定。然後執行 `doctor`、`context` 和 `scripts/verify_onboarding.py`，核對專案數量、最近交接、設備身分和材料讀取。
 
-升级前已批准的任务重新核对文件及设备。文件或材料映射变化时按当前任务重新确认。
+升級前已核准的任務重新核對文件及設備。文件或材料映射變化時按當前任務重新確認。
 
 ## 回退
 
-停止新版工作台，保存升级后新增的项目与任务记录。在独立目录解压旧版源码，用旧版安装脚本重建依赖。先恢复到备份验证目录并核对 SHA-256，再迁移相应数据，检查项目和设备连接。保留新版目录以便找回新增记录。
+停止新版工作台，儲存升級後新增的專案與任務記錄。在獨立目錄解壓舊版原始碼，用舊版安裝腳本重建依賴。先恢復到備份驗證目錄並核對 SHA-256，再遷移相應資料，檢查專案和設備連接。保留新版目錄以便找回新增記錄。
 
-实际恢复前核对目标路径。Bambuddy 数据库恢复时停止该服务，按其官方恢复流程处理数据库及伴随文件。回退后运行 `doctor` 和只读状态检查，未知发送结果继续使用已有任务记录对账。
+實際恢復前核對目標路徑。Bambuddy 資料庫恢復時停止該服務，按其官方恢復流程處理資料庫及伴隨文件。回退後執行 `doctor` 和只讀狀態檢查，未知發送結果繼續使用已有任務記錄對賬。
 
-## 安装失败
+## 安裝失敗
 
-- Python 版本不足时选择 Python 3.11+，使用 `PRINTLAB_PYTHON` 指向解释器后重跑安装。
-- PyPI/npm 下载失败时保存错误类型和失败域名，恢复网络后重跑同一安装命令。
-- 文件检查器失败时运行 `Runtime/venv/bin/python scripts/install_inspector.py`，Windows 换用对应解释器，再运行 `doctor`。
-- 端口占用时核对已有服务。独立工作空间通过启动命令的 `--port` 选择端口。
-- 设备读不到时依次核对 Bambuddy 页面、实际服务 URL、只读 key、打印机 ID 和网络模式。接口连接成功后，再核对实时数据时间与材料。
+- Python 版本不足時選擇 Python 3.11+，使用 `PRINTLAB_PYTHON` 指向解釋器後重跑安裝。
+- PyPI/npm 下載失敗時儲存錯誤類型和失敗域名，恢復網路後重跑同一安裝命令。
+- 文件檢查器失敗時執行 `Runtime/venv/bin/python scripts/install_inspector.py`，Windows 換用對應解釋器，再執行 `doctor`。
+- 連接埠占用時核對已有服務。獨立工作區通過啟動命令的 `--port` 選擇連接埠。
+- 設備讀不到時依次核對 Bambuddy 頁面、實際服務 URL、只讀 key、印表機 ID 和網路模式。介面連接成功後，再核對即時資料時間與材料。
 
-提交问题时使用仓库问题表单，附操作系统、Release、脱敏错误和复现步骤。凭据文件保留在本机。
+提交問題時使用倉庫問題表單，附作業系統、Release、脫敏錯誤和復現步驟。憑據文件保留在本機。

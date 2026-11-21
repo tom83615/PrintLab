@@ -481,10 +481,8 @@ def print_configuration_issues(job):
     mapping = job.get("mapping", {})
     if job.get('printer_provider') == 'official_studio' and mapping.get('transport') != 'bambu_studio':
         issues.append('未選擇官方 Bambu Studio 手動交接路線')
-    if mapping.get("routing_verified") is not True or not mapping.get("ams_mapping") or not mapping.get("extruder_mapping"):
-        issues.append("实际耗材和挤出机路线尚未核验")
-    if not machine_profiles.single_nozzle_model(job.get('sliced_printer_model')) and (mapping.get("fts_installed") is not False or fts_declaration() is not False):
-        issues.append("直连路线需绑定用户明确确认的无 FTS 配置")
+    if not mapping.get("ams_mapping") or not mapping.get("extruder_mapping"):
+        issues.append("缺少切片耗材與噴嘴路線資料")
     card = read_json(DEVICE_CARD, {})
     model = card.get('user_confirmed', {}).get('model') or card.get('model')
     if model and job.get('sliced_printer_model') and machine_profiles.model_id(model) != machine_profiles.model_id(job['sliced_printer_model']):
@@ -687,8 +685,6 @@ def job_fingerprint(p, jd, job):
     from . import machine_profiles
     if read_json(p / "project.json").get("current_revision") != job["revision"]:
         raise WorkflowError("Project revision changed; previous approval is stale")
-    if not machine_profiles.single_nozzle_model(job.get('sliced_printer_model')) and (job.get("mapping", {}).get("fts_installed") is not False or fts_declaration() is not False):
-        raise WorkflowError("FTS hardware declaration changed or is unconfirmed; previous route approval is invalid")
     validate_3mf(jd / job["artifact"], job.get("plate", 1))
     current_source = revision_files(p, job["revision"])
     if current_source != job["source_hashes"]:
@@ -721,38 +717,27 @@ def job_fingerprint(p, jd, job):
 
 def approve(pid, jid, confirmation="", plate_clear=False, confirmation_event_id=None):
     confirmation_facts = None
-    if confirmation_event_id:
-        from . import confirmation as confirmation_module
-        confirmation_facts = confirmation_module.approval_facts(pid, jid, confirmation_event_id)
-        confirmation = confirmation_facts["print_authorized"]["quote"]
-        plate_clear = True
-    if not plate_clear:
-        raise WorkflowError("Explicit build-plate-clear confirmation is required")
-    if not confirmation_facts and (not confirmation or not any(t in confirmation.lower() for t in ("确认打印", "开始打印", "approve print", "start print"))):
-        raise WorkflowError("Record the user's explicit print confirmation, not design approval")
     if selected_printer_id() is None:
         raise WorkflowError("Configure and verify the target printer or bind its Studio name/model/serial before approval")
     with lock("printer"):
         if confirmation_event_id:
             from . import confirmation as confirmation_module
-            confirmation_facts = confirmation_module.approval_facts(pid, jid, confirmation_event_id)
-            confirmation = confirmation_facts["print_authorized"]["quote"]
+            fingerprint = job_fingerprint(project_path(pid), job_path(pid, jid), read_json(job_path(pid, jid)/"job.json"))
+            confirmation_facts = confirmation_module.resolve(job_path(pid, jid), read_json(job_path(pid, jid)/"job.json"), fingerprint, confirmation_event_id)
         p = project_path(pid)
         jd = job_path(pid, jid)
         job = read_json(jd / "job.json")
-        if job.get("trial_only") or print_configuration_issues(job):
+        current_issues = print_configuration_issues(job)
+        if current_issues:
             raise WorkflowError("Trial slice lacks verified device/mapping/plate configuration; configure then re-slice before approval")
-        if job["state"] not in {"awaiting_approval", "approved"} or (jd / "dispatch.json").exists():
+        if job["state"] not in {"awaiting_configuration", "awaiting_approval", "approved"} or (jd / "dispatch.json").exists():
             raise WorkflowError("Only a fresh sliced job can be approved")
         from . import slicer_guard
         slicer_guard.assert_safe_archive(safe_path(jd, job['artifact']), job.get('plate', 1))
         receipt = {"job_id": jid, "approved_at": now(), "confirmation": confirmation,
-                   "plate_clear": True, "fingerprint": job_fingerprint(p, jd, job)}
+                   "plate_clear": False, "fingerprint": job_fingerprint(p, jd, job)}
         if confirmation_facts:
             receipt["recorded_at"] = receipt["approved_at"]
-            receipt["plate_clear_confirmed_at"] = confirmation_facts["plate_clear"]["recorded_at"]
-            receipt["print_authorized_at"] = confirmation_facts["print_authorized"]["recorded_at"]
-            receipt["approved_at"] = min(confirmation_facts[k]["recorded_at"] for k in ("print_authorized", "plate_clear"))
             receipt["confirmation_facts"] = confirmation_facts
             receipt["confirmation_event_id"] = confirmation_event_id
         previous = read_json(jd / "approval.json")
@@ -760,6 +745,7 @@ def approve(pid, jid, confirmation="", plate_clear=False, confirmation_event_id=
             write_json(jd / "ApprovalHistory" / (uuid.uuid4().hex + ".json"), previous)
         write_json(jd / "approval.json", receipt)
         job.update(state="approved", updated_at=now())
+        job.update(trial_only=False, configuration_issues=[])
         write_json(jd / "job.json", job)
         return receipt
 

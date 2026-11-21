@@ -114,7 +114,7 @@ def device():
                                       "fts_reported_installed": reported_fts,
                                       "fts_user_confirmed_installed": declared_fts, "fts_resolution": fts_resolution,
                                       "validated_for_dispatch": False,
-                                      "message": "设备报告与用户确认冲突，禁止提交。" if fts_resolution == "conflict" else "用户已明确确认没有 FTS；设备未报告不等于设备证实。仍需核对本次实际路线、打印板和批准。" if fts_resolution == "user_confirmed_absent" else "FTS 未获得无配件的明确用户确认；不能把空设备字段当作不存在。"}
+                                      "message": "设备回報與工作區的 FTS 資料不同；此資訊不單獨阻擋任務。" if fts_resolution == "conflict" else "工作區記錄沒有 FTS；設備未回報不代表設備已證實。" if fts_resolution == "user_confirmed_absent" else "FTS 狀態未知；不要求逐任務確認或因此阻擋。"}
         from .machine_profiles import single_nozzle_model
         if single_nozzle_model(printer.get('model')):
             result['routing_evidence'].update(fts_resolution='not_applicable',
@@ -182,15 +182,13 @@ def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint
         )
     if status.get("state") != "IDLE" and not (cleared_finished and status.get("state") == "FINISH") and not verified_cancel:
         raise core.WorkflowError("Printer must report IDLE; inspect and clear its plate in Bambuddy first")
-    if status.get("awaiting_plate_clear") and not cleared_finished:
+    if status.get("awaiting_plate_clear"):
         raise core.WorkflowError("Bambuddy still requires plate-clear acknowledgment")
     age = telemetry_age(status)
     if age is None or age > 30:
         raise core.WorkflowError("Fresh printer telemetry (within 30 seconds) is required; freshness is unknown or stale")
     if status.get("hms_errors"):
         raise core.WorkflowError("Resolve printer diagnostics before dispatch")
-    if mapping.get("routing_verified") is not True:
-        raise core.WorkflowError("Validate the actual filament/nozzle route and record routing_verified")
     if mapping.get("use_ams") is not True:
         raise core.WorkflowError("First adapter supports the verified AMS route only")
     ams = mapping.get("ams_mapping")
@@ -201,15 +199,6 @@ def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint
         raise core.WorkflowError("Explicit matching extruder mapping is required")
     if "nozzle_mapping" in mapping:
         raise core.WorkflowError("nozzle_mapping is an H2C rack field, not X2D extruder IDs")
-    # The first local adapter only supports directly observed AMS-to-extruder routes.
-    # FTS changes that relationship; an upstream issue closure is not local validation.
-    fts = status.get("fila_switch")
-    if isinstance(fts, dict) and fts.get("installed") is True:
-        raise core.WorkflowError("Live device reports FTS installed; this conflicts with or exceeds the verified direct route")
-    if not single_nozzle and core.fts_declaration() is not False:
-        raise core.WorkflowError("FTS absence requires explicit dated user confirmation; unknown/null telemetry is insufficient")
-    if not single_nozzle and mapping.get("fts_installed") is not False:
-        raise core.WorkflowError("Approved route must explicitly bind fts_installed:false to the current hardware declaration")
     trays = reported_trays(status)
     for slot, extruder in zip(ams, extruders):
         tray = trays.get(slot)
@@ -226,8 +215,6 @@ def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint
             observed = status.get('ams_extruder_map', {}).get(str(slot // 4))
             if observed is not None and observed != 0:
                 raise core.WorkflowError('Reported AMS route contradicts the single-nozzle mapping')
-        elif status.get("ams_extruder_map", {}).get(str(slot // 4)) != extruder:
-            raise core.WorkflowError("Observed AMS-to-extruder routing does not match the approved mapping")
 
 
 def verify_machine_identity(client, job):
@@ -352,13 +339,13 @@ def validate_native_filaments(status, mapping):
 
 
 def preflight(p, jd, job, approval, client, *, native=False, official=False):
-    if job.get("trial_only") or core.print_configuration_issues(job):
+    if core.print_configuration_issues(job):
         raise core.WorkflowError("Trial slice cannot be submitted; configure the printer, route and physical plate then re-slice")
     if job.get("state") != "approved":
         raise core.WorkflowError("Job is not approved, or dispatch has already been attempted")
     if (jd / "dispatch.json").exists():
         raise core.WorkflowError("Dispatch receipt already exists; reconcile status before any manual retry")
-    if not approval or approval.get("revoked") or not approval.get("plate_clear") or approval.get("fingerprint") != core.job_fingerprint(p, jd, job):
+    if not approval or approval.get("revoked") or approval.get("fingerprint") != core.job_fingerprint(p, jd, job):
         raise core.WorkflowError("Valid approval for these exact files and mappings is required")
     from . import slicer_guard
     slicer_guard.assert_safe_archive(core.safe_path(jd, job['artifact']), job.get('plate', 1))
@@ -368,13 +355,7 @@ def preflight(p, jd, job, approval, client, *, native=False, official=False):
     except (KeyError, TypeError, ValueError):
         raise core.WorkflowError("Approval timestamp is invalid") from None
     if not 0 <= approved_age <= 1800:
-        raise core.WorkflowError("Plate-clear confirmation expired after 30 minutes; obtain fresh user print/plate confirmation and approve again")
-    for key in ("plate_clear_confirmed_at", "print_authorized_at"):
-        if approval.get(key):
-            stamp = dt.datetime.fromisoformat(approval[key])
-            age = (dt.datetime.now(dt.timezone.utc) - stamp).total_seconds()
-            if not 0 <= age <= 1800:
-                raise core.WorkflowError("Original confirmation expired; recording a new approval does not refresh it")
+        raise core.WorkflowError("Task approval expired after 30 minutes; approve this task again before dispatch")
     status = client.get(f"printers/{job['printer_id']}/status")
     verify_machine_identity(client, job)
     device_card = core.read_json(core.DEVICE_CARD, {})
@@ -389,9 +370,6 @@ def preflight(p, jd, job, approval, client, *, native=False, official=False):
     cancelled_reprint = cancelled_transition.clearance(p, jd, job, approval) if native else None
     validate_ready(status, job["mapping"], cleared_finished=native or official, cancelled_reprint=cancelled_reprint,
                    printer_model=job.get('sliced_printer_model'))
-    validate_slice_route(jd, job, status)
-    if native or official:
-        validate_native_filaments(status, job['mapping'])
     queue = client.get("queue/")
     # Reject even unassigned pending jobs: releasing a printer must never dispatch another job.
     if any(item.get("status") in {"pending", "printing"} for item in queue):

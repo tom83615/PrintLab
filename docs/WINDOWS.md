@@ -45,19 +45,13 @@ MLX 圖生模型路線適用於 Apple Silicon。Windows 的圖生模型工具需
 
 Windows 的待列印頁按任務綁定的通道處理。既有且已設定 Bambuddy 的 `bambuddy_queue` 任務仍按既有記錄對帳。無 Bambuddy 的官方 Studio 任務透過下方手動交接，無需安裝或設定 Bambuddy。Mac 專用視窗助手仍需 macOS。
 
-1. 在 PrintLab 儲存當前版本、切片包、設備、板型、材料映射和用量，確認具體作業及清板狀態。
+1. 在 PrintLab 儲存當前版本、切片包、印表機身份、板型、材料映射和用量；材料/路線/設備就緒/清板/授權確認事件不是必需條件。
 2. 沒有 Bambuddy 時，先用 `workspace studio-device` 綁定官方 Studio 顯示的名稱、機型和序號。使用 `studio-copy 專案ID 作業ID` 準備官方 Studio 副本，核對返回的任務 ID 和文件雜湊。
-3. 對該任務記錄目前設備就緒、已核對噴嘴/料槽路線、材料已裝、打印板清空和打印授權。OpenSpoolMan 快照不可替代當次設備畫面核對。
+3. 使用者主動批准該任務，`submit --execute` 只建立 60 秒有效的單次交接回執，不會控制印表機。在官方 Studio 開啟回執指定檔案並由使用者手動發送一次。實際設備離線、忙碌、故障或明確等待清板仍會阻擋。
 
-   ```powershell
-   .\Harness\bin\printlab.ps1 record-confirmation 專案ID 作業ID --facts-json '{"device_ready":true,"routing_verified":true,"material_loaded":true,"plate_clear":true,"print_authorized":true}' --quote '我已在 Studio 核對 H2C、料路、材料和空置打印板，確認此任務' --source 'Bambu Studio 任務與設備畫面'
-   .\Harness\bin\printlab.ps1 approve 專案ID 作業ID --confirmation-event 確認事件ID
-   ```
-
-4. `submit --execute` 只建立交接回執，不會控制印表機。在官方 Studio 開啟回執指定的檔案，核對目標設備和選項後由使用者手動發送一次。
-5. 沒有即時遙測時，使用 `reconcile --outcome ... --task-name ... --evidence ... --source ...` 記錄使用者觀察。結果未知須先查明，不得重送；完成後仍需實物檢查。
 4. 單次發送後讀取設備狀態與任務回執。回執不明確時先對賬，再決定下一步。
-5. 儲存首層、完成狀態與實物回饋，繼續相同專案。
+5. 沒有即時遙測時，使用 `reconcile --outcome ... --task-name ... --evidence ... --source ...` 記錄使用者觀察。結果未知須先查明，不得重送。
+6. 儲存首層、完成狀態與實物回饋，繼續相同專案。
 
 安裝腳本會獨立下載固定版本的公開文件檢查器。`doctor` 實際執行文件檢查，並報告依賴缺失或呼叫失敗。Windows 的文件檢查、官方 Studio 手動預約和工作台 API 可執行；自動 Studio 點擊助手只支援已驗證的 macOS 路線。OpenSpoolMan 不提供此部署所需的即時狀態，因此 Windows 列印結果需由使用者觀察後手動對帳。
 

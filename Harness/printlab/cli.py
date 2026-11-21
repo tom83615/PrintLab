@@ -176,7 +176,7 @@ def parser():
     a.add_argument("project")
     a.add_argument("job")
     a.add_argument("--confirmation", default="")
-    a.add_argument("--confirmation-event", help="Recorded exact-task authorization and plate-clear evidence")
+    a.add_argument("--confirmation-event", help="Optional historical confirmation event; not required for approval")
     a.add_argument("--plate-clear", action="store_true")
     d = sub.add_parser("submit")
     d.add_argument("project")

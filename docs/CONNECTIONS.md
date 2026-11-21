@@ -6,7 +6,7 @@ PrintLab 是執行在你自己電腦上的工作台。ChatGPT/Codex 需要宿主
 | --- | --- | --- |
 | Agent 設計 | 需求 → Text-to-CAD/參數化源文件 → 真實預覽 → Bambu Studio 切片 → PrintLab 登記 | 需要本機執行及對應工具；圖像生成和 CAD 查看能力分別核驗 |
 | Agent 控制列印 | 具體任務批准 → PrintLab 預檢與預約 → 官方 Studio 介面發送一次 → 設備讀回 | 需要桌面控制能力；Windows 可由具備該能力的 Agent 操作官方介面，尚無 Windows 專用自動發送助手 |
-| 工作台一鍵啟動 | 待列印卡片 → 核驗 → 清板確認 → 啟動 → 本機 Studio 助手 | 僅 PRINTING.md 列明的 Mac/X2D/Studio/材料組合；按鈕不繞過預檢和授權 |
+| 工作台一鍵啟動 | 待列印卡片 → 預檢 → 使用者啟動 → 本機 Studio 助手 | 僅 PRINTING.md 列明的 Mac/X2D/Studio/材料組合；實際設備硬故障與活動任務仍阻止發送 |
 | 電腦 Studio | 開啟已綁定的切片包，核對設備、板型及材料，再按 PrintLab 官方交接發送 | 不重新切片或換包後沿用舊批准，發送不明不得重複點 |
 | 手機瀏覽器 | 私人網路連接電腦上的 PrintLab 網頁 | 電腦服務需持續執行；發送仍由電腦執行，Mac助手需已登入且解鎖 |
 | Bambu Handy | 拓竹官方雲服務與手機應用 | 與 PrintLab 手機網頁是不同入口；LAN Only 下的可用功能按機型手冊核實，不能承諾仍可雲列印 |
@@ -35,7 +35,7 @@ Bambuddy 文件對較新韌體的完整第三方控制要求 LAN Only 與 Develo
 - `openspoolman_url`：從 OpenSpoolMan 首頁辨識 AMS 與外掛料卷卡片。目前此部署未提供 OpenAPI 文件或印表機 REST 端點，工作台只讀取並解析首頁；本機讀取時間不代表來源遙測時間。資料僅用於設計準備，設備連線、實際重量與噴嘴路線須另外核對。頁面格式不支援或服務不可用時，工作台會顯示來源不可用。
 - 用 `printlab onboarding status --refresh` 讀回兩個來源。僅設定 OpenSpoolMan 時，「列印歷史」提供其原生歷史頁入口；PrintLab 不匯入或判定該頁的列印結果。既有 Bambuddy 列印預檢、任務對帳和歷史匯入仍使用原先的連接設定。
 
-Windows 上不使用 Bambuddy 發送時，先在 `Runtime/config.json` 綁定本機 Bambu Studio 中已核實的印表機名稱、機型和序號：`printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。此身份只用來綁定工作，不代表設備即時在線或料路已確認。每個具體任務仍須記錄當次設備就緒、實際料路、材料已裝、清板和列印授權，才能批准；`submit --execute` 只建立一次 60 秒官方 Studio 手動交接預約，不會操作印表機。完成或結果不明後，以 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記使用者觀察；它不查詢或重送設備任務。詳細步驟見 [Windows 列印](WINDOWS.md)。
+Windows 上不使用 Bambuddy 發送時，先在 `Runtime/config.json` 綁定本機 Bambu Studio 中已核實的印表機名稱、機型和序號：`printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。此身份只用來綁定工作，不代表設備即時在線或料路已確認。逐任務的設備就緒、實際料路、裝料、清板與列印授權確認不是必要條件；`submit --execute` 只建立一次 60 秒官方 Studio 手動交接預約，使用者再主動於 Studio 發送。完成或結果不明後，以 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記使用者觀察；它不查詢或重送設備任務。詳細步驟見 [Windows 列印](WINDOWS.md)。
 
 ## 手機訪問
 

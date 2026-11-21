@@ -52,7 +52,7 @@ Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和
 
 每次最終制作檢查品質、可靠性、列印總時間、支撐、材料切換和後處理。記錄實際切片比較，模板見 `Templates/Project/Review/x2d-final-review.md`。
 
-列印授權綁定具體模型版本、切片文件、設備、材料與當次清板事實。使用 `printlab approve / submit / reconcile` 的同一任務記錄。首次設定、建模、切片、測試均保持無設備動作。準備發送時先核對已有任務，結果不明先對賬，避免重複發送。官方 Studio 路線見 `Context/official-studio-dispatch.md`。
+列印批准綁定具體模型版本、切片文件與設備身份，使用 `printlab approve / submit / reconcile` 的同一任務記錄。材料/FTS/噴嘴路線/設備就緒/清板/列印授權的逐任務確認不是必要條件，缺少或過期不得單獨阻擋。使用者仍須主動啟動送印；實際離線、忙碌、故障、明確等待清板、檔案損壞及結果不明任務仍須處理。首次設定、建模、切片、測試均保持無設備動作。結果不明先對賬，避免重複發送。官方 Studio 路線見 `Context/official-studio-dispatch.md`。
 
 設備完成後進入實物檢查。使用者確認配合、外觀、強度或使用體驗後，再登記驗收結果。
 

@@ -79,7 +79,7 @@ class Start(BaseModel):
     model_config = ConfigDict(extra='forbid')
     check_token: str = Field(min_length=20, max_length=100)
     request_id: str = Field(min_length=32, max_length=36)
-    plate_clear: StrictBool
+    plate_clear: StrictBool = False
 
 @router.post('/{pid}/{jid}/start', status_code=202)
 def start(pid: str, jid: str, body: Start, request: Request):

@@ -15,7 +15,7 @@ from urllib.parse import quote
 from . import core, bambuddy, design, native, slicer_guard, materials
 
 REGISTRY = 'Library/Prepared/list.json'
-PREPARED_STATES = {'awaiting_approval', 'approved'}
+PREPARED_STATES = {'awaiting_configuration', 'awaiting_approval', 'approved'}
 
 
 def _registry():
@@ -122,7 +122,7 @@ def register(pid, jid, *, title=None, parts=None, note=None):
         raise core.WorkflowError('任务身份不匹配')
     if job.get('state') not in PREPARED_STATES or (jd / 'dispatch.json').exists():
         raise core.WorkflowError('只能加入尚未发送的已切片任务；不得重复打印旧回执')
-    if job.get('trial_only') or core.print_configuration_issues(job):
+    if core.print_configuration_issues(job):
         raise core.WorkflowError('试切片或配置不完整的任务不能加入待打印清单')
     registration_issue = None
     if core.read_json(p / 'project.json').get('current_revision') != job.get('revision'):
@@ -304,7 +304,7 @@ def check(pid, jid, *, client=None, inspector=None):
     def integrity():
         if job.get('project_id') != entry['project_id'] or job.get('id') != jid or job.get('state') not in PREPARED_STATES or (jd / 'dispatch.json').exists():
             raise core.WorkflowError('不可重复发送')
-        if job.get('trial_only') or core.print_configuration_issues(job):
+        if core.print_configuration_issues(job):
             raise core.WorkflowError('配置未完成')
         fp = core.job_fingerprint(p, jd, job)
         if fp != entry['fingerprint'] or job.get('artifact_sha256') != entry['artifact_sha256']:
@@ -334,23 +334,10 @@ def check(pid, jid, *, client=None, inspector=None):
         return value
     inspection = probe('gcode', '刀路与启动指令', file_checks, '刀路、载料和温度指令检查通过', '刀路、启动指令或用料数据未通过检查')
     if job.get('printer_provider') == 'official_studio':
-        from . import confirmation
         binding = core.studio_device_binding()
         record('identity', '本機 Studio 印表機身份', bool(binding and job.get('studio_device_binding') == binding),
                '任務綁定的 Studio 名稱、機型與序號一致', '本機 Studio 印表機身份缺失或已變更')
         facts = {}
-        def exact_facts():
-            if not fingerprint:
-                raise core.WorkflowError('Task fingerprint is unavailable')
-            observed = confirmation.resolve(jd, job, fingerprint)
-            required = ('device_ready', 'routing_verified', 'material_loaded', 'plate_clear', 'print_authorized')
-            missing = [key for key in required if not observed.get(key, {}).get('value') or not observed.get(key, {}).get('fresh')]
-            if missing:
-                raise core.WorkflowError('Missing fresh exact-task observations: ' + ', '.join(missing))
-            return observed
-        facts = probe('manual_observations', '本次 Studio 任務核對', exact_facts,
-                      '設備、料路、裝料、清板與授權都已按此任務核實',
-                      '缺少本次任務的即時設備／料路／裝料／清板／授權確認') or {}
         plate = core.read_json(core.DEVICE_CARD, {}).get('user_confirmed', {}).get('build_plate_description')
         record('plate_type', '打印板类型', plate == job.get('requested_bed_type') == job.get('curr_bed_type'),
                '切片與已確認的打印板類型一致', '切片板型與已確認的打印板類型不符')
@@ -363,8 +350,8 @@ def check(pid, jid, *, client=None, inspector=None):
                              'message':'Windows 使用者在官方 Studio 手動核對與發送；此預檢不控制印表機。'},
                 'device':{'name':(binding or {}).get('studio_printer_name'),
                           'model':(binding or {}).get('studio_printer_model'),'state':'user_verified_at_task'},
-                'device_facts':facts,'plate_confirmation_required':True,'executed':False,'automatic_start':False,
-                'quantity_note':'Spoolman 餘量是台帳估算；實際已裝材料和料路需在官方 Studio 當次核對。'}
+                'device_facts':facts,'plate_confirmation_required':False,'executed':False,'automatic_start':False,
+                'quantity_note':'Spoolman 餘量是台帳估算；未核實的實際裝料與料路會保留為未知。'}
     own_client = client is None
     try:
         client = client or bambuddy.Client()
@@ -387,14 +374,11 @@ def check(pid, jid, *, client=None, inspector=None):
             record('heaters', '加热与其他作业', quiet, '没有正在执行的加热目标', '设备正在加热，或加热状态未知')
             if bindings and fresh:
                 def route():
-                    # FINISH is conditionally usable only after later explicit plate confirmation.
                     bambuddy.verify_machine_identity(client, job)
                     bambuddy.validate_ready(status, job['mapping'], cleared_finished=True,
                                            printer_model=job.get('sliced_printer_model'))
-                    bambuddy.validate_slice_route(jd, job, status)
-                    bambuddy.validate_native_filaments(status, job['mapping'])
                     return True
-                probe('route', '颜色、材料与供料路线', route, '实际材料、颜色、槽位和喷嘴与切片一致', '材料、颜色或供料路线不符；换槽后须重新核对映射')
+                probe('route', '設備路線結構', route, '設備連線與 AMS 路線資料可讀', '設備路線資料不可讀或設備狀態不允許發送')
                 expected = (inspection or {}).get('inspection', {}).get('nozzleDiameters')
                 actual = [_number(n.get('nozzle_diameter')) for n in status.get('nozzles', [])]
                 nozzle_ok = (isinstance(expected, list) and len(expected) == len(actual) and bool(actual)
@@ -408,8 +392,10 @@ def check(pid, jid, *, client=None, inspector=None):
                     if not isinstance(assignments, list) or not isinstance(spools, list):
                         raise core.WorkflowError('库存返回格式不正确')
                     return quantity_checks(bindings, status, assignments, spools)
-                quantities = probe('inventory', '当前料卷身份', quantity, '已读取实际料卷绑定', '无法读取当前料卷绑定和卷重') or []
-                record('quantity', '耗材余量', bool(quantities) and all(q['sufficient'] for q in quantities), '各料位预计余量足够，已留10%且至少10克余量', '部分耗材不足或余量未知，请查看材料明细')
+                try:
+                    quantities = quantity()
+                except Exception:
+                    quantities = []
             else:
                 record('route', '颜色、材料与供料路线', False, '', '文件或实时数据未通过，无法核验供料')
                 record('quantity', '耗材余量', False, '', '实时数据不足，无法核验余量')
@@ -436,5 +422,5 @@ def check(pid, jid, *, client=None, inspector=None):
                           'independent_dispatch_verified': False,
                           'message': '需由发送适配器另行核验可用性；此结果不代表已能独立发送'},
             'device': {k: (status or {}).get(k) for k in ('id', 'name', 'state', 'current_print')},
-            'plate_confirmation_required': True, 'executed': False, 'automatic_start': False,
+            'plate_confirmation_required': False, 'executed': False, 'automatic_start': False,
             'quantity_note': '余量按设备百分比和当前绑定料卷的标称克重估计，可能滞后；不是实称值。'}

@@ -29,19 +29,19 @@ When Bambuddy is not configured, PrintLab SHALL bind each prepared task to the l
 - **THEN** the existing approval becomes invalid and PrintLab requires a newly bound task
 
 ### Requirement: Block dispatch when required evidence is unknown
-PrintLab SHALL NOT treat a Spoolman inventory record or an OpenSpoolMan supply snapshot alone as proof of current printer readiness, verified routing, or a cleared build plate.
+PrintLab SHALL NOT block solely because task-specific readiness, material, route, plate-clear, or authorization facts are missing, stale, or withdrawn. Unknown SHALL remain distinct from confirmed. FTS declaration changes alone SHALL NOT invalidate a task fingerprint. Sending SHALL be user-initiated. Live offline, active/unknown, error, or awaiting-clear device states SHALL still block sending.
 
 #### Scenario: Required routing cannot be verified
 - **WHEN** the approved task requires a slot or nozzle route that is unknown or only inferred from an unverified snapshot
-- **THEN** PrintLab blocks dispatch until the route is independently verified and recorded for that task
+- **THEN** PrintLab retains the route as unverified information and does not block dispatch solely because task-level route confirmation is absent
 
 #### Scenario: Current device readiness is unavailable
-- **WHEN** current device readiness or the required clear-plate fact cannot be confirmed
-- **THEN** PrintLab keeps the task unsubmitted and identifies the missing precondition
+- **WHEN** task-specific readiness or clear-plate confirmation is missing
+- **THEN** PrintLab does not require those confirmation events; it still blocks when live telemetry reports an actual unsafe device state
 
 #### Scenario: Manual Studio handoff requires current observations
-- **WHEN** a task uses the no-Bambuddy manual Studio route
-- **THEN** PrintLab requires fresh exact-task confirmation of printer readiness, verified material routing, loaded material, cleared build plate, and authorization
+- **WHEN** a task uses the no-Bambuddy manual Studio route without fresh exact-task readiness, route, loaded-material, clear-plate, or authorization facts
+- **THEN** PrintLab allows the user-initiated handoff if file integrity and printer identity requirements pass, without synthesizing missing facts
 
 ### Requirement: Reconcile the same approved task without a Bambuddy queue
 PrintLab SHALL preserve task identity and report dispatch outcome as unknown until the official Studio handoff has an observable result; it SHALL NOT retry an uncertain dispatch automatically.

@@ -5,7 +5,7 @@ import hashlib
 import re
 import secrets
 import threading
-from . import core, prepared, confirmation, bambuddy
+from . import core, prepared, bambuddy
 
 TTL = 120
 TERMINAL = {'blocked', 'observed', 'submitted', 'unknown'}
@@ -107,8 +107,6 @@ def reconcile_operation(opid, owner):
         return _public(op)
 
 def start(pid, jid, *, owner, check_token, plate_clear, request_id, launch=None):
-    if plate_clear is not True:
-        raise core.WorkflowError('请先确认本次打印板已清洁并空置')
     if not re.fullmatch(r'[a-zA-Z0-9_-]{20,100}', check_token or '') or not re.fullmatch(r'[a-fA-F0-9-]{32,36}', request_id or ''):
         raise core.WorkflowError('确认信息无效，请重新核验')
     token_path = _base() / 'checks' / (hashlib.sha256(check_token.encode()).hexdigest() + '.json')
@@ -151,12 +149,7 @@ def _run(op):
         if not result['ready'] or result['fingerprint'] != op['fingerprint']:
             op.update(state='blocked', message='设备、材料、文件或发送能力已变化，请重新核验；未发送', checks=result['checks'])
             return
-        if not 0 <= _stamp_age(op['confirmed_at']) <= TTL:
-            op.update(state='blocked', message='清板确认已过期，请重新核验；未发送')
-            return
-        event = confirmation.record(pid, jid, {'print_authorized': True, 'plate_clear': True},
-            '打印板已清洁并空置，确认打印此配件', 'PrintLab 工作台 / 操作 ' + op['id'], confirmed_at=op['confirmed_at'])
-        core.approve(pid, jid, confirmation_event_id=event['id'])
+        core.approve(pid, jid)
         op.update(state='dispatching', message='正在通过已绑定通道发送；尚未确认设备已开始')
         core.write_json(path, op)
         from . import studio_bridge

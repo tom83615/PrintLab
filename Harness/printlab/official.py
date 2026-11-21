@@ -124,7 +124,7 @@ def submit(pid,jid,execute=False,client_factory=None,inspector=None):
 
 def _submit_manual_studio(pid, jid, execute=False, inspector=None):
     """Reserve a Windows Studio handoff using exact-task user observations only."""
-    from . import confirmation, slicer_guard
+    from . import slicer_guard
     with core.lock('printer'):
         p, jd = core.project_path(pid), core.job_path(pid, jid)
         job, approval = core.read_json(jd/'job.json'), core.read_json(jd/'approval.json')
@@ -136,9 +136,7 @@ def _submit_manual_studio(pid, jid, execute=False, inspector=None):
             raise core.WorkflowError('Task is not approved or already has a dispatch receipt; reconcile before retrying')
         if not approval or approval.get('revoked') or approval.get('fingerprint') != core.job_fingerprint(p, jd, job):
             raise core.WorkflowError('Valid approval for this exact Studio device, file and route is required')
-        if not approval.get('confirmation_event_id'):
-            raise core.WorkflowError('Manual Studio dispatch requires a recorded exact-task confirmation event')
-        facts = confirmation.approval_facts(pid, jid, approval['confirmation_event_id'])
+        facts = {}
         if core.print_configuration_issues(job):
             raise core.WorkflowError('Printer, route, or physical plate configuration is incomplete')
         slicer_guard.assert_safe_archive(core.safe_path(jd, job['artifact']), job.get('plate', 1))
@@ -152,9 +150,6 @@ def _submit_manual_studio(pid, jid, execute=False, inspector=None):
                        'created_at':core.now(), 'fingerprint':approval['fingerprint'],
                        'artifact_sha256':job['artifact_sha256'], 'expected_task_name':jid+'.gcode',
                        'studio_device_binding':job['studio_device_binding'],
-                       'confirmation_event_id':approval['confirmation_event_id'],
-                       'confirmed_facts':{key:facts[key]['recorded_at'] for key in
-                           ('device_ready','routing_verified','material_loaded','plate_clear','print_authorized')},
                        'send_deadline':(dt.datetime.now(dt.timezone.utc)+dt.timedelta(seconds=60)).isoformat(),
                        'command_sent':False}
             core.write_json(jd/'dispatch.json',receipt)

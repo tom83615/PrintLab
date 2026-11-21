@@ -41,13 +41,6 @@ def record(pid, jid, facts, quote, source, confirmed_at=None):
         if confirmed_at is not None:
             event['confirmed_at']=confirmed_at
         core.write_json(jd / 'Confirmations' / (event['id']+'.json'), event)
-        if any(facts.get(k) is False for k in ('print_authorized','plate_clear','material_loaded','device_ready','routing_verified')):
-            previous=core.read_json(jd/'approval.json')
-            if previous:
-                core.write_json(jd/'ApprovalHistory'/(uuid.uuid4().hex+'.json'), previous)
-                core.write_json(jd/'approval.json', {**previous,'revoked':True,'revoked_at':core.now(),'revocation_event_id':event['id']})
-            job.update(state='awaiting_approval',updated_at=core.now())
-            core.write_json(jd/'job.json',job)
         return event
 
 
@@ -89,12 +82,6 @@ def approval_facts(pid, jid, event_id):
     job = core.read_json(jd/'job.json')
     fingerprint = core.job_fingerprint(p,jd,job)
     facts = resolve(jd,job,fingerprint,event_id)
-    if any(not facts.get(k,{}).get('value') or not facts.get(k,{}).get('fresh') for k in ('print_authorized','plate_clear')):
-        raise core.WorkflowError('Current exact-task print authorization and cleared-plate facts are required')
-    if job.get('printer_provider') == 'official_studio':
-        required = ('device_ready', 'routing_verified', 'material_loaded')
-        if any(not facts.get(k,{}).get('value') or not facts.get(k,{}).get('fresh') for k in required):
-            raise core.WorkflowError('Manual Studio approval requires fresh exact-task printer, route and loaded-material checks')
     return facts
 
 
@@ -118,26 +105,7 @@ def card(pid, jid=None, device=None):
     except (core.WorkflowError,OSError) as exc:
         issues.append(str(exc))
     facts = resolve(jd,job,fingerprint) if fingerprint else {}
-    approval = core.read_json(jd/'approval.json',{})
-    if fingerprint and approval.get('fingerprint') == fingerprint and not approval.get('revoked'):
-        age = _age(approval.get('approved_at'))
-        fresh = age is not None and 0 <= age <= 1800
-        for key,value in [('print_authorized',bool(approval.get('confirmation'))),('plate_clear',approval.get('plate_clear') is True)]:
-            if key not in facts or facts[key].get('recorded_at','') < approval.get('approved_at',''):
-                facts[key]={'value':value,'fresh':fresh,'source':'approval.json','quote':approval.get('confirmation'),
-                            'recorded_at':approval.get('approved_at')}
     missing=[{'key':'configuration','label':issue,'needs_user':False} for issue in issues]
-    if not dispatched:
-        if not facts.get('plate_clear',{}).get('value') or not facts.get('plate_clear',{}).get('fresh'):
-            missing.append({'key':'plate_clear','label':'本次打印板已清空','needs_user':True})
-        if not facts.get('print_authorized',{}).get('value') or not facts.get('print_authorized',{}).get('fresh'):
-            missing.append({'key':'print_authorized','label':'允许这一个具体任务开始打印','needs_user':True})
-        if job.get('printer_provider') == 'official_studio':
-            for key, label in (('device_ready', '在官方 Studio 核對目標印表機就緒'),
-                               ('routing_verified', '在官方 Studio 核對實際噴嘴與料槽路線'),
-                               ('material_loaded', '核對任務材料已實際裝載')):
-                if not facts.get(key,{}).get('value') or not facts.get(key,{}).get('fresh'):
-                    missing.append({'key':key,'label':label,'needs_user':True})
     if device is None:
         from . import supplies
         device=supplies.device()
@@ -162,7 +130,7 @@ def card(pid, jid=None, device=None):
             'state':job['state'],'plate_type':job.get('curr_bed_type') or plate,'known_plate_type':plate,
             'artifact_sha256':job.get('artifact_sha256'),'estimates':job.get('estimates'),
             'routes':routes,'facts':facts,'missing':missing,'already_dispatched':dispatched,
-            'can_approve':not missing and not dispatched and job.get('state') in {'awaiting_approval','approved'},
+            'can_approve':not missing and not dispatched and job.get('state') in {'awaiting_configuration','awaiting_approval','approved'},
             'device_fresh':fresh_device,'observed_at':(device or {}).get('updated_at'),
             'studio_device_binding':job.get('studio_device_binding'),
-            'device_note':'槽位快照不代表即時遙測；手動 Studio 列印須記錄當次設備、料路、裝料與清板核對。'}
+            'device_note':'未確認的設備就緒、材料、路線與清板事實保持未知；依實際設備狀態檢查發送條件。'}

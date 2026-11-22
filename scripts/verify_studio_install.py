@@ -102,7 +102,7 @@ def slice_probe(root, executable, profiles, output, selected=None):
                       str(root / 'machine.json') + ';' + str(root / 'process.json'), '--load-filaments',
                       str(root / 'filament.json'), '--export-3mf', str(editable), str(root / 'probe.stl')]
     with (output / 'studio-editable.log').open('w', encoding='utf-8') as log:
-        subprocess.run(export_command, check=True, stdout=log, stderr=log, timeout=180)
+        subprocess.run(export_command, cwd=root, check=True, stdout=log, stderr=log, timeout=180)
     exported = project3mf.inspect(editable, 1)
     expected_model = json.loads((root / 'machine.json').read_text(encoding='utf-8'))['printer_model']
     assert exported['printer_model'] == expected_model and not exported['sliced']
@@ -111,7 +111,7 @@ def slice_probe(root, executable, profiles, output, selected=None):
                str(root/'filament.json'), '--arrange', '1', '--slice', '1',
                '--export-3mf', str(artifact), str(root/'probe.stl')]
     with (output/'studio-slicing.log').open('w', encoding='utf-8') as log:
-        subprocess.run(command, check=True, stdout=log, stderr=log, timeout=180)
+        subprocess.run(command, cwd=root, check=True, stdout=log, stderr=log, timeout=180)
     previous_root = core.ROOT
     try:
         core.ROOT = root

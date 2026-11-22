@@ -673,7 +673,7 @@ def slice_project(pid, machine, process, filaments, revision=None, plate=1, mapp
             input_hashes['Input/manual-project.3mf'] = digest(derived)
             source = derived
         out = jd / "job.gcode.3mf"
-        command = [slicer, "--load-settings", ";".join(map(str, copied[:2])), "--load-filaments", ";".join(map(str, copied[2:])), "--arrange", "0" if preserve_layout else "1", "--slice", "1", "--export-3mf", str(out), str(source)]
+        command = [str(Path(slicer).absolute()), "--load-settings", ";".join(map(str, copied[:2])), "--load-filaments", ";".join(map(str, copied[2:])), "--arrange", "0" if preserve_layout else "1", "--slice", "1", "--export-3mf", str(out), str(source)]
         provider = printer_provider()
         identity = studio_device_binding() if provider == 'official_studio' else None
         job = {"id": jid, "project_id": read_json(p / "project.json")["id"], "revision": revision, "state": "slicing", "created_at": now(), "plate": plate, "mapping": mapping or {}, "source_hashes": revision_files(p, revision), "profile_hashes": {str(x.relative_to(jd)): digest(x) for x in (jd / "Profiles").iterdir()}, "slicer_path": slicer, "slicer_sha256": digest(Path(slicer)), "printer_id": selected_printer_id(), "printer_provider": provider,
@@ -689,7 +689,8 @@ def slice_project(pid, machine, process, filaments, revision=None, plate=1, mapp
                 job["slice_input"]["manual_project"] = manual_evidence
         write_json(jd / "job.json", job)
         try:
-            r = subprocess.run(command, capture_output=True, text=True, timeout=900)
+            with tempfile.TemporaryDirectory(prefix="printlab-slice-") as scratch:
+                r = subprocess.run(command, cwd=scratch, capture_output=True, text=True, timeout=900)
             (jd / "slicing.log").write_text(r.stdout + "\n" + r.stderr, encoding="utf-8")
             if r.returncode:
                 raise WorkflowError("Slicer returned a failure; inspect slicing.log")

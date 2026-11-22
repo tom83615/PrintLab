@@ -126,7 +126,7 @@ def test_reapproval_retains_original_plate_confirmation_time(workspace):
     assert receipt['recorded_at']>original
 
 
-@pytest.mark.parametrize("infill_error", [None, "marker", "3MF", "G-code"])
+@pytest.mark.parametrize("infill_error", [None, "marker", "3MF", "G-code", "Slicer returned a failure"])
 def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(workspace,monkeypatch,infill_error):
     p,jd=workspace
     model=p/'Exports/v001/model.3mf';controlled(model)
@@ -140,9 +140,20 @@ def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(w
     process_settings = {'sparse_infill_pattern': 'gyroid', 'different_settings_to_system': ['wall_loops']}
     core.write_json(process,process_settings);core.write_json(filament,{'filament_type':['PLA']});slicer.write_text('never executed')
     cfg=core.read_json(core.ROOT/'Runtime/config.json');cfg['slicer_path']=str(slicer);core.write_json(core.ROOT/'Runtime/config.json',cfg)
+    caller_report = core.ROOT / 'result.json'
+    caller_report.write_text('existing report', encoding='utf-8')
+    monkeypatch.chdir(core.ROOT)
+    scratch_dirs = []
+
     class Result:
-        returncode=0;stdout='synthetic slicer';stderr=''
+        returncode = 1 if infill_error == 'Slicer returned a failure' else 0
+        stdout = 'synthetic slicer'
+        stderr = ''
+
     def fake_run(command,**kwargs):
+        scratch = Path(kwargs['cwd'])
+        scratch_dirs.append(scratch)
+        (scratch / 'result.json').write_text('{}', encoding='utf-8')
         assert Path(command[-1]).parts[-2:] == ('Input', 'model.3mf')
         assert Path(command[-1]).read_bytes()==model.read_bytes()
         copied_process = Path(command[command.index('--load-settings')+1].split(';')[1])
@@ -169,18 +180,24 @@ def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(w
         return Result()
     monkeypatch.setattr(core.subprocess,'run',fake_run)
     def slice_controlled():
-        return core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'routing_verified':True,'ams_mapping':[0,1],'extruder_mapping':[0,0],'fts_installed':False},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
+        try:
+            return core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'routing_verified':True,'ams_mapping':[0,1],'extruder_mapping':[0,0],'fts_installed':False},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
+        finally:
+            assert len(scratch_dirs) == 1 and not scratch_dirs[0].exists()
+            assert caller_report.read_text(encoding='utf-8') == 'existing report'
 
     if infill_error is not None:
         with pytest.raises(core.WorkflowError, match=infill_error):
             slice_controlled()
         failed = next(path for path in (p/'Print').glob('J*/job.json') if path.parent != jd)
         assert core.read_json(failed)['state'] == 'slice_failed'
+        assert (failed.parent / 'slicing.log').is_file()
         return
 
     job = slice_controlled()
     assert core.read_json(process) == process_settings
     attempt=core.job_path('P001',job['id'])
+    assert (attempt / 'slicing.log').is_file()
     assert job['slice_input']['object_filament_assignments']=={'1':1,'2':2}
     assert job['input_hashes']=={'Input/model.3mf':core.digest(model)}
     core.job_fingerprint(p,attempt,job)

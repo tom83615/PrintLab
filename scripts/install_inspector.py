@@ -18,7 +18,7 @@ def main():
         shutil.copy2(ROOT / 'scripts/inspector-dependencies' / name, prefix / name)
     command = [os.environ.get('COMSPEC', 'cmd.exe'), '/d', '/c', npm] if sys.platform == 'win32' else [npm]
     subprocess.run([*command, 'ci', '--prefix', str(prefix)], check=True)
-    print('Independent inspector installed: bambu-printer-mcp 1.1.33 (GPL-2.0). No device connection or print attempted.')
+    print('Independent inspector installed: bambu-printer-mcp 1.1.99 (GPL-2.0). No device connection or print attempted.')
 
 
 if __name__ == '__main__':

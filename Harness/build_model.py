@@ -17,6 +17,10 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def relative_posix(path, root):
+    return path.relative_to(root).as_posix()
+
+
 def blender_worker(args):
     import bpy
     from mathutils import Vector
@@ -182,8 +186,8 @@ def main():
             'volume_mm3':round(float(mesh.volume),3),'checks':checks,'verified':all(checks.values()),
             'target_build_envelope': envelope,
             'verification_limits':['No full wall-thickness or mechanical load analysis','Physical fit and print quality require a test print'],
-            'tools':version,'source_sha256':{str(f.relative_to(project)):digest(f) for f in sorted(src.rglob('*')) if f.is_file() and '__pycache__' not in f.parts},
-            'artifacts':{str(f.relative_to(project)):digest(f) for d in [out,preview] for f in sorted(d.glob('*')) if f.is_file()}}
+            'tools':version,'source_sha256':{relative_posix(f, project):digest(f) for f in sorted(src.rglob('*')) if f.is_file() and '__pycache__' not in f.parts},
+            'artifacts':{relative_posix(f, project):digest(f) for d in [out,preview] for f in sorted(d.glob('*')) if f.is_file()}}
     (out / 'build.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")
     (preview / 'dimensions.json').write_text(json.dumps({'dimensions_mm':data['dimensions_mm'],'checks':checks},indent=2)+'\n', encoding="utf-8")
     print(json.dumps(data,ensure_ascii=False))

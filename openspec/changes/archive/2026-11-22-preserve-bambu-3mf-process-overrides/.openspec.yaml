@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-22
+goal: Bambu Studio retains the selected infill pattern when opening or
+  round-tripping PrintLab job.gcode.3mf.

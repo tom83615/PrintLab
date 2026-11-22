@@ -11,7 +11,7 @@ PrintLab 發佈包保留原創工作台、流程、適配介面與項目模板�
 | [Blender](https://www.blender.org/download/) | 有機外形、同源預覽和動畫視圖 | 從官網安裝。原工作流使用 Blender 4.5 系列，當前安裝需檢查匯出介面。 |
 | [CadQuery](https://github.com/CadQuery/cadquery) | 參數化結構和 STEP 橋接 | 在使用者虛擬環境中從 PyPI 安裝。 |
 | [build123d](https://github.com/gumyr/build123d) | Text-to-CAD 的參數化幾何能力 | 按 Text-to-CAD 原專案環境要求獨立取得。 |
-| [bambu-printer-mcp](https://github.com/DMontgomery40/bambu-printer-mcp) | 獨立離線切片檢查；歷史原生髮送研究來源 | 安裝腳本從 npm 獨立下載固定 1.1.33，通過公開 MCP inspect_print_file 呼叫，不提供印表機憑據，不匯入上游內部模塊。歷史原生髮送仍不可用。 |
+| [bambu-printer-mcp](https://github.com/DMontgomery40/bambu-printer-mcp) | 獨立離線切片檢查；歷史原生髮送研究來源 | 安裝腳本從 npm 獨立下載固定 1.1.99，通過公開 MCP inspect_print_file 呼叫，不提供印表機憑據，不匯入上游內部模塊。歷史原生髮送仍不可用。 |
 | [Hunyuan3D-Swift](https://github.com/ZimengXiong/Hunyuan3D-Swift) / [Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | 可選圖生外形候選 | 程式碼和模型權重分別從原作者取得並檢查許可。`image3d` 保留本機適配原始碼，需要自行準備對應隔離環境和來源清單。 |
 
 ## 許可歸屬
@@ -34,6 +34,6 @@ Python 包在 `Harness/pyproject.toml` 聲明。網頁依賴在 `Harness/studio/
 
 Python 依賴使用 `scripts/requirements.lock` 的版本和 SHA-256；前端與檢查器分別使用自己的 package-lock.json。升級時更新鎖文件並重跑跨平臺驗收，不能直接改為 latest。
 
-檢查器下載清單將 `bambu-js` 的間接依賴 `basic-ftp` 固定為 6.2.6，清除舊版目錄解析漏洞。該版本與檢查器已有的直接依賴一致，檢查器主版本仍為 1.1.33。此組合驗證範圍為本機 `inspect_print_file`，包括真實切片包檢查。[上游漏洞記錄](https://github.com/advisories/GHSA-c475-qrg2-pj4r)
+檢查器 1.1.99 的下載鎖定檔保留 basic-ftp 6.2.6。離線檢查使用公開的 inspect_print_file，並以 Bambu Studio H2C 切片包核對結果。
 
 Text-to-CAD 的固定版本、Mac/Windows 安裝命令、宿主接入和最小建模驗收見 [CAD 安裝指南](CAD_SETUP.md)。

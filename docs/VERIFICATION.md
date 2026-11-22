@@ -1,5 +1,13 @@
 # 驗證記錄
 
+## v0.5.0 workbench project deletion
+
+The browser check creates two projects in a temporary workspace and opens the target from the project gallery. It cancels once, attempts deletion during an active workbench operation, then confirms after that operation ends. It checks the actual project directory, the original source outside the project, the sibling project's metadata and the gallery after a reload. Both desktop and narrow-screen layouts are exercised. Run `scripts/verify_browser.py` after setup with Playwright and Chromium installed.
+
+`Harness/tests/test_project_delete.py` covers the HTTP confirmation, project identity, active jobs, shared data, concurrent changes and retry after interrupted file cleanup. The release ZIP installation check also runs the deletion tests in a new workspace. Hardware is outside the scope of these checks.
+
+## v0.4.4 English-first documentation
+
 ## v0.4.0 個性化工作流與發送準備
 
 2026-11-13，功能候選 `898f7ca` 在 macOS、Windows Server 2022/Python 3.11 與 Windows Server 2025/Python 3.13 雲端虛擬機全部通過。Mac 為438項通過、9項跳過及9個子場景通過；兩臺Windows各414項通過、33項跳過。每組另通過21項乾淨ZIP迴歸。跳過項包括平臺專屬、私人樣本和實體設備檢查。[候選雲端記錄](https://github.com/AFangTeam/PrintLab/actions/runs/43326110000)

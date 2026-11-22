@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-21
+goal: Allow a Windows model build to pass PrintLab source and artifact lineage checks.
+skip_specs: true

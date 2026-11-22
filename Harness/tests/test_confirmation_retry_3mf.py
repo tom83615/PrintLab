@@ -126,7 +126,8 @@ def test_reapproval_retains_original_plate_confirmation_time(workspace):
     assert receipt['recorded_at']>original
 
 
-def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(workspace,monkeypatch):
+@pytest.mark.parametrize("infill_error", [None, "marker", "3MF", "G-code"])
+def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(workspace,monkeypatch,infill_error):
     p,jd=workspace
     model=p/'Exports/v001/model.3mf';controlled(model)
     manifest={'verified':True,'checks':{'watertight':True},
@@ -136,13 +137,17 @@ def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(w
     machine=p/'machine.json';process=p/'process.json';filament=p/'filament.json';slicer=p/'fake-slicer'
     from printlab import slicer_guard
     core.write_json(machine,{'printer_model':'Bambu Lab X2D',**slicer_guard.official_templates(),'printable_area':[]})
-    core.write_json(process,{});core.write_json(filament,{'filament_type':['PLA']});slicer.write_text('never executed')
+    process_settings = {'sparse_infill_pattern': 'gyroid', 'different_settings_to_system': ['wall_loops']}
+    core.write_json(process,process_settings);core.write_json(filament,{'filament_type':['PLA']});slicer.write_text('never executed')
     cfg=core.read_json(core.ROOT/'Runtime/config.json');cfg['slicer_path']=str(slicer);core.write_json(core.ROOT/'Runtime/config.json',cfg)
     class Result:
         returncode=0;stdout='synthetic slicer';stderr=''
     def fake_run(command,**kwargs):
         assert Path(command[-1]).parts[-2:] == ('Input', 'model.3mf')
         assert Path(command[-1]).read_bytes()==model.read_bytes()
+        copied_process = Path(command[command.index('--load-settings')+1].split(';')[1])
+        differences = core.read_json(copied_process)['different_settings_to_system']
+        assert differences == ['wall_loops;sparse_infill_pattern', '', '', '']
         out=Path(command[command.index('--export-3mf')+1])
         with zipfile.ZipFile(jd/'job.gcode.3mf') as old, zipfile.ZipFile(out,'w') as new:
             for name in old.namelist():
@@ -153,13 +158,28 @@ def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(w
                     settings = json.loads(value)
                     for field in ('filament_type', 'filament_map', 'nozzle_temperature_initial_layer', 'nozzle_temperature'):
                         settings[field] = settings[field] * 2
+                    settings['different_settings_to_system'] = ['wall_loops', '', '', ''] if infill_error == 'marker' else differences
+                    settings['sparse_infill_pattern'] = 'grid' if infill_error == '3MF' else 'gyroid'
                     value = json.dumps(settings).encode()
                 elif name == 'Metadata/plate_1.gcode':
+                    pattern = 'grid' if infill_error == 'G-code' else 'gyroid'
+                    value = f'; CONFIG_BLOCK_START\r\n; sparse_infill_pattern = {pattern}\r\n; CONFIG_BLOCK_END\r\n'.encode() + value
                     value += b'\nM620 S1A\nT1\nM621 S1A\nM109 S220\nG1 X2 E1\n'
                 new.writestr(name,value)
         return Result()
     monkeypatch.setattr(core.subprocess,'run',fake_run)
-    job=core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'routing_verified':True,'ams_mapping':[0,1],'extruder_mapping':[0,0],'fts_installed':False},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
+    def slice_controlled():
+        return core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'routing_verified':True,'ams_mapping':[0,1],'extruder_mapping':[0,0],'fts_installed':False},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
+
+    if infill_error is not None:
+        with pytest.raises(core.WorkflowError, match=infill_error):
+            slice_controlled()
+        failed = next(path for path in (p/'Print').glob('J*/job.json') if path.parent != jd)
+        assert core.read_json(failed)['state'] == 'slice_failed'
+        return
+
+    job = slice_controlled()
+    assert core.read_json(process) == process_settings
     attempt=core.job_path('P001',job['id'])
     assert job['slice_input']['object_filament_assignments']=={'1':1,'2':2}
     assert job['input_hashes']=={'Input/model.3mf':core.digest(model)}

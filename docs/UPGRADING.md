@@ -37,3 +37,17 @@ Mac 執行 `bash scripts/setup.sh`。Windows 執行 `powershell -NoProfile -Exec
 - 設備讀不到時依次核對 Bambuddy 頁面、實際服務 URL、只讀 key、印表機 ID 和網路模式。介面連接成功後，再核對即時資料時間與材料。
 
 提交問題時使用倉庫問題表單，附作業系統、Release、脫敏錯誤和復現步驟。憑據文件保留在本機。
+
+## v0.5.0：專案刪除
+
+升級並重啟工作台後，可在專案圖冊選擇「刪除專案」。對話框會顯示名稱與 ID；永久刪除會移除專案本機資料夾、待列印項目及購物需求。取消不會刪除。若有進行中或結果不明的列印，先對賬以保留記錄；印表機歷史、共享庫存、選圖檔案、專案外原始檔和備份會保留。
+
+## v0.4.4: English-first documentation
+
+The Traditional Chinese introduction is available in [README.zh-TW.md](../README.zh-TW.md), and the English guide remains in [README.en.md](../README.en.md). The former Chinese README links to the Traditional Chinese introduction. YouTube is the primary walkthrough link. Merge any customized instructions and retain existing user records. See [language coverage](LANGUAGE.md).
+
+## v0.4.3: route selection and queue checks
+
+The read-only `dispatch-plan` command assesses the route before recommending permissions. Queue startup checks the file, plate and materials; previously approved tasks do not automatically switch routes.
+
+A1 without AMS / using Ext still uses Studio fallback; this combination has no new automatic dispatch adapter. If Studio has already sliced the correct file, continue that print there without upgrading solely for troubleshooting. Upgrade when you want the newer route planning/window helper. Downloading a ZIP does not automatically upgrade an existing workspace.

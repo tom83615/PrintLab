@@ -13,7 +13,7 @@ import re
 import zipfile
 from . import core
 
-VERSION = '1.1.33'
+VERSION = '1.1.99'
 
 
 def artifact_model(artifact, job):

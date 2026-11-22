@@ -7,7 +7,7 @@ const [entry, artifact, plate, model] = process.argv.slice(2);
 let server;
 try {
   const pkg = JSON.parse(fs.readFileSync(path.resolve(entry, '../../package.json'), 'utf8'));
-  if (pkg.name !== 'bambu-printer-mcp' || pkg.version !== '1.1.33') throw Error('Install the verified bambu-printer-mcp@1.1.33 inspector.');
+  if (pkg.name !== 'bambu-printer-mcp' || pkg.version !== '1.1.99') throw Error('Install the verified bambu-printer-mcp@1.1.99 inspector.');
   server = spawn(process.execPath, [entry], {stdio: ['pipe', 'pipe', 'pipe'], env: {...process.env, MCP_TRANSPORT: 'stdio'}});
   const pending = new Map();
   let buffer = '', bytes = 0, id = 0;

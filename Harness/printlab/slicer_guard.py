@@ -212,7 +212,7 @@ def audit(gcode, settings, active_filament_ids=None):
             'startup_nozzle_targets': targets, 'scope': 'Offline command and official-template checks; physical feeding/extrusion remains unverified'}
 
 
-def inspect_archive(path, plate=1):
+def inspect_archive(path, plate=1, expected_sparse_infill=None):
     with zipfile.ZipFile(path) as archive:
         key = f'Metadata/plate_{plate}.gcode'
         for entry in (key, 'Metadata/project_settings.config'):
@@ -221,6 +221,17 @@ def inspect_archive(path, plate=1):
         active = None
         gcode = archive.read(key).decode('utf-8')
         settings = json.loads(archive.read('Metadata/project_settings.config'))
+        if expected_sparse_infill is not None:
+            differences = settings.get('different_settings_to_system')
+            if (not isinstance(differences, list) or not differences or not isinstance(differences[0], str)
+                    or 'sparse_infill_pattern' not in differences[0].split(';')):
+                raise ValueError('3MF is missing the sparse_infill_pattern process override marker')
+            if settings.get('sparse_infill_pattern') != expected_sparse_infill:
+                raise ValueError('3MF sparse infill pattern differs from the selected process profile')
+            config_block = gcode.partition('; CONFIG_BLOCK_START')[2].partition('; CONFIG_BLOCK_END')
+            patterns = re.findall(r'^; sparse_infill_pattern = (\S+)[ \t\r]*$', config_block[0], re.M)
+            if not config_block[1] or patterns != [expected_sparse_infill]:
+                raise ValueError('G-code sparse infill pattern differs from the selected process profile')
         if 'Metadata/slice_info.config' in archive.namelist():
             try:
                 root = ET.fromstring(archive.read('Metadata/slice_info.config'))
@@ -253,10 +264,10 @@ def inspect_archive(path, plate=1):
         return audit(gcode, settings, active)
 
 
-def assert_safe_archive(path, plate=1):
+def assert_safe_archive(path, plate=1, expected_sparse_infill=None):
     from .core import WorkflowError
     try:
-        result = inspect_archive(path, plate)
+        result = inspect_archive(path, plate, expected_sparse_infill)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile) as exc:
         raise WorkflowError('Bambu offline startup inspection failed: ' + str(exc)) from exc
     if not result['ok']:

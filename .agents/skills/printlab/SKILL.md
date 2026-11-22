@@ -14,7 +14,8 @@ license: PolyForm Noncommercial 1.0.0; see the PrintLab repository LICENSE.md an
 - 自動建隊與首次訪談：使用者的安裝請求包含建立角色時，按 docs/ONBOARDING.md 執行宿主工具探測、已有入口查詢、預留與真實建立、首條介紹讀回。新角色使用 Mike 和 Sarah，已有 Sara 接續。主 Agent 讀取設備、已裝材料和庫存，只問真實缺項。
 - 開始設計或接續：讀取 Context/profile.md、Context/workflow.md、設備檔案；執行當前 CLI 的 --help 和 context，按 project.json 的 latest_session 繼續原專案。新作品先了解用途、尺寸、設備、材料和驗收標準。生圖前用 constraints capture 儲存實際來源，進入 CAD/切片前從 context 核對設備材料或需求變化。
 - 外形、CAD、切片：按 Context/image-to-print.md 和 Context/cad-master-design.md 繼承已選方案；真實源模型匯出預覽，關鍵介面與實測獨立核對。依據當前機器比較列印方向、材料、支撐、分盤及完整工時。
-- 列印：先讀 docs/PRINTING.md。只通過工作台/CLI 的統一批准和發送入口，綁定具體模型版本、切片文件、設備、材料與有效清板確認。安裝或設計不授權列印。結果未知先對賬，不自動重發；不借第三方外掛程式繞過 PrintLab 檢查。
+- 切片交付：提供切片檔、版本、分盤、預估時間和用量，在交接記錄等待使用者回饋。此階段省略建立回執、加入待列印列表和送印。
+- 列印：收到使用者明確要求後，先讀 docs/PRINTING.md，經工作台/CLI 的統一批准和發送入口綁定具體模型版本、切片文件與設備。結果未知先對賬，不自動重發；不借第三方外掛程式繞過 PrintLab 檢查。
 - 共同記錄：使用 workspace 命令的哈希檢查追加偏好、事實與經驗，衝突後重讀。使用者確認擁有的其他耗材通過 material-intake 寫入已設定的庫存來源；Spoolman 可用 --preview 先核對品項，超時後使用相同請求標識對賬。
 - 交接：用 CLI handoff 儲存完成項、當前版本、證據、未知項與下一步，再通過 context 讀回。設備已結束不等於實物合格。
 

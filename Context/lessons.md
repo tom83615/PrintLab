@@ -9,6 +9,26 @@
 - 材料餘量標明設備報告、賬面估算或實稱來源。
 - 失敗、取消或結果不明的發送保留原始回執，處理前先對賬。
 
+<!-- printlab-update:p001-gyroid-3mf-diff-20261122 -->
+<!-- content-sha256:90437a4b181aad825d538c7f3b5901e713fe2d31e28c69e2a7b3c266ca0a6268 -->
+## 2026-11-21T16:39:16.346776+00:00
+
+P001 reprint finding: a sliced job.gcode.3mf may store sparse_infill_pattern=gyroid in Metadata/project_settings.config but still have different_settings_to_system empty. When the selected print_settings_id names a system preset that defaults to grid, Bambu Studio can reload the project as Grid. Any process override must also list changed process keys in the process entry of different_settings_to_system (for this single-filament H2C package: [sparse_infill_pattern, ", "]). Verify the final 3MF by round-tripping it through the installed Bambu Studio CLI and checking both Metadata/project_settings.config and Metadata/plate_1.gcode; both must retain gyroid before the task is offered for Studio handoff. Confirmed on P001 job J20261122-003428-08d42e.
+
+來源記錄
+
+P001 reprint, 2026-11-22, job J20261122-003428-08d42e
+
+<!-- printlab-update:p001-gyroid-diff-array-clarify-20261122 -->
+<!-- content-sha256:1be68159ebeb01df1e6eeaeeaea0c2cd53859a2ec851cae6f8999d514cb2cd07 -->
+## 2026-11-21T16:39:48.806242+00:00
+
+補充精確欄位位置：different_settings_to_system 的陣列第一項是工藝差異清單；單材料任務其餘兩項留空。Gyroid 的合法記法為三項陣列，第一項包含 sparse_infill_pattern，第二與第三項為空字串。
+
+來源記錄
+
+P001 corrected 3MF metadata check, 2026-11-22
+
 <!-- printlab-update:cad-draft-then-solidcraft-20261122 -->
 <!-- content-sha256:6f56787956503cd80de73d038d2d49dc06280dd2b04d895cf6af92cf59232120 -->
 ## 2026-11-22T14:06:36.993555+00:00

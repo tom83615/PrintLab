@@ -1,4 +1,6 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([switch]$SharedRecords)
+
+$ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
 $Workspace = Join-Path $env:LOCALAPPDATA 'PrintLab/development'
 $Python = Join-Path $Root 'Runtime/venv/Scripts/python.exe'
@@ -30,8 +32,14 @@ $watcher = Start-Process -FilePath (Get-Command node).Source -WorkingDirectory $
     -RedirectStandardOutput (Join-Path $logs 'frontend.log') `
     -RedirectStandardError (Join-Path $logs 'frontend-error.log') -WindowStyle Hidden -PassThru
 try {
-    Write-Host '開發版 http://localhost:8018。前端建置後重新整理頁面。'
-    & $Python -m uvicorn printlab.api:app --host 127.0.0.1 --port 8018 --reload --reload-dir (Join-Path $Root 'Harness') --no-proxy-headers
+    $serverArgs = @('--host', '127.0.0.1', '--port', '8018', '--reload', '--reload-dir', (Join-Path $Root 'Harness'), '--no-proxy-headers')
+    if ($SharedRecords) {
+        Write-Host '開發版 http://localhost:8018。資料操作由正式版處理。'
+        & $Python -m uvicorn serve_shared_preview:app --app-dir $PSScriptRoot --reload-dir $PSScriptRoot --lifespan off @serverArgs
+    } else {
+        Write-Host '開發版 http://localhost:8018。前端建置後重新整理頁面。'
+        & $Python -m uvicorn printlab.api:app @serverArgs
+    }
     exit $LASTEXITCODE
 } finally {
     if (!$watcher.HasExited) { Stop-Process -Id $watcher.Id }

@@ -2,7 +2,7 @@
 
 | 用途 | 網址 | 資料目錄 |
 | --- | --- | --- |
-| 開發測試 | `http://localhost:8018` | `%LOCALAPPDATA%\PrintLab\development` |
+| Windows 原生開發 | `http://localhost:8018` | 獨立資料，或使用正式 API 讀寫共用資料 |
 | Docker 正式版 | `http://127.0.0.1:10818` | `%LOCALAPPDATA%\PrintLab\production` |
 
 請使用表中的主機名稱開啟兩個入口，讓工作台的瀏覽器會話 Cookie 分開。兩個埠均限本機連線。
@@ -15,7 +15,15 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1
 ```
 
-Python 檔案存檔後會重載服務。前端建置完成後重新整理頁面，建置記錄位於開發資料目錄的 `Runtime/logs`。開發版首次啟動建立空白工作區。執行開發用 CLI 時，先將 `PRINTLAB_ROOT` 指到表中的開發資料目錄，再呼叫 `Harness/bin/printlab.ps1`。
+Python 檔案存檔後會重載服務。前端建置完成後重新整理頁面。獨立開發工作區位於 `%LOCALAPPDATA%\PrintLab\development`，建置記錄位於其下的 `Runtime/logs`。首次啟動時會建立空白資料。執行開發用 CLI 時，先將 `PRINTLAB_ROOT` 指到獨立開發工作區，再呼叫 `Harness/bin/printlab.ps1`。
+
+若要在開發版讀寫正式作品與列印記錄，先停止使用 `8018` 的開發程序，再執行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1 -SharedRecords
+```
+
+開發前端在 Windows 上建置和執行。共用模式把 API 請求交給 `10818`，兩個入口的資料操作使用同一套檔案鎖及同源驗證。正式版提供的操作可在兩邊執行。要測試尚未部署的 API 或新資料格式時，使用不帶 `-SharedRecords` 的啟動指令。
 
 ## 正式更新
 

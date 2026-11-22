@@ -6,6 +6,7 @@ PrintLab 發佈包保留原創工作台、流程、適配介面與項目模板�
 | --- | --- | --- |
 | [Bambuddy](https://github.com/maziggy/bambuddy) | 設備、材料庫存、佇列與已捕獲歷史 | 按原專案安裝指南獨立執行。PrintLab 本機適配基線為 v1.2.5.7，當前上游介面需重新驗證。通過獨立 HTTP API 連接。 |
 | [Text-to-CAD](https://github.com/earthtojake/text-to-cad) | Codex 建模、模型查看、匯出與製造檢查 | 按原專案 `docs/install.md` 安裝。本機歷史驗證基線為 0.8.2，當前上游入口已使用 `cad`，以實際 `--help` 為準。 |
+| [SolidCraft](https://solidcraft.io/) | 在可視化參數化 CAD 編輯器中，透過 MCP 由 AI 與使用者共同修正 STEP 草稿 | 從官方網站獨立安裝；Codex MCP 設定、live 模式、檔案權限及 STEP 交接見 [SolidCraft MCP 使用指引](SOLIDCRAFT_MCP.md)。 |
 | [Bambu Studio](https://github.com/bambulab/BambuStudio) | 正式工程、切片與官方發送 | 從拓竹官方獲取應用及其外掛程式。首版發送助手的本機驗證版本為 02.08.02.61。 |
 | [Blender](https://www.blender.org/download/) | 有機外形、同源預覽和動畫視圖 | 從官網安裝。原工作流使用 Blender 4.5 系列，當前安裝需檢查匯出介面。 |
 | [CadQuery](https://github.com/CadQuery/cadquery) | 參數化結構和 STEP 橋接 | 在使用者虛擬環境中從 PyPI 安裝。 |
@@ -15,7 +16,7 @@ PrintLab 發佈包保留原創工作台、流程、適配介面與項目模板�
 
 ## 許可歸屬
 
-核對過的上游許可包括 Text-to-CAD 的 MIT、Bambuddy 的 AGPL-3.0 和 bambu-printer-mcp 的 GPL-2.0。使用者應以自己下載版本的 LICENSE 為準。上游的許可與署名繼續適用，PrintLab 的非商用許可只覆蓋 PrintLab 原創部分。
+核對過的上游許可包括 Text-to-CAD 的 MIT、SolidCraft 可選 MIT 或 Apache-2.0、Bambuddy 的 AGPL-3.0 和 bambu-printer-mcp 的 GPL-2.0。使用者應以自己下載版本的 LICENSE 為準。上游的許可與署名繼續適用，PrintLab 的非商用許可只覆蓋 PrintLab 原創部分。
 
 舊原生客戶端通過進程內載入 `bambu-printer-mcp` 內部模塊工作。首版發佈包移除了該客戶端、上游補丁和相關執行環境，保留本專案的歷史任務讀回與獨立檢查邏輯。首版 `bambu_native` 發送返回明確的不可用原因，官方 Studio 工作流在 `PRINTING.md` 中說明。
 

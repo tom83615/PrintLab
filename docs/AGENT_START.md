@@ -92,7 +92,7 @@ Runtime/venv/bin/python scripts/verify_onboarding.py
 
 連接模式與手機/電腦/Agent 的具體路徑見 [連接與控制指南](CONNECTIONS.md)。
 
-Text-to-CAD 的固定版本、Mac/Windows 安裝命令、宿主接入和最小建模驗收見 [CAD 安裝指南](CAD_SETUP.md)。
+Text-to-CAD 的固定版本、Mac/Windows 安裝命令、宿主接入和最小建模驗收見 [CAD 安裝指南](CAD_SETUP.md)。Text-to-CAD 草稿交給 SolidCraft 進行 MCP 精修的流程見 [SolidCraft MCP 指南](SOLIDCRAFT_MCP.md)。
 
 ## 既有終端與帳號同步
 

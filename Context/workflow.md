@@ -14,6 +14,8 @@
 
 Text-to-CAD/build123d 適合參數化結構與介面，現有 CadQuery 源繼續使用，Blender 適合有機曲面。用實際實體匯出三視圖並對照目標。未知尺寸註明假設，關鍵配合先核對。通過選擇圖只能確認目標外形。
 
+一般迭代先用 Text-to-CAD 建立草稿並保留 Python 源碼；確認草稿方向後匯出 STEP，交由 AI 與使用者在 SolidCraft 中共同查看和修正。SolidCraft 的修改另存原生設計與 STEP，並記錄哪一版是目前正式幾何；兩邊不會自動同步。若設計變化太大，回到 Text-to-CAD 重建草稿，再重新交接 STEP。MCP 設定及操作見 `docs/SOLIDCRAFT_MCP.md`。
+
 保留主腳本、參數、輸入、來源、毫米單位和匯出記錄。試模與成品呼叫相同介面幾何。變更共享參數後重建受影響文件。詳見 `cad-master-design.md`。
 
 ## 配色與最終製作

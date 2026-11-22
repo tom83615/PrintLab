@@ -1,5 +1,7 @@
 # 獨立安裝 Text-to-CAD
 
+Text-to-CAD 草稿交由 SolidCraft 進行 AI／人工精修的 MCP 操作，見 [SolidCraft MCP 使用指引](SOLIDCRAFT_MCP.md)。
+
 PrintLab 不附帶 Text-to-CAD 原始碼、外掛程式或模型。其官方新版本使用 `cad`；作者原工作台的 0.8.2 使用過 `cadgen`，不要混用命令。以下固定 **cad-server 0.11.9**，從 PyPI 獨立獲取。該版本的宿主安裝行為見 [上游安裝指南](https://github.com/earthtojake/text-to-cad/blob/main/docs/install.md)。
 
 ## 在工作台之外保留獨立工具環境

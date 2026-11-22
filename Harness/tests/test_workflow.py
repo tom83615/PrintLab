@@ -50,7 +50,7 @@ def ready():
 
 
 def approve(workspace):
-    return core.approve("P001", "Jtest", "确认打印测试任务", True)
+    return core.approve("P001", "Jtest", "確認打印測試任務", True)
 
 
 class SimulatedBambuddy:
@@ -102,9 +102,9 @@ def test_paths_and_symlink_cannot_expose_runtime(workspace):
 
 def test_approval_requires_explicit_print_and_plate(workspace):
     with pytest.raises(core.WorkflowError):
-        core.approve("P001", "Jtest", "模型看着不错", True)
+        core.approve("P001", "Jtest", "模型看著不錯", True)
     with pytest.raises(core.WorkflowError):
-        core.approve("P001", "Jtest", "确认打印", False)
+        core.approve("P001", "Jtest", "確認打印", False)
     assert approve(workspace)["plate_clear"] is True
 
 
@@ -204,7 +204,7 @@ def test_only_physical_review_completes_project(workspace):
     job = core.read_json(jd / "job.json")
     job["state"] = "awaiting_physical_review"
     core.write_json(jd / "job.json", job)
-    core.review("P001", "用户检查了实物尺寸与安装，满足需求。", "passed")
+    core.review("P001", "用戶檢查了實物尺寸與安裝，滿足需求。", "passed")
     assert core.read_json(p / "project.json")["status"] == "completed"
 
 

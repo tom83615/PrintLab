@@ -185,9 +185,9 @@ def view(ref=None, data=None):
     projects, groups = {}, {}
     for key, project in data["projects"].items():
         try:
-            name = "通用采购" if key == "general" else core.read_json(core.project_path(key) / "project.json")["name"]
+            name = "通用採購" if key == "general" else core.read_json(core.project_path(key) / "project.json")["name"]
         except core.WorkflowError:
-            name = key + "（项目文件待恢复）"
+            name = key + "（項目文件待恢復）"
         projects[key] = {**project, "id": key, "name": name}
         for req in project["requirements"]:
             item = data["items"][req["item_id"]]

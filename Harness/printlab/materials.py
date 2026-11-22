@@ -51,7 +51,7 @@ def quantity(spool, baseline=None):
             "estimated_remaining_weight": remaining, "estimated_remaining_percent": percent,
             "quantity_basis": "inventory_estimate" if valid else "unknown", "measured": False,
             "actual_remaining_weight": None, "actual_remaining_percent": None,
-            "quantity_note": "账面估算，实际余量未知；不人工扣减，不将历史满卷记录当当前满卷。",
+            "quantity_note": "帳面估算，實際餘量未知；不人工扣減，不將歷史滿卷記錄當當前滿卷。",
             "historical_baseline": historical, "measurement": measured}
 
 
@@ -76,7 +76,7 @@ def inventory_items(rows, baseline=None):
                     and (not raw.get("color_name") or raw.get("color_name") == other.get("color_name"))):
                     candidates.append(other.get("id"))
         item["possible_duplicate_ids"] = candidates
-        item["identity_note"] = "RFID记录可能与同系列手工台账对应同卷；未核实、未合并，不合计可用克数。" if candidates else None
+        item["identity_note"] = "RFID記錄可能與同系列手工台帳對應同卷；未核實、未合併，不合計可用克數。" if candidates else None
         result.append(item)
     return result
 
@@ -133,10 +133,10 @@ def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, n
             extruder = 0
         name = "AMS " + chr(ord("A") + aid) if type(aid) is int and 0 <= aid <= 25 else f"AMS {aid}"
         logical_nozzle = {1: 1, 0: 2}.get(extruder)
-        nozzle_label = {1: "左主喷嘴 1", 0: "右辅喷嘴 2"}.get(extruder)
+        nozzle_label = {1: "左主噴嘴 1", 0: "右輔噴嘴 2"}.get(extruder)
         if single_nozzle:
             logical_nozzle = 1 if extruder == 0 else None
-            nozzle_label = '单喷嘴 1' if extruder == 0 else '路线冲突，待核实'
+            nozzle_label = '單噴嘴 1' if extruder == 0 else '路線衝突，待核實'
         slots = []
         for tid in range(count):
             tray = trays.get(tid, {})
@@ -169,10 +169,10 @@ def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, n
                           "actual_remaining_weight": None, "fresh": fresh, "source_timestamp": status.get("last_ams_update"),
                           "route": {"ams_label": name, "nozzle_number": logical_nozzle,
                                     "firmware_extruder_id": extruder,
-                                    "text": f"{name} → {nozzle_label}" if nozzle_label else f"{name} → 喷嘴待核实"},
+                                    "text": f"{name} → {nozzle_label}" if nozzle_label else f"{name} → 噴嘴待核實"},
                           "diagnostics": {"ams_id": aid, "tray_id": tid, "physical_extruder_id": extruder,
                                           "reported_state": tray.get("state"), "assigned_spool_id": spool_id}})
         modules.append({"name": name, "slots": slots})
     return {"modules": modules, "observed_at": observed_at, "source_timestamp": status.get("last_ams_update"),
             "age_seconds": age, "fresh": fresh,
-            "note": "槽位按1–4显示；单喷嘴可通过换料完成多色。余量是设备报告，可能滞后。" if single_nozzle else "槽位按1–4显示；余量是设备报告，可能滞后。多色不等于使用两个喷嘴。"}
+            "note": "槽位按1–4顯示；單噴嘴可通過換料完成多色。餘量是設備報告，可能滯後。" if single_nozzle else "槽位按1–4顯示；餘量是設備報告，可能滯後。多色不等於使用兩個噴嘴。"}

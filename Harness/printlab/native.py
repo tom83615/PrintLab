@@ -53,7 +53,7 @@ def run_client(jd, job, mode, approval=None, *, timeout=None):
         return inspect(jd, job, timeout=timeout or 90)
     client_path = core.ROOT / "Harness/native-client.mjs"
     if not client_path.is_file():
-        raise core.WorkflowError("原生适配器尚未独立安装。请按 docs/PRINTING.md 使用官方 Bambu Studio 发送流程。")
+        raise core.WorkflowError("原生適配器尚未獨立安裝。請按 docs/PRINTING.md 使用官方 Bambu Studio 發送流程。")
     toolchain = core.read_json(core.ROOT / "Harness/native-toolchain.json", {})
     pinned_node = toolchain.get("node", {})
     node = pinned_node.get("path") or shutil.which("node")
@@ -113,7 +113,7 @@ def check(pid, jid):
             client.close()
         result['dispatch_capability'] = {
             'state': 'requires_official_app' if live.get('developer_mode') is False else 'not_proven',
-            'message': '只读状态和刀路检查通过不代表发送签名可用；未发送探测打印命令。',
+            'message': '只讀狀態和刀路檢查通過不代表發送簽名可用；未發送探測打印命令。',
             'developer_mode': live.get('developer_mode')}
     except Exception as exc:
         core.write_json(jd / "native-check.json", {"at": core.now(), "ok": False, "error": str(exc), "executed": False})
@@ -175,20 +175,20 @@ def submit(pid, jid, execute=False, client_factory=None, runner=None):
 def observed_state(live):
     raw = str(live.get("state") or "").upper()
     if raw in {"PREPARE", "PREPARING", "HEATING"}:
-        return "preparing", "准备 / 加热中；首层尚未核实"
+        return "preparing", "準備 / 加熱中；首層尚未核實"
     if raw in {"PAUSE", "PAUSED"}:
-        return "paused", "设备报告暂停"
+        return "paused", "設備報告暫停"
     if raw == "RUNNING":
         def positive(value):
             return type(value) in {int, float} and value > 0
         if positive(live.get("layer_num")) or positive(live.get("progress")):
-            return "printing", "设备报告打印进度；实物仍待检查"
+            return "printing", "設備報告打印進度；實物仍待檢查"
         if live.get("layer_num") == 0 or live.get("progress") == 0:
-            return "preparing", "任务已启动，等待首层进度"
-        return "running", "设备报告运行中；首层进度未知"
-    return {"FINISH": ("awaiting_physical_review", "设备报告完成，等待实物验收"),
-            "FAILED": ("failed", "设备报告任务失败"),
-            "CANCELLED": ("cancelled", "设备报告任务取消")}.get(raw, ("dispatch_unknown", "设备状态无法对应明确阶段，先核对任务"))
+            return "preparing", "任務已啟動，等待首層進度"
+        return "running", "設備報告運行中；首層進度未知"
+    return {"FINISH": ("awaiting_physical_review", "設備報告完成，等待實物驗收"),
+            "FAILED": ("failed", "設備報告任務失敗"),
+            "CANCELLED": ("cancelled", "設備報告任務取消")}.get(raw, ("dispatch_unknown", "設備狀態無法對應明確階段，先核對任務"))
 
 
 def _is_current_attempt(p, job):
@@ -220,7 +220,7 @@ def reconcile(pid, jid, client=None):
         fresh = live.get("connected") is True and age is not None and age <= 60
         stamp = core.now()
         previous = job.get("reconciliation", {})
-        message = "设备离线或读数过期，保留上次状态" if not fresh else "当前任务与回执不匹配，不能归为本次执行"
+        message = "設備離線或讀數過期，保留上次狀態" if not fresh else "當前任務與回執不匹配，不能歸為本次執行"
         observation_state = "stale" if not fresh else "unmatched"
         if fresh and matching:
             state, message = observed_state(live)

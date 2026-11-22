@@ -313,7 +313,7 @@ do {
         let tokens=shot["tokens"] as? [[String:Any]] ?? []
         let texts=tokens.compactMap { $0["text"] as? String }
         guard Set(texts).isDisjoint(with:["允许","不允许","打开系统设置"]) else {
-            try fail("系统弹窗遮挡发送窗口，请先处理系统提示再继续")
+            try fail("系統彈窗遮擋發送窗口，請先處理系統提示再繼續")
         }
         guard texts.filter({$0.trimmingCharacters(in:CharacterSet(charactersIn:" /"))==args[2]}).count==1 else {
             try fail("Exact job is not visible in the send dialog; no option clicked")

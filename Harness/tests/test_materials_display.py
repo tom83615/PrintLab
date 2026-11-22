@@ -40,7 +40,7 @@ def test_slots_have_user_numbers_real_single_nozzle_route_and_invalid_remain_unk
     assert [s['slot_number'] for s in slots]==[1,2,3,4]
     assert slots[0]['reported_remaining_percent'] is None
     assert slots[0]['route']['nozzle_number']==1
-    assert '左主喷嘴 1' in slots[0]['route']['text']
+    assert '左主噴嘴 1' in slots[0]['route']['text']
     assert slots[0]['diagnostics']['physical_extruder_id']==1
     assert result['fresh'] is True
     assert slots[1]['state']=='unknown'
@@ -112,5 +112,5 @@ def test_two_ams_share_main_and_labels_survive_reordered_telemetry():
     status['ams_extruder_map']={'1':0}
     result=materials.slot_overview(status,now=1010)
     assert result['modules'][0]['slots'][0]['route']['nozzle_number']==2
-    assert '右辅喷嘴 2' in result['modules'][0]['slots'][0]['route']['text']
+    assert '右輔噴嘴 2' in result['modules'][0]['slots'][0]['route']['text']
     assert result['modules'][1]['slots'][0]['route']['nozzle_number'] is None

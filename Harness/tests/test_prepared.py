@@ -81,7 +81,7 @@ def ready(setup):
 
 
 def reg(setup):
-    return prepared.register('P001', 'Jone', title='V1.1 左手柄', parts=['左手柄连滑轨'], note='仅准备；稍后由用户点击打印')
+    return prepared.register('P001', 'Jone', title='V1.1 左手柄', parts=['左手柄連滑軌'], note='僅準備；稍後由用戶點擊打印')
 
 
 def test_registration_and_check_never_approve_or_send(setup):
@@ -185,7 +185,7 @@ def test_stale_component_registration_still_checks_integrity(setup):
     p = setup[0]
     core.write_json(p / 'project.json', {**core.read_json(p / 'project.json'), 'current_revision': 'v002'})
     (p / 'Design/v001/model.py').write_text('modified')
-    with pytest.raises(core.WorkflowError, match='旧版本源文件已变化'):
+    with pytest.raises(core.WorkflowError, match='舊版本源文件已變化'):
         reg(setup)
 
 
@@ -271,4 +271,4 @@ def test_per_material_usage_must_match_plate_total(setup):
     p, jd, j, _, _, write_archive, _ = setup
     write_archive(weight=100)
     j['artifact_sha256'] = core.digest(jd / 'job.gcode.3mf'); core.write_json(jd / 'job.json', j)
-    with pytest.raises(core.WorkflowError, match='总用量不一致'): reg(setup)
+    with pytest.raises(core.WorkflowError, match='總用量不一致'): reg(setup)

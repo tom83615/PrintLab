@@ -29,10 +29,10 @@ def _origin(request):
     allowed.add(configured.netloc)
     host = request.headers.get('host', '')
     if host not in allowed or request.headers.get('sec-fetch-site') == 'cross-site':
-        raise HTTPException(403, '仅允许从 PrintLab 工作台操作')
+        raise HTTPException(403, '僅允許從 PrintLab 工作台操作')
     origin = request.headers.get('origin')
     if origin and origin != f'{request.url.scheme}://{host}':
-        raise HTTPException(403, '网页来源不匹配')
+        raise HTTPException(403, '網頁來源不匹配')
     return origin
 
 def _session(request, *, write=False):
@@ -40,7 +40,7 @@ def _session(request, *, write=False):
     sid = request.cookies.get('printlab_session', '')
     row = _load_sessions().get(sid)
     if not row or time.time() - row['at'] > 43200:
-        raise HTTPException(403, '会话已过期，请刷新工作台')
+        raise HTTPException(403, '會話已過期，請刷新工作台')
     if write and (not origin or not secrets.compare_digest(request.headers.get('x-printlab-csrf', ''), row['csrf'])):
         raise HTTPException(403, '请从工作台核验并确认打印')
     return sid
@@ -123,8 +123,8 @@ class EnableSender(BaseModel):
 def enable_sender(body: EnableSender, request: Request):
     _session(request, write=True)
     if body.request_permissions is not True:
-        raise HTTPException(400, '需要本人明确选择为发送助手启用系统权限')
+        raise HTTPException(400, '需要本人明確選擇為發送助手啟用系統權限')
     from . import studio_bridge
     if not hasattr(studio_bridge, 'setup_permissions'):
-        raise HTTPException(409, '发送助手正在准备，请稍后刷新')
+        raise HTTPException(409, '發送助手正在準備，請稍後刷新')
     return studio_bridge.setup_permissions()

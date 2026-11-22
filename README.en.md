@@ -12,7 +12,7 @@ Give the repository URL and this prompt to Codex or another agent with local ter
 
 > Install https://github.com/AFangTeam/PrintLab on this computer. Read README.md, AGENTS.md, and docs/AGENT_START.md. Create a persistent workspace, start the workbench, and run the onboarding verification. Create Sara, the 3D-printing advisor, and Mike, the workflow designer, as chats sharing this workspace, and record their actual setup status. Create a task-group chat when I choose my first object. Install third-party tools independently from their original projects. Tell me the specific actions needed for device information, login, or system permissions. Report the workspace path, workbench URL, role entry points, verified results, and next steps.
 
-The interaction guide explains what happens in chat, what happens in the web workbench, and how roles exchange project context. The agent guide provides executable setup steps and completion checks. Both guides currently use Simplified Chinese. [User interaction guide](docs/GETTING_STARTED.md) · [Agent onboarding guide](docs/AGENT_START.md)
+The interaction guide explains what happens in chat, what happens in the web workbench, and how roles exchange project context. The agent guide provides executable setup steps and completion checks. Both guides use Traditional Chinese. [User interaction guide](docs/GETTING_STARTED.md) · [Agent onboarding guide](docs/AGENT_START.md)
 
 For a manual installation, prepare Python 3.11+ and Node.js 22+, then run the following commands.
 
@@ -35,7 +35,7 @@ bash scripts/setup.sh
 bash scripts/start.sh
 ```
 
-The detailed installation and workflow reference pages are currently in Simplified Chinese. [Installation guide](docs/SETUP.md)
+The detailed installation and workflow reference pages use Traditional Chinese. [Installation guide](docs/SETUP.md)
 
 On Windows, install Python 3.11+ and Node.js 22+, open PowerShell in the repository folder, and run these commands.
 

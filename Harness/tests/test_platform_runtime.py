@@ -27,11 +27,11 @@ with open(sys.argv[1], 'a') as stream:
 
 
 def test_private_directory_and_unicode_roundtrip(tmp_path):
-    directory = tmp_path / '私人资料 space'
+    directory = tmp_path / '私人資料 space'
     platforms.protect_directory(directory)
-    file = directory / '凭据.json'
-    core.write_json(file, {'说明': '中文数据'})
-    assert core.read_json(file) == {'说明': '中文数据'}
+    file = directory / '憑據.json'
+    core.write_json(file, {'說明': '中文數據'})
+    assert core.read_json(file) == {'說明': '中文數據'}
     if sys.platform == 'win32':
         command = '$ErrorActionPreference="Stop"; $a=[System.IO.Directory]::GetAccessControl($env:PRINTLAB_TEST_PRIVATE); ConvertTo-Json -InputObject @($a.AreAccessRulesProtected, @($a.Access | ForEach-Object { $_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value })) -Compress'
         result = subprocess.check_output(['powershell', '-NoProfile', '-Command', command], text=True, env={**os.environ, 'PRINTLAB_TEST_PRIVATE': str(directory)})

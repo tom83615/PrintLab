@@ -128,7 +128,7 @@ def overview():
     counts = {s: sum(p.get("status") == s for p in projects) for s in ("designing", "awaiting_review", "printing", "completed")}
     counts["total"] = len(projects)
     counts["active"] = sum(p.get("status") in {"preparing", "running", "printing", "paused", "dispatching", "submitted"} for p in projects)
-    actions = [{"title": p["name"], "detail": "模型待确认" if p["status"] == "awaiting_review" else "打印结束，等待实物检查", "project_id": p["id"]} for p in projects if p.get("status") in {"awaiting_review", "awaiting_physical_review"}]
+    actions = [{"title": p["name"], "detail": "模型待確認" if p["status"] == "awaiting_review" else "打印結束，等待實物檢查", "project_id": p["id"]} for p in projects if p.get("status") in {"awaiting_review", "awaiting_physical_review"}]
     config = core.config()
     if device["state"] != "online" or device.get("stale"):
         title = "已讀取槽位快照" if device["state"] == "snapshot" else "設備連接待核驗"

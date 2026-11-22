@@ -161,4 +161,4 @@ def test_external_queue_never_advertises_sender_available(queue_setup):
     result = queue_sender.capability({'project_id': 'P001', 'job_id': 'Jone',
         'device': {'state': 'IDLE'}, 'transport': {'sdcard': True}})
     assert not result['available']
-    assert any('外挂' in reason for reason in result['blockers'])
+    assert any('外掛' in reason for reason in result['blockers'])

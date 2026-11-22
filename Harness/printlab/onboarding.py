@@ -10,8 +10,8 @@ from . import bambuddy, core, supplies, workspace
 
 
 STATE = 'Context/onboarding.json'
-ROLES = {'sarah': ('Sarah · 3D 打印顾问', '设备、材料、打印问题与制作建议'),
-         'mike': ('Mike · 工作流设计师', '工具连接、工作习惯、工作台与流程改进')}
+ROLES = {'sarah': ('Sarah · 3D 列印顧問', '設備、材料、列印問題與製作建議'),
+         'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進')}
 CAPABILITIES = {'local_files', 'terminal', 'chat_create', 'chat_read', 'desktop_control',
                 'image_generation', 'cad_viewer'}
 
@@ -81,13 +81,13 @@ def _role(role):
 
 def role_prompt(role, request_id):
     title, duties = ROLES[role]
-    return (f'你是{title}。共同工作空间为 {core.ROOT}。职责为{duties}。'
-            '先读取这个工作空间的 AGENTS.md，使用实际 CLI 执行 context，读取设备、材料、'
-            '用户偏好、经验与已有项目。首次回复请介绍职责，列出真实读到的配置、尚缺信息及一项下一步。'
-            '沿用初始会话已经收集的答案，避免重复访谈。每次接手作品都先按稳定项目 ID 读取 context，'
-            '收尾保存交接。事实、经验或偏好更新使用 workspace 命令的版本检查，保留用户原话与来源。'
-            '设置和设计不能触发实体打印，具体打印仍经共同批准与发送入口。'
-            f'本次角色建立标识为 {request_id}，恢复时用它核对已有聊天，避免重复创建。')
+    return (f'你是{title}。共同工作空間為 {core.ROOT}。職責為{duties}。'
+            '先讀取這個工作空間的 AGENTS.md，使用實際 CLI 執行 context，讀取設備、材料、'
+            '用戶偏好、經驗與已有項目。首次回覆請介紹職責，列出真實讀到的配置、尚缺信息及一項下一步。'
+            '沿用初始會話已經收集的答案，避免重複訪談。每次接手作品都先按穩定項目 ID 讀取 context，'
+            '收尾保存交接。事實、經驗或偏好更新使用 workspace 命令的版本檢查，保留用戶原話與來源。'
+            '設置和設計不能觸發實體打印，具體打印仍經共同批准與發送入口。'
+            f'本次角色建立標識為 {request_id}，恢復時用它核對已有聊天，避免重複創建。')
 
 
 def reserve_role(role, request_id, expected):
@@ -248,27 +248,27 @@ def view(device=None, inventory=None):
     questions = []
     external_slots = bool(supplies.sources().get('openspoolman_url'))
     if cfg['printer_id'] is None and not (external_slots and card.get('user_confirmed', {}).get('model')):
-        questions.append({'id': 'printer', 'text': '你使用哪些打印机？请选择这次要连接的一台。'})
-    for key, text in [('cloud_needs', '你现在怎样使用 Handy 和 Studio？有哪些连接方式需要保留？'),
-                      ('additional_materials', '除了已装载和已登记的耗材，你还有哪些材料？'),
-                      ('usage_goals', '你主要想制作什么，最重视哪些使用效果？')]:
+        questions.append({'id': 'printer', 'text': '你使用哪些打印機？請選擇這次要連接的一台。'})
+    for key, text in [('cloud_needs', '你現在怎樣使用 Handy 和 Studio？有哪些連接方式需要保留？'),
+                      ('additional_materials', '除了已裝載和已登記的耗材，你還有哪些材料？'),
+                      ('usage_goals', '你主要想製作什麼，最重視哪些使用效果？')]:
         if key not in value['answers']:
             questions.append({'id': key, 'text': text})
     roles = [{**{'role': role, 'title': title, 'status': 'pending'}, **value['roles'].get(role, {})}
              for role, (title, _) in ROLES.items()]
     next_actions = []
     if questions:
-        next_actions.append({'kind': 'interview', 'text': '由首次配置会话补齐真实缺项', 'questions': questions})
+        next_actions.append({'kind': 'interview', 'text': '由首次配置會話補齊真實缺項', 'questions': questions})
     for role in roles:
         if role['status'] != 'introduced':
-            next_actions.append({'kind': 'role', 'role': role['role'], 'text': f"完成 {role['title']} 的创建与首次介绍"})
+            next_actions.append({'kind': 'role', 'role': role['role'], 'text': f"完成 {role['title']} 的創建與首次介紹"})
     if external_slots:
         next_actions.append({'kind': 'device', 'text': 'OpenSpoolMan 槽位供設計參考；核對實機噴嘴、列印板和供料路線'})
         if core.printer_provider() == 'official_studio' and core.studio_device_binding() is None:
             next_actions.append({'kind': 'studio_device',
                 'text': '在 Runtime/config.json 記錄官方 Studio 顯示的印表機名稱、機型與序號，才能綁定手動列印任務'})
     elif card.get('verification_status') != 'connected_readonly' or not selected_device_matches:
-        next_actions.append({'kind': 'device', 'text': '核对设备身份、打印板、喷嘴与实际供料连接'})
+        next_actions.append({'kind': 'device', 'text': '核對設備身份、打印板、噴嘴與實際供料連接'})
     return {**value, 'workspace': str(core.ROOT), 'platform': platform.system(), 'roles': roles,
             'questions': questions, 'next_actions': next_actions,
             'device_card': card, 'device': device, 'inventory': inventory,

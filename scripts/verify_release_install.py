@@ -24,7 +24,7 @@ def main():
     env = {k:v for k,v in os.environ.items() if k not in {'PRINTLAB_ROOT','PYTHONPATH','VIRTUAL_ENV'}}
     env['PRINTLAB_SKIP_RELEASE_CHECK'] = '1'
     env['PYTHONUTF8'] = '1'
-    with tempfile.TemporaryDirectory(prefix='PrintLab 发布 ZIP ') as temporary:
+    with tempfile.TemporaryDirectory(prefix='PrintLab 發佈 ZIP ') as temporary:
         target = Path(temporary) / 'PrintLab'
         with zipfile.ZipFile(bundle) as archive:
             assert all(n.startswith('PrintLab/') and '..' not in Path(n).parts for n in archive.namelist())

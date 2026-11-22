@@ -27,4 +27,4 @@
 
 ## Impact
 
-影響 `Harness/printlab/` 的供應商適配、onboarding、製造條件、庫存登記、預檢及歷史流程；Studio 庫存／歷史介面；連接、設定及列印文件；`Runtime/config.json` 的服務網址設定。實作前需核對 OpenSpoolMan 實際可提供的設備／槽位資料和更新時間；Spoolman 負責台帳庫存而非即時 AMS 余量。列印仍透過官方 Studio，不把 Spoolman 或 OpenSpoolMan 描述為列印傳輸服務。
+影響 `Harness/printlab/` 的供應商適配、onboarding、製造條件、庫存登記、預檢及歷史流程；Studio 庫存／歷史介面；連接、設定及列印文件；`Runtime/config.json` 的服務網址設定。實作前需核對 OpenSpoolMan 實際可提供的設備／槽位資料和更新時間；Spoolman 負責台帳庫存而非即時 AMS 餘量。列印仍透過官方 Studio，不把 Spoolman 或 OpenSpoolMan 描述為列印傳輸服務。

@@ -33,7 +33,7 @@ def _payload(spool, source):
     # Upstream defaults to a full 1000g spool. Explicit zero leaves unknown weight unknown.
     result.setdefault('label_weight', 0)
     result.setdefault('core_weight', 0)
-    result.update(weight_used=0, data_origin='manual', note=f'用户确认的库存记录\n来源 {source}\n实际余量未知。')
+    result.update(weight_used=0, data_origin='manual', note=f'用戶確認的庫存記錄\n來源 {source}\n實際餘量未知。')
     return result
 
 

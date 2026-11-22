@@ -77,7 +77,7 @@ def sanitize_device(raw):
 
 def device():
     pid = core.config().get("printer_id")
-    result = {"state": "unconfigured", "message": "打印机尚未连接；没有实时状态。", "updated_at": None, "printer": None}
+    result = {"state": "unconfigured", "message": "打印機尚未連接；沒有實時狀態。", "updated_at": None, "printer": None}
     if pid is None:
         return result
     client = None
@@ -88,7 +88,7 @@ def device():
         try:
             metadata = client.get(f'printers/{pid}')
         except (httpx.HTTPError, ValueError, core.WorkflowError):
-            result['metadata_warning'] = '设备实时状态可读，机型元数据读取失败。'
+            result['metadata_warning'] = '設備實時狀態可讀，機型元數據讀取失敗。'
         age = telemetry_age(raw)
         printer = sanitize_device(raw)
         if isinstance(metadata, dict) and metadata.get('id') == pid:
@@ -97,7 +97,7 @@ def device():
         stale = age is None or age > 60
         result.update(state="online" if online else "offline", printer=printer, updated_at=core.now(),
                       telemetry_age_seconds=age, telemetry_source="AMS report; no global printer timestamp available", stale=stale,
-                      message="已连接；设备数据时间未知或已过期。" if online and stale else "设备已连接。" if online else "打印机离线；状态不可用于开始打印。")
+                      message="已連接；設備數據時間未知或已過期。" if online and stale else "設備已連接。" if online else "打印機離線；狀態不可用於開始打印。")
         assignments, spools = [], []
         try:
             assignments = client.get("inventory/assignments")
@@ -114,13 +114,13 @@ def device():
                                       "fts_reported_installed": reported_fts,
                                       "fts_user_confirmed_installed": declared_fts, "fts_resolution": fts_resolution,
                                       "validated_for_dispatch": False,
-                                      "message": "设备回報與工作區的 FTS 資料不同；此資訊不單獨阻擋任務。" if fts_resolution == "conflict" else "工作區記錄沒有 FTS；設備未回報不代表設備已證實。" if fts_resolution == "user_confirmed_absent" else "FTS 狀態未知；不要求逐任務確認或因此阻擋。"}
+                                      "message": "設備回報與工作區的 FTS 資料不同；此資訊不單獨阻擋任務。" if fts_resolution == "conflict" else "工作區記錄沒有 FTS；設備未回報不代表設備已證實。" if fts_resolution == "user_confirmed_absent" else "FTS 狀態未知；不要求逐任務確認或因此阻擋。"}
         from .machine_profiles import single_nozzle_model
         if single_nozzle_model(printer.get('model')):
             result['routing_evidence'].update(fts_resolution='not_applicable',
-                message='已识别单喷嘴机型，按当前 AMS 槽位与切片核对供料。')
+                message='已識別單噴嘴機型，按當前 AMS 槽位與切片核對供料。')
     except (httpx.HTTPError, core.WorkflowError, ValueError):
-        result.update(state="offline", message="无法读取 Bambuddy；设备状态未知。")
+        result.update(state="offline", message="無法讀取 Bambuddy；設備狀態未知。")
     finally:
         if client:
             client.close()
@@ -142,7 +142,7 @@ def inventory():
             baseline_path = core.safe_path(core.ROOT, 'Library/Materials/quantity-baseline-2026-10-25.json', require_file=False)
         baseline = core.read_json(baseline_path, {})
         return {"state": "online", "kind": "inventory_ledger", "items": materials.inventory_items(rows, baseline),
-                "updated_at": core.now(), "quantity_note": "实际余量未知；设备报告与台账估算分开，历史100%不代表当前满卷。不人工扣料，保留Bambuddy原生追踪。"}
+                "updated_at": core.now(), "quantity_note": "實際餘量未知；設備報告與台帳估算分開，歷史100%不代表當前滿卷。不人工扣料，保留Bambuddy原生追蹤。"}
     except (httpx.HTTPError, core.WorkflowError, ValueError, TypeError):
         return {"state": "unavailable", "items": [], "updated_at": None}
     finally:
@@ -487,7 +487,7 @@ def reconcile(pid, jid, client=None, manual_outcome=None, expected_task=None, ev
         core.write_json(jd / "observation.json", observation)
         job.update(state=mapped, queue_id=receipt["queue_id"], last_reconciled_at=stamp, updated_at=stamp,
                    reconciliation={"state": "stale" if stale else "current", "observed_at": stamp, "last_success_at": stamp,
-                                   "message": "设备数据过期或未知；队列记录已读回。" if stale else "已读取对应队列记录和设备状态。"})
+                                   "message": "設備數據過期或未知；隊列記錄已讀回。" if stale else "已讀取對應隊列記錄和設備狀態。"})
         core.write_json(jd / "job.json", job)
         project = core.read_json(core.project_path(pid) / "project.json")
         project_state = "needs_changes" if mapped == "failed" else mapped
@@ -541,7 +541,7 @@ def reconcile_active_jobs(client_factory=None):
                 except Exception as exc:
                     prior = job.get("reconciliation", {})
                     job["reconciliation"] = {"state": "unavailable", "checked_at": core.now(), "last_success_at": prior.get("last_success_at"),
-                                             "error_type": type(exc).__name__, "message": "无法读回对应任务；保留上次状态，不重发。"}
+                                             "error_type": type(exc).__name__, "message": "無法讀回對應任務；保留上次狀態，不重發。"}
                     core.write_json(path, job)
                     outcomes.append({"project_id": pid, "job_id": job["id"], "state": "unavailable"})
         finally:

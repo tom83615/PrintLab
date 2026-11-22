@@ -1,4 +1,4 @@
-# 最終制作 Review
+# 最終製作 Review
 
 模型完成後，在同一次 Review 中核對品質、可靠性和總成本，使用 `Templates/Project/Review/x2d-final-review.md`。
 

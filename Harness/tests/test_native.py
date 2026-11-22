@@ -27,7 +27,7 @@ def test_finished_requires_current_bound_approval(workspace):
     native_job(workspace)
     with pytest.raises(core.WorkflowError, match='approved'):
         native.submit('P001','Jtest',True,client_factory=lambda:NativeDevice(),runner=lambda *a:pytest.fail('must not dispatch'))
-    core.approve('P001','Jtest','确认打印；板已清空',True)
+    core.approve('P001','Jtest','確認打印；板已清空',True)
     calls=[]
     result=native.submit('P001','Jtest',False,client_factory=lambda:NativeDevice(),runner=lambda *a:calls.append(a[2]))
     assert result['executed'] is False and calls==['check']
@@ -35,18 +35,18 @@ def test_finished_requires_current_bound_approval(workspace):
 
 
 def test_empty_tray_and_wrong_colour_never_dispatch(workspace):
-    native_job(workspace);core.approve('P001','Jtest','确认打印；板已清空',True)
+    native_job(workspace);core.approve('P001','Jtest','確認打印；板已清空',True)
     d=NativeDevice();d.empty=True
     with pytest.raises(core.WorkflowError,match='empty'):
         native.submit('P001','Jtest',True,client_factory=lambda:d,runner=lambda *a:pytest.fail('no runner'))
     job=core.read_json(workspace[1]/'job.json');job['mapping']['color']='D6001CFF';core.write_json(workspace[1]/'job.json',job)
-    core.approve('P001','Jtest','确认打印；板已清空',True)
+    core.approve('P001','Jtest','確認打印；板已清空',True)
     with pytest.raises(core.WorkflowError,match='colour'):
         native.submit('P001','Jtest',True,client_factory=lambda:NativeDevice(),runner=lambda *a:pytest.fail('no runner'))
 
 
 def test_timeout_is_durable_and_no_retry(workspace):
-    native_job(workspace);core.approve('P001','Jtest','确认打印；板已清空',True)
+    native_job(workspace);core.approve('P001','Jtest','確認打印；板已清空',True)
     calls=[]
     def runner(jd,job,mode,approval=None):
         calls.append(mode)

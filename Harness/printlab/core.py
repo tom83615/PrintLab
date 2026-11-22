@@ -287,13 +287,13 @@ def new_project(name, kind="functional", brief="", summary_text=""):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(text, encoding="utf-8")
         if not (p / "brief.md").exists():
-            (p / "brief.md").write_text(f"# {name}\n\n待补充：用途、实测尺寸、材料与完成标准。\n", encoding="utf-8")
+            (p / "brief.md").write_text(f"# {name}\n\n待補充：用途、實測尺寸、材料與完成標準。\n", encoding="utf-8")
         if brief:
             with (p / "brief.md").open("a") as f:
                 f.write("\n## 初始需求\n\n" + brief + "\n")
         if not (p / "decisions.md").exists():
-            (p / "decisions.md").write_text("# 已确认决定\n\n尚无设计或打印批准。\n", encoding="utf-8")
-        (p / "Sessions" / "handoff.md").write_text("# 接手\n\n已建立项目。尚未建模、切片或批准打印。下一步：补齐需求。\n", encoding="utf-8")
+            (p / "decisions.md").write_text("# 已確認決定\n\n尚無設計或打印批准。\n", encoding="utf-8")
+        (p / "Sessions" / "handoff.md").write_text("# 接手\n\n已建立項目。尚未建模、切片或批准打印。下一步：補齊需求。\n", encoding="utf-8")
         choice_example = template / "Review/taste-choice.example.json"
         if choice_example.is_file():
             write_json(p / "Review/taste-choice.example.json", read_json(safe_path(template, "Review/taste-choice.example.json")))
@@ -471,7 +471,7 @@ def print_configuration_issues(job):
     from . import machine_profiles
     issues = []
     if job.get("printer_id") is None:
-        issues.append("未绑定实际打印机")
+        issues.append("未綁定實際打印機")
     if job.get('printer_provider') == 'official_studio':
         binding = studio_device_binding()
         if binding is None or job.get('studio_device_binding') != binding:
@@ -486,11 +486,11 @@ def print_configuration_issues(job):
     card = read_json(DEVICE_CARD, {})
     model = card.get('user_confirmed', {}).get('model') or card.get('model')
     if model and job.get('sliced_printer_model') and machine_profiles.model_id(model) != machine_profiles.model_id(job['sliced_printer_model']):
-        issues.append('切片机型与已选设备档案不一致')
+        issues.append('切片機型與已選設備檔案不一致')
     if not job.get("requested_bed_type"):
-        issues.append("未明确确认实际打印板；切片中的板型仅为试算配置")
+        issues.append("未明確確認實際打印板；切片中的板型僅為試算配置")
     elif job.get("curr_bed_type") != job["requested_bed_type"]:
-        issues.append("切片板型与明确指定的打印板不一致")
+        issues.append("切片板型與明確指定的打印板不一致")
     return issues
 
 
@@ -831,7 +831,7 @@ def review(pid, note, outcome):
             if not any(j.get("state") == "awaiting_physical_review" and j.get("revision") == data.get("current_revision") for j in jobs):
                 raise WorkflowError("A confirmed completed print of the current revision is required before physical acceptance")
         stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:4]
-        (p / "Review" / f"{stamp}.md").write_text(f"# 实物复盘\n\n日期：{now()}\n结果：{outcome}\n\n{note}\n", encoding="utf-8")
+        (p / "Review" / f"{stamp}.md").write_text(f"# 實物覆盤\n\n日期：{now()}\n結果：{outcome}\n\n{note}\n", encoding="utf-8")
         data.update(status="completed" if outcome == "passed" else "needs_changes", updated_at=now())
         write_json(p / "project.json", data)
         return {"project_id": pid, "outcome": outcome}
@@ -845,7 +845,7 @@ def handoff(pid, note):
         stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
         path = p / "Sessions" / f"{stamp}.md"
         with path.open("x", encoding="utf-8") as f:
-            f.write(f"# 会话交接\n\n{now()}\n\n{note}\n")
+            f.write(f"# 會話交接\n\n{now()}\n\n{note}\n")
             f.flush()
             os.fsync(f.fileno())
         project = read_json(p / "project.json")
@@ -871,7 +871,7 @@ def library():
                         title = first[0][2:]
                 rows.append({"path": rel, "title": title, "category": "/".join(p.relative_to(ROOT).parts[:3]), "url": "/api/documents/" + quote(rel, safe="/")})
     card = DEVICE_INSTALLED
-    return {"documents": rows, "device_card": card.read_text(encoding="utf-8") if card.exists() else "本机配置尚未核验。"}
+    return {"documents": rows, "device_card": card.read_text(encoding="utf-8") if card.exists() else "本機配置尚未核驗。"}
 
 
 def doctor():

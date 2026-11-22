@@ -79,7 +79,7 @@ class StudioBridgeTests(unittest.TestCase):
         for text in ['允许', '不允许', '打开系统设置']:
             shot = copy.deepcopy(self.shot)
             shot['tokens'].append({'text': text})
-            with self.assertRaisesRegex(core.WorkflowError, '系统弹窗'):
+            with self.assertRaisesRegex(core.WorkflowError, '系統彈窗'):
                 bridge.validate_snapshot(shot, self.job)
 
     def test_unresolved_combined_timelapse_token_does_not_pass(self):
@@ -133,9 +133,9 @@ class StudioBridgeTests(unittest.TestCase):
                     return {'ok': True, 'sent': False}
                 with patch.object(bridge.core, 'job_path', return_value=directory), patch.object(bridge.core, 'digest', return_value='expected'), patch.object(bridge, 'capability', return_value={'available': True, 'observation': {'instances': []}}), patch.object(bridge.subprocess, 'run') as launch, patch.object(bridge.time, 'sleep'), patch.object(bridge, '_run', side_effect=helper) as run:
                     if scenario in ['wrong_job', 'overlay', 'refresh_still_incomplete', 'wrong_device', 'wrong_model']:
-                        expected_error = {'wrong_job':'任务名', 'overlay':'系统弹窗',
-                                          'refresh_still_incomplete':'双喷嘴',
-                                          'wrong_device':'打印机', 'wrong_model':'打印机'}[scenario]
+                        expected_error = {'wrong_job':'任務名', 'overlay':'系統彈窗',
+                                          'refresh_still_incomplete':'雙噴嘴',
+                                          'wrong_device':'打印機', 'wrong_model':'打印機'}[scenario]
                         with self.assertRaisesRegex(core.WorkflowError, expected_error):
                             bridge._open_prepared('P000', job['id'])
                     else:
@@ -155,7 +155,7 @@ class StudioBridgeTests(unittest.TestCase):
         observed={'studio_version':bridge.STUDIO_VERSION,'accessibility':False,'screen_capture':True,'session_on_console':True,'screen_locked':False}
         with patch.object(bridge,'_run',return_value=observed) as run:
             result=bridge.capability()
-            self.assertFalse(result['available']);self.assertIn('辅助功能',result['message']);run.assert_called_once_with('probe',timeout=10)
+            self.assertFalse(result['available']);self.assertIn('輔助功能',result['message']);run.assert_called_once_with('probe',timeout=10)
 
     def test_permission_setup_is_explicit_and_never_prints(self):
         with patch.object(bridge,'_verify_bundle'),patch.object(bridge.subprocess,'run') as run:
@@ -185,7 +185,7 @@ class StudioBridgeTests(unittest.TestCase):
                 Path(command[-1]).write_text(json.dumps({'ok':True,'request_id':'wrong'}))
                 return subprocess.CompletedProcess(command, 0, '', '')
             with patch.object(bridge.core,'ROOT',Path(root)),patch.object(bridge,'_verify_bundle'),patch.object(bridge.subprocess,'run',side_effect=reply):
-                with self.assertRaisesRegex(core.WorkflowError,'不属于本次请求'):bridge._run('probe')
+                with self.assertRaisesRegex(core.WorkflowError,'不屬於本次請求'):bridge._run('probe')
 
     def test_launchservices_waits_for_delayed_atomic_receipt(self):
         with tempfile.TemporaryDirectory() as root:
@@ -205,7 +205,7 @@ class StudioBridgeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             launched = subprocess.CompletedProcess([], 0, '', '')
             with patch.object(bridge.core, 'ROOT', Path(root)), patch.object(bridge, '_verify_bundle'), patch.object(bridge.subprocess, 'run', return_value=launched) as run, patch.object(bridge.time, 'monotonic', side_effect=[0, 21]):
-                with self.assertRaisesRegex(core.WorkflowError, '没有返回有效回执'):
+                with self.assertRaisesRegex(core.WorkflowError, '沒有返回有效回執'):
                     bridge._run('send-once', 'bound-request.json')
                 run.assert_called_once()
                 pending = list((Path(root)/'Runtime/studio-bridge-ipc').iterdir())
@@ -274,7 +274,7 @@ class StudioBridgeTests(unittest.TestCase):
             with self.assertRaisesRegex(core.WorkflowError, 'Artifact changed'):
                 bridge.open_preview_file(source, '0'*64)
             with patch.object(bridge, 'window_status', return_value={'studio_version':bridge.STUDIO_VERSION}):
-                with self.assertRaisesRegex(core.WorkflowError, '权限'):
+                with self.assertRaisesRegex(core.WorkflowError, '權限'):
                     bridge.open_preview_file(source, core.digest(source))
             launch.assert_not_called()
 
@@ -335,7 +335,7 @@ class StudioBridgeTests(unittest.TestCase):
                 Path(command[-1]).write_text(json.dumps({'ok': True, 'request_id': request['request_id']}))
                 return subprocess.CompletedProcess(command, 1, '', '')
             with patch.object(bridge.core, 'ROOT', Path(root)), patch.object(bridge, '_verify_bundle'), patch.object(bridge.subprocess, 'run', side_effect=reply):
-                with self.assertRaisesRegex(core.WorkflowError, '执行结果仍需核实'):
+                with self.assertRaisesRegex(core.WorkflowError, '執行結果仍需核實'):
                     bridge._run('send-once', 'bound-request.json')
 
     def test_launch_failure_exposes_diagnostic_without_retry(self):

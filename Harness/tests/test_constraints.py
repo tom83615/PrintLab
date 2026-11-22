@@ -9,7 +9,7 @@ from printlab import bambuddy, constraints, core, supplies, workspace
 def project(tmp_path, monkeypatch):
     monkeypatch.setattr(core, 'ROOT', tmp_path)
     monkeypatch.setattr(bambuddy, 'inventory', lambda: {'state': 'unavailable', 'items': []})
-    project = core.new_project('用户的支架', brief='适配用户实测桌板，关键尺寸待确认')
+    project = core.new_project('用戶的支架', brief='適配用戶實測桌板，關鍵尺寸待確認')
     return project['id']
 
 

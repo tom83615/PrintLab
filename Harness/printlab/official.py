@@ -251,7 +251,7 @@ def reconcile(pid,jid,client=None,manual_outcome=None,expected_task=None,evidenc
         observation={'at':core.now(),'matching_task':matching,'fresh':fresh,'device':bambuddy.sanitize_device(live)}
         core.write_json(jd/'official-observation.json',observation)
         job.update(updated_at=core.now(),reconciliation={'state':'current' if fresh and matching else 'unmatched',
-                    'message':'官方任务已读回；实物质量待检查。' if fresh and matching else '官方任务尚未匹配；不重复发送。'})
+                    'message':'官方任務已讀回；實物質量待檢查。' if fresh and matching else '官方任務尚未匹配；不重複發送。'})
         core.write_json(jd/'job.json',job)
         return {'job':job,'matching_task':matching,'fresh':fresh,'device_state':live.get('state')}
     finally:

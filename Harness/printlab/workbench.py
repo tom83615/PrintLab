@@ -26,7 +26,7 @@ def recover_operations():
             op = core.read_json(path)
             if op.get('state') in {'checking', 'dispatching'}:
                 op.update(state='unknown' if op['state'] == 'dispatching' else 'blocked',
-                    message='服务曾重启；发送结果需核对，不会重发' if op['state'] == 'dispatching' else '核验被服务重启中断，未发送；可重新核验',
+                    message='服務曾重啟；發送結果需核對，不會重發' if op['state'] == 'dispatching' else '核驗被服務重啟中斷，未發送；可重新核驗',
                     updated_at=core.now())
                 core.write_json(path, op)
 
@@ -47,15 +47,15 @@ def capability(report):
             result.pop('observation', None)
             return result
         except (ImportError, AttributeError):
-            return {'available': False, 'kind': kind, 'message': '官方 Studio 独立发送脚本尚未验证，当前只能保存和核验待打印件'}
+            return {'available': False, 'kind': kind, 'message': '官方 Studio 獨立發送腳本尚未驗證，當前只能保存和核驗待打印件'}
     # Keep native mode changes out of this feature; a new transport needs its own review.
-    return {'available': False, 'kind': kind, 'message': '这个打印包尚未准备独立发送通道'}
+    return {'available': False, 'kind': kind, 'message': '這個打印包尚未準備獨立發送通道'}
 
 def check(pid, jid, *, owner=None):
     result = prepared.check(pid, jid)
     transport = capability(result)
     result['transport'].update(transport)
-    result['checks'].append({'id': 'sender', 'label': '独立发送通道',
+    result['checks'].append({'id': 'sender', 'label': '獨立發送通道',
         'status': 'pass' if transport.get('available') is True else 'blocked', 'message': transport['message']})
     result['blockers'] = [x for x in result['checks'] if x['status'] == 'blocked']
     result['ready'] = not result['blockers']
@@ -70,7 +70,7 @@ def check(pid, jid, *, owner=None):
 
 def _operation_path(opid):
     if not re.fullmatch(r'[a-f0-9]{32}', opid):
-        raise core.WorkflowError('操作编号无效')
+        raise core.WorkflowError('操作編號無效')
     return _base() / 'operations' / (opid + '.json')
 
 def _public(value):
@@ -79,7 +79,7 @@ def _public(value):
 def operation(opid, owner):
     value = core.read_json(_operation_path(opid))
     if not value:
-        raise core.WorkflowError('没有找到工作台打印操作')
+        raise core.WorkflowError('沒有找到工作台打印操作')
     return _public(value)
 
 def reconcile_operation(opid, owner):
@@ -88,7 +88,7 @@ def reconcile_operation(opid, owner):
     with core.lock('workbench-start'):
         op = core.read_json(path)
         if not op:
-            raise core.WorkflowError('没有找到工作台打印操作')
+            raise core.WorkflowError('沒有找到工作台打印操作')
         if op.get('state') not in {'unknown', 'submitted', 'observed'}:
             return _public(op)
         jd = core.job_path(op['project_id'], op['job_id'])
@@ -97,44 +97,44 @@ def reconcile_operation(opid, owner):
                 observed = bambuddy.reconcile(op['project_id'], op['job_id'])
                 op['observation'] = {k: observed.get(k) for k in ('matching_task', 'fresh', 'device_state')}
                 if observed.get('matching_task') and observed.get('fresh'):
-                    op.update(state='observed', message='设备已读回匹配任务；首层与实物仍需检查')
+                    op.update(state='observed', message='設備已讀回匹配任務；首層與實物仍需檢查')
                 else:
-                    op['message'] = '尚未匹配到这次任务，保留原记录；不会重复发送'
+                    op['message'] = '尚未匹配到這次任務，保留原記錄；不會重複發送'
             except Exception:
-                op['message'] = '暂时无法核对设备，保留原记录；不会重复发送'
+                op['message'] = '暫時無法核對設備，保留原記錄；不會重複發送'
         op['updated_at'] = core.now()
         core.write_json(path, op)
         return _public(op)
 
 def start(pid, jid, *, owner, check_token, plate_clear, request_id, launch=None):
     if not re.fullmatch(r'[a-zA-Z0-9_-]{20,100}', check_token or '') or not re.fullmatch(r'[a-fA-F0-9-]{32,36}', request_id or ''):
-        raise core.WorkflowError('确认信息无效，请重新核验')
+        raise core.WorkflowError('確認信息無效，請重新核驗')
     token_path = _base() / 'checks' / (hashlib.sha256(check_token.encode()).hexdigest() + '.json')
     with core.lock('workbench-start'):
         for file in (_base() / 'operations').glob('*.json'):
             op = core.read_json(file)
             if op.get('owner') == owner and op.get('request_id') == request_id:
                 if (op['project_id'], op['job_id']) != (pid, jid):
-                    raise core.WorkflowError('此确认已绑定另一任务')
+                    raise core.WorkflowError('此確認已綁定另一任務')
                 return _public(op)
             if op.get('state') not in TERMINAL or op.get('state') == 'unknown':
-                raise core.WorkflowError('已有发送正在处理或结果不明，请先核对结果，不能重复发送')
+                raise core.WorkflowError('已有發送正在處理或結果不明，請先核對結果，不能重複發送')
         ticket = core.read_json(token_path)
         if (not ticket or ticket.get('owner') != owner or ticket.get('consumed')
                 or (ticket.get('project_id'), ticket.get('job_id')) != (pid, jid)
                 or not 0 <= _stamp_age(ticket.get('created_at')) <= TTL):
-            raise core.WorkflowError('核验已过期或已使用，请重新核验')
+            raise core.WorkflowError('核驗已過期或已使用，請重新核驗')
         ticket['consumed'] = True
         core.write_json(token_path, ticket)
         op = {'id': secrets.token_hex(16), 'project_id': pid, 'job_id': jid, 'owner': owner,
               'request_id': request_id, 'created_at': core.now(), 'confirmed_at': core.now(),
               'fingerprint': ticket['fingerprint'], 'state': 'checking', 'executed': False,
-              'message': '正在再次核验设备与耗材，尚未发送'}
+              'message': '正在再次核驗設備與耗材，尚未發送'}
         core.write_json(_operation_path(op['id']), op)
     try:
         (launch or _launch)(op)
     except Exception:
-        op.update(state='blocked', message='后台执行器未启动，未发送；请重新核验', updated_at=core.now())
+        op.update(state='blocked', message='後台執行器未啟動，未發送；請重新核驗', updated_at=core.now())
         core.write_json(_operation_path(op['id']), op)
     return _public(op)
 
@@ -147,10 +147,10 @@ def _run(op):
     try:
         result = check(pid, jid)
         if not result['ready'] or result['fingerprint'] != op['fingerprint']:
-            op.update(state='blocked', message='设备、材料、文件或发送能力已变化，请重新核验；未发送', checks=result['checks'])
+            op.update(state='blocked', message='設備、材料、文件或發送能力已變化，請重新核驗；未發送', checks=result['checks'])
             return
         core.approve(pid, jid)
-        op.update(state='dispatching', message='正在通过已绑定通道发送；尚未确认设备已开始')
+        op.update(state='dispatching', message='正在通過已綁定通道發送；尚未確認設備已開始')
         core.write_json(path, op)
         from . import studio_bridge
         try:
@@ -160,22 +160,22 @@ def _run(op):
             else:
                 result = studio_bridge.dispatch(pid, jid)
         except studio_bridge.BeforeSendError:
-            op.update(state='blocked', executed=False, message='发送准备未通过，已确认未发起发送；可重新核验')
+            op.update(state='blocked', executed=False, message='發送準備未通過，已確認未發起發送；可重新核驗')
             return
         if result.get('command_sent') is not True:
-            raise core.WorkflowError('发送执行器未证实已发起发送')
-        op.update(state='submitted', executed=result.get('executed', False), message='发送操作已结束，等待设备读回', result=result)
+            raise core.WorkflowError('發送執行器未證實已發起發送')
+        op.update(state='submitted', executed=result.get('executed', False), message='發送操作已結束，等待設備讀回', result=result)
         observed = bambuddy.reconcile(pid, jid)
         op['observation'] = {k: observed.get(k) for k in ('matching_task', 'fresh', 'device_state')}
         if observed.get('matching_task') and observed.get('fresh'):
-            op.update(state='observed', message='设备已读回匹配任务；首层与实物仍需检查')
+            op.update(state='observed', message='設備已讀回匹配任務；首層與實物仍需檢查')
         # Dispatch receipts alone never prove physical extrusion.
         if op['state'] != 'observed':
-            op['message'] = '已发起发送，尚未匹配到设备任务；不会重复发送'
+            op['message'] = '已發起發送，尚未匹配到設備任務；不會重複發送'
     except Exception:
         dispatched = op.get('state') in {'dispatching', 'submitted', 'observed'} or (core.job_path(pid, jid) / 'dispatch.json').exists()
         op.update(state='unknown' if dispatched else 'blocked', executed=False,
-            message='发送结果需要核对，不会自动重发' if dispatched else '核验或准备未通过，未发送；请查看任务记录')
+            message='發送結果需要核對，不會自動重發' if dispatched else '核驗或準備未通過，未發送；請查看任務記錄')
     finally:
         op['updated_at'] = core.now()
         core.write_json(path, op)

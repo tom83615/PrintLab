@@ -39,14 +39,14 @@ def main():
     })
     write_new(ROOT / 'Runtime/private/bambuddy.json', {'read_api_key': '', 'write_api_key': ''}, private=True)
     write_new(ROOT / 'Library/Devices/H2C/device.json', {
-        'schema_version': 1, 'name': '待配置的拓竹打印机', 'model': None,
+        'schema_version': 1, 'name': '待配置的拓竹打印機', 'model': None,
         'verification_status': 'unconfigured', 'user_confirmed': {},
-        'installed': {}, 'unverified': ['机型、喷嘴、打印板、供料连接与材料待核对'],
+        'installed': {}, 'unverified': ['機型、噴嘴、打印板、供料連接與材料待核對'],
     })
     installed = ROOT / 'Library/Devices/H2C/installed.md'
     if not installed.exists():
-        installed.write_text('# 本机设备\n\n尚未连接。按 docs/SETUP.md 核对设备与耗材。\n', encoding="utf-8")
-    print('工作空间已初始化，现有配置与项目已保留。')
+        installed.write_text('# 本機設備\n\n尚未連接。按 docs/SETUP.md 核對設備與耗材。\n', encoding="utf-8")
+    print('工作空間已初始化，現有配置與項目已保留。')
 
 
 if __name__ == '__main__':

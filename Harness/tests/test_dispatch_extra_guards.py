@@ -9,7 +9,7 @@ def test_cancelled_failed_state_never_bypasses_upstream_gate_or_uploads(workspac
     job=core.read_json(jd/'job.json')
     job['mapping'].update(transport='bambu_native',material='PLA Basic',color='FFFFFFFF')
     core.write_json(jd/'job.json',job)
-    core.approve('P001','Jtest','确认打印',True)
+    core.approve('P001','Jtest','確認打印',True)
     class CancelledDevice(SimulatedBambuddy):
         def get(self,path):
             result=super().get(path)
@@ -26,7 +26,7 @@ def test_x2d_missing_external_storage_never_uploads_via_ftps(workspace):
     p,jd=workspace
     card=core.read_json(core.ROOT/'Library/Devices/H2C/device.json');card['model']='X2D'
     core.write_json(core.ROOT/'Library/Devices/H2C/device.json',card)
-    core.approve('P001','Jtest','确认打印',True)
+    core.approve('P001','Jtest','確認打印',True)
     device=SimulatedBambuddy()
     with pytest.raises(core.WorkflowError,match='external storage'):
         bambuddy.submit('P001','Jtest',True,client_factory=lambda **kwargs:device)
@@ -35,7 +35,7 @@ def test_x2d_missing_external_storage_never_uploads_via_ftps(workspace):
 
 def test_revoked_or_future_approval_cannot_dispatch(workspace):
     _,jd=workspace
-    approval=core.approve('P001','Jtest','确认打印',True)
+    approval=core.approve('P001','Jtest','確認打印',True)
     core.write_json(jd/'approval.json',{**approval,'revoked':True})
     with pytest.raises(core.WorkflowError,match='approval'):
         bambuddy.submit('P001','Jtest',True,client_factory=lambda **kwargs:SimulatedBambuddy())

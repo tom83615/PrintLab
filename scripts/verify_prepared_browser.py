@@ -87,25 +87,25 @@ def main():
                 page.on('pageerror', lambda error: errors.append(str(error)))
                 page.goto(f'http://127.0.0.1:{port}/#/prepared')
                 page.locator('main img').evaluate('(image) => image.decode()')
-                page.get_by_role('button',name='核验设备与材料',exact=True).click()
+                page.get_by_role('button',name='核驗設備與材料',exact=True).click()
                 if sys.platform == 'darwin':
-                    page.get_by_role('heading',name='核验通过',exact=True).wait_for()
-                    button = page.get_by_role('button',name='启动打印',exact=True)
+                    page.get_by_role('heading',name='核驗通過',exact=True).wait_for()
+                    button = page.get_by_role('button',name='啟動列印',exact=True)
                     expect(button).to_be_disabled()
                     page.get_by_role('checkbox').check()
                     expect(button).to_be_enabled()
                     page.screenshot(path=str(output/'prepared-ready.png'),full_page=True)
                     button.click()
-                    page.get_by_text('已提交，等待设备确认',exact=True).wait_for(timeout=30000)
+                    page.get_by_text('已提交，等待設備確認',exact=True).wait_for(timeout=30000)
                     assert sends == ['send-once']
                     assert core.read_json(job_dir/'official-inspection.json')['receipt']['evidence'] == 'file-only'
                     page.reload()
-                    page.get_by_text('已提交，等待设备确认',exact=True).wait_for()
-                    assert page.get_by_role('button',name='启动打印',exact=True).count() == 0
+                    page.get_by_text('已提交，等待設備確認',exact=True).wait_for()
+                    assert page.get_by_role('button',name='啟動列印',exact=True).count() == 0
                     assert sends == ['send-once']
                 else:
-                    page.get_by_role('heading',name='暂时不能启动',exact=True).wait_for()
-                    assert page.get_by_role('button',name='启动打印',exact=True).count() == 0
+                    page.get_by_role('heading',name='暫時不能啟動',exact=True).wait_for()
+                    assert page.get_by_role('button',name='啟動列印',exact=True).count() == 0
                     assert not sends
                 page.screenshot(path=str(output/'prepared-result.png'),full_page=True)
                 assert not errors, errors

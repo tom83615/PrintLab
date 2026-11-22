@@ -74,7 +74,7 @@ def append_note(name, text, source, request_id, expected_sha256):
             return {**current, 'replayed': True}
         path = core.safe_path(core.ROOT, current['path'], require_file=False)
         check_version(path, expected_sha256)
-        body = f"{current['text'].rstrip()}\n\n{marker}\n{receipt}\n## {core.now()}\n\n{text}\n\n来源记录\n\n{source}\n"
+        body = f"{current['text'].rstrip()}\n\n{marker}\n{receipt}\n## {core.now()}\n\n{text}\n\n來源記錄\n\n{source}\n"
         write_text(path, body)
         return {**document(name), 'replayed': False}
 

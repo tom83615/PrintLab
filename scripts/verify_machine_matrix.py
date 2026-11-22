@@ -47,7 +47,7 @@ def main():
             return json.loads(result.stdout)
 
         for model, process, filament in MACHINES:
-            project = call('new', f'{model} 软件验收', '--brief', '离线测试，实际设备与耗材尚未配置')
+            project = call('new', f'{model} 軟件驗收', '--brief', '離線測試，實際設備與耗材尚未配置')
             directory = workspace / 'Project' / f"{project['id']}-{project['slug']}"
             design = directory / 'Design/v001'
             design.mkdir()

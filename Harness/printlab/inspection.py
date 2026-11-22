@@ -44,18 +44,18 @@ def inspect(jd, job, *, timeout=90):
     entry = harness.parent / 'Runtime/third-party/bambu-inspector/node_modules/bambu-printer-mcp/dist/index.js'
     node = shutil.which('node')
     if not node or not entry.is_file():
-        raise core.WorkflowError('离线检查器未安装。运行 python scripts/install_inspector.py 后重试检查；未发送打印。')
+        raise core.WorkflowError('離線檢查器未安裝。運行 python scripts/install_inspector.py 後重試檢查；未發送打印。')
     artifact = core.safe_path(jd, job['artifact'])
     plate = job.get('plate')
     if type(plate) is not int or plate < 1:
-        raise core.WorkflowError('检查需要明确的正整数盘号')
+        raise core.WorkflowError('檢查需要明確的正整數盤號')
     with tempfile.TemporaryDirectory(prefix='PrintLab inspect ') as temporary:
         directory = Path(temporary)
         snapshot = directory / ('artifact' + artifact.suffix)
         shutil.copyfile(artifact, snapshot)
         digest = core.digest(snapshot)
         if digest != job['artifact_sha256']:
-            raise core.WorkflowError('打印文件与登记 SHA-256 不符')
+            raise core.WorkflowError('打印文件與登記 SHA-256 不符')
         model = artifact_model(snapshot, job)
         # Empty home/cwd prevent dotenv and user runtime configuration leaking in.
         env = {k: v for k, v in os.environ.items() if k.upper() in {'PATH', 'SYSTEMROOT', 'WINDIR', 'COMSPEC'}}
@@ -69,7 +69,7 @@ def inspect(jd, job, *, timeout=90):
             stdout, _ = process.communicate(timeout=timeout)
         except (subprocess.TimeoutExpired, KeyboardInterrupt):
             _terminate_group(process)
-            raise core.WorkflowError('离线检查超时或中断，未发送打印。') from None
+            raise core.WorkflowError('離線檢查超時或中斷，未發送打印。') from None
         try:
             if len(stdout) > 4 * 1024 * 1024:
                 raise ValueError('oversized response')
@@ -87,7 +87,7 @@ def inspect(jd, job, *, timeout=90):
             if core.digest(artifact) != digest:
                 raise ValueError('file changed during inspection')
         except (ValueError, TypeError, AttributeError) as error:
-            raise core.WorkflowError(f'独立离线检查失败：{error}') from None
+            raise core.WorkflowError(f'獨立離線檢查失敗：{error}') from None
         return {'ok': True, 'executed': False, 'phase': 'offline_inspection',
                 'inspection': receipt['inspection'], 'receipt': receipt, 'inspector_version': VERSION}
 

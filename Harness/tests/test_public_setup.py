@@ -73,8 +73,8 @@ def test_custom_port_keeps_same_origin_validation(tmp_path, monkeypatch):
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS sender adapter')
 def test_missing_sender_is_reported_as_unavailable(monkeypatch):
     def missing(*args, **kwargs):
-        raise core.WorkflowError('发送助手未安装')
+        raise core.WorkflowError('發送助手未安裝')
     monkeypatch.setattr(studio_bridge, '_run', missing)
     result = studio_bridge.capability()
     assert result['available'] is False
-    assert result['message'] == '发送助手未安装'
+    assert result['message'] == '發送助手未安裝'

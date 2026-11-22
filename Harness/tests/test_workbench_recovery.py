@@ -83,7 +83,7 @@ def test_unknown_readback_needs_fresh_exact_match(isolated, monkeypatch):
     monkeypatch.setattr(workbench.bambuddy, 'reconcile', lambda *a: {'matching_task':True,'fresh':True,'device_state':'RUNNING'})
     matched = workbench.reconcile_operation(record['id'],'other-owner')
     assert matched['state'] == 'observed'
-    assert '首层' in matched['message']
+    assert '首層' in matched['message']
 
 
 def test_readback_error_after_click_stays_unknown(isolated, monkeypatch):

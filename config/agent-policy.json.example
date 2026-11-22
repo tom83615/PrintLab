@@ -2,6 +2,6 @@
   "schema_version": 1,
   "scope": "PrintLab modeling",
   "default_modeling_model": null,
-  "basis": "由使用者选择当前可用的 Codex 模型",
+  "basis": "由使用者選擇當前可用的 Codex 模型",
   "print_authorized": false
 }

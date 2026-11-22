@@ -43,25 +43,25 @@ def main():
         assert str(workspace) in (workspace / 'Context/team.md').read_text(encoding="utf-8")
         checks.append('empty_workspace_and_team_initialized')
 
-        project = run_json([*command, 'new', '入门验收挂钩', '--kind', 'functional',
-                            '--brief', '验收数据，桌板尺寸待测量', '--summary', '临时入门验收'],
+        project = run_json([*command, 'new', '入門驗收掛鉤', '--kind', 'functional',
+                            '--brief', '驗收數據，桌板尺寸待測量', '--summary', '臨時入門驗收'],
                            workspace, environment)
         pid = project['id']
         directory = workspace / 'Project' / f"{pid}-{project['slug']}"
         team = directory / 'Review/team.md'
         assert team.is_file()
-        team.write_text(team.read_text(encoding="utf-8") + '\n验收模拟分工：Sara 核对材料，Mike 检查工具，任务小组整理需求。\n', encoding="utf-8")
+        team.write_text(team.read_text(encoding="utf-8") + '\n驗收模擬分工：Sara 核對材料，Mike 檢查工具，任務小組整理需求。\n', encoding="utf-8")
         checks.append('project_created_with_team_template')
 
         first = run_json([*command, 'handoff', pid, '--note',
-                          '验收模拟 Sara 交接：材料条件仍待使用者确认。'], workspace, environment)
+                          '驗收模擬 Sara 交接：材料條件仍待使用者確認。'], workspace, environment)
         resumed = run_json([*command, 'context', pid], workspace, environment)
         contents = {d['path']: d['text'] for d in resumed['documents']}
         prefix = directory.relative_to(workspace).as_posix()
         assert 'Sara' in contents[f'{prefix}/{first["latest_session"]}']
         assert 'Mike' in contents[f'{prefix}/Review/team.md']
         second = run_json([*command, 'handoff', pid, '--note',
-                           '验收模拟任务小组接续：已读取 Sara 交接，下一步补齐尺寸。'],
+                           '驗收模擬任務小組接續：已讀取 Sara 交接，下一步補齊尺寸。'],
                           workspace, environment)
         final = run_json([*command, 'context', pid], workspace, environment)
         assert f'{prefix}/{second["latest_session"]}' in final['loaded']
@@ -79,7 +79,7 @@ rows = client.get('/api/projects').json()['projects']
 assert len(rows) == 1
 pid = rows[0]['id']
 project = client.get('/api/projects/' + pid).json()
-assert '桌板尺寸待测量' in project['brief']
+assert '桌板尺寸待測量' in project['brief']
 assert any(f['path'] == 'Review/team.md' for f in project['files'])
 assert 'Mike' in client.get('/api/files/' + pid + '/Review/team.md').text
 assert client.get('/api/device').json()['state'] == 'unconfigured'

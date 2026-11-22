@@ -24,16 +24,20 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='PrintLab browser 中文 ') as temporary:
         workspace = Path(temporary).resolve()
-        for name in ('Context', 'config', 'Templates'):
+        for name in ('config', 'Templates'):
             shutil.copytree(ROOT / name, workspace / name)
+        shutil.copytree(ROOT / 'Context', workspace / 'Context',
+                        ignore=shutil.ignore_patterns('profile.md', 'taste.md', 'agent-policy.json',
+                                                      'team.md', 'onboarding.json'))
+        shutil.copy2(workspace / 'config/profile.md.example', workspace / 'Context/profile.md')
         (workspace / 'Harness/studio').mkdir(parents=True)
         shutil.copytree(ROOT / 'Harness/studio/dist', workspace / 'Harness/studio/dist')
         shutil.copy2(ROOT / 'AGENTS.md', workspace / 'AGENTS.md')
         environment = {**os.environ, 'PRINTLAB_ROOT': str(workspace), 'PYTHONUTF8': '1',
                        'PYTHONPATH': str(ROOT / 'Harness')}
         command = [sys.executable, '-X', 'utf8', '-m', 'printlab.cli']
-        created = subprocess.check_output([*command, 'new', 'Windows 中文工作流验收',
-                                          '--brief', '验证用途与尺寸记录'], env=environment)
+        created = subprocess.check_output([*command, 'new', 'Windows 中文工作流驗收',
+                                          '--brief', '驗證用途與尺寸記錄'], env=environment)
         project = json.loads(created)
         # Synthetic recovered images exercise the real document route and Gallery rendering.
         preview_dir = workspace / 'Library/References/PrintHistory/CloudPreviews'
@@ -78,45 +82,45 @@ def main():
                 failures = []
                 page.on('pageerror', lambda error: failures.append(str(error)))
                 page.goto(base)
-                page.get_by_role('heading', name='把想法，做成实物。', exact=True).wait_for()
-                page.get_by_role('heading', name='我的打印图册', exact=True).scroll_into_view_if_needed()
-                page.get_by_text('配置板预览', exact=True).wait_for()
-                page.get_by_text('原模型参考', exact=True).wait_for()
-                page.get_by_text('切片模型预览', exact=True).wait_for()
+                page.get_by_role('heading', name='把想法，做成實物。', exact=True).wait_for()
+                page.get_by_role('heading', name='我的列印圖冊', exact=True).scroll_into_view_if_needed()
+                page.get_by_text('設定板預覽', exact=True).wait_for()
+                page.get_by_text('原模型參考', exact=True).wait_for()
+                page.get_by_text('切片模型預覽', exact=True).wait_for()
                 page.wait_for_function("Array.from(document.querySelectorAll('.gallery-cover img')).filter(i => i.complete && i.naturalWidth === 8).length === 3")
                 page.screenshot(path=str(output / 'recovered-previews.png'), full_page=True, animations='disabled')
                 checked = []
-                for route, title in [('onboarding', '配置与队伍'), ('projects', '项目图册'), ('prepared', '待打印'),
-                                     ('history', '每一次打印，都在这里。'), ('favorites', '灵感收藏'),
-                                     ('shop', '购物清单'), ('library', '资料与经验'), ('device', '设备与材料')]:
+                for route, title in [('onboarding', '設定與團隊'), ('projects', '專案圖冊'), ('prepared', '待列印'),
+                                     ('history', '每一次列印，都在這裡。'), ('favorites', '靈感收藏'),
+                                     ('shop', '購物清單'), ('library', '資料與經驗'), ('device', '設備與材料')]:
                     page.goto(base + '/#/' + route)
                     page.get_by_role('heading', name=title, exact=True).wait_for()
                     checked.append(route)
                 page.goto(base + '/#/onboarding')
-                page.get_by_role('heading', name='Sarah · 3D 打印顾问', exact=True).wait_for()
-                page.get_by_role('heading', name='Mike · 工作流设计师', exact=True).wait_for()
-                assert page.get_by_role('button', name='让 Agent 接着配置').count() == 1
+                page.get_by_role('heading', name='Sarah · 3D 列印顧問', exact=True).wait_for()
+                page.get_by_role('heading', name='Mike · 工作流設計師', exact=True).wait_for()
+                assert page.get_by_role('button', name='讓 Agent 接著設定').count() == 1
                 page.get_by_role('button', name='Context/profile.md', exact=True).click()
                 page.get_by_role('dialog').wait_for()
-                assert '加载失败' not in page.get_by_role('dialog').inner_text()
+                assert '載入失敗' not in page.get_by_role('dialog').inner_text()
                 page.keyboard.press('Escape')
                 page.screenshot(path=str(output / 'onboarding-desktop.png'), full_page=True, animations='disabled')
                 page.goto(base + '/#/projects/' + project['id'])
-                page.get_by_role('heading', name='Windows 中文工作流验收', exact=True).wait_for()
-                assert '验证用途与尺寸记录' in page.locator('main').inner_text()
+                page.get_by_role('heading', name='Windows 中文工作流驗收', exact=True).wait_for()
+                assert '驗證用途與尺寸記錄' in page.locator('main').inner_text()
                 page.screenshot(path=str(output / 'project-desktop.png'), full_page=True, animations='disabled')
                 page.goto(base + '/#/prepared')
                 if sys.platform == 'win32':
-                    page.get_by_role('heading', name='Windows 发送通道').wait_for()
-                    assert page.get_by_role('button', name='启用发送助手', exact=True).count() == 0
+                    page.get_by_role('heading', name='Windows 發送通道').wait_for()
+                    assert page.get_by_role('button', name='啟用發送助手', exact=True).count() == 0
                 page.screenshot(path=str(output / 'prepared-desktop.png'), full_page=True, animations='disabled')
                 page.set_viewport_size({'width': 390, 'height': 844})
                 page.goto(base + '/#/onboarding')
-                page.get_by_role('heading', name='配置与队伍', exact=True).wait_for()
+                page.get_by_role('heading', name='設定與團隊', exact=True).wait_for()
                 assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
                 page.screenshot(path=str(output / 'onboarding-mobile.png'), full_page=True, animations='disabled')
                 page.goto(base + '/#/projects')
-                page.get_by_role('heading', name='项目图册', exact=True).wait_for()
+                page.get_by_role('heading', name='專案圖冊', exact=True).wait_for()
                 page.screenshot(path=str(output / 'projects-mobile.png'), full_page=True, animations='disabled')
                 assert failures == [], failures
                 browser.close()

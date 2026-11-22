@@ -15,13 +15,13 @@ def test_card_remembers_answers_and_structured_quote_needs_no_magic_phrase(works
     p,jd=workspace
     device_path=core.ROOT/'Library/Devices/H2C/device.json'
     data=core.read_json(device_path);data['user_confirmed']['build_plate_description']='Textured PEI Plate';core.write_json(device_path,data)
-    event=confirmation.record('P001','Jtest',{'plate_clear':True,'material_loaded':True},'已经清空装好','test-session-A')
+    event=confirmation.record('P001','Jtest',{'plate_clear':True,'material_loaded':True},'已經清空裝好','test-session-A')
     card=confirmation.card('P001','Jtest',DEVICE)
     assert card['known_plate_type']=='Textured PEI Plate'
     assert [v['key'] for v in card['missing']]==['print_authorized']
-    event=confirmation.record('P001','Jtest',{'print_authorized':True},'就按这一份下发吧','test-session-B')
+    event=confirmation.record('P001','Jtest',{'print_authorized':True},'就按這一份下發吧','test-session-B')
     approval=core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    assert approval['confirmation']=='就按这一份下发吧'
+    assert approval['confirmation']=='就按這一份下發吧'
     assert approval['confirmation_facts']['plate_clear']['source']=='test-session-A'
     assert confirmation.card('P001','Jtest',DEVICE)['can_approve']
     assert not (jd/'dispatch.json').exists()
@@ -31,7 +31,7 @@ def test_confirmation_veto_after_old_event_revokes_existing_approval(workspace):
     p,jd=workspace
     event=confirmation.record('P001','Jtest',{'plate_clear':True,'print_authorized':True},'test approval','test')
     core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    confirmation.record('P001','Jtest',{'print_authorized':False},'先不要发','later-session')
+    confirmation.record('P001','Jtest',{'print_authorized':False},'先不要發','later-session')
     assert core.read_json(jd/'job.json')['state']=='awaiting_approval'
     assert core.read_json(jd/'approval.json')['revoked'] is True
     with pytest.raises(core.WorkflowError,match='authorization'):

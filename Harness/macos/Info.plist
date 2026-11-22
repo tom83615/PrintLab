@@ -28,7 +28,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>PrintLab 3D 打印设计工作室</string>
+	<string>PrintLab 3D 打印設計工作室</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

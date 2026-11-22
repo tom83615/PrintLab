@@ -30,7 +30,7 @@ def test_real_stop_receipt_required_and_record_is_immutable(workspace):
 
 def test_only_exact_approved_replacement_has_failed_transition(workspace):
     p,jd=workspace;recorded(workspace)
-    approval=core.approve('P001','Jtest','确认打印',True)
+    approval=core.approve('P001','Jtest','確認打印',True)
     proof=cancelled_transition.clearance(p,jd,core.read_json(jd/'job.json'),approval)
     assert proof['newJobId']=='Jtest' and proof['fileSha256']==core.digest(jd/'job.gcode.3mf')
     status={**ready(),'state':'FAILED','current_print':REMOTE,'hms_errors':[]}
@@ -42,7 +42,7 @@ def test_only_exact_approved_replacement_has_failed_transition(workspace):
 
 def test_expired_approval_or_changed_cancel_evidence_never_allows_failed(workspace):
     p,jd=workspace;recorded(workspace)
-    approval=core.approve('P001','Jtest','确认打印',True);job=core.read_json(jd/'job.json')
+    approval=core.approve('P001','Jtest','確認打印',True);job=core.read_json(jd/'job.json')
     assert cancelled_transition.clearance(p,jd,job,None) is None
     expired={**approval,'approved_at':(dt.datetime.now(dt.timezone.utc)-dt.timedelta(minutes=31)).isoformat()}
     assert cancelled_transition.clearance(p,jd,job,expired) is None

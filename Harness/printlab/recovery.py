@@ -81,7 +81,7 @@ def before_submit(jd, job, approval, client):
                 core.write_json(path.parent / 'dispatch-resolution.json', evidence)
                 # Preserve the original dispatch error, including unknown attribution.
                 old.update(state='dispatch_rejected', updated_at=core.now(),
-                           reconciliation={'state':'settled', 'message':'签名失败已结案；旧任务不重发，保留原始报错和未归属的实体结果。'})
+                           reconciliation={'state':'settled', 'message':'簽名失敗已結案；舊任務不重發，保留原始報錯和未歸屬的實體結果。'})
                 core.write_json(path, old)
                 p = core.project_path(project['id'])
                 if core.is_current_attempt(p, old):

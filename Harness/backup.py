@@ -237,18 +237,18 @@ def create_backup(root: Path = DEFAULT_ROOT, destination: Path | None = None) ->
         write_json(partial / "manifest.json", manifest)
         readme = partial / "RESTORE.txt"
         readme.write_text(
-            "PrintLab 私有本地备份\n\n"
-            "本目录含设备凭据和数据库，请保持目录权限700、文件600，不上传公共仓库。\n"
-            "这是本机副本，不是异地灾备。node_modules、虚拟环境、vendor、缓存和日志未备份；按锁定版本重建。\n"
-            "验证：python3 Harness/backup.py verify <本备份目录>\n"
-            "验证只将payload恢复到新的Runtime/evidence/recovery-*目录，不覆盖在线资料。\n"
-            "实际恢复需先停止相关服务，保留当前状态副本，再由用户明确选择恢复目录和版本。\n"
-            "先校验manifest的全部SHA256与SQLite quick_check，再复制相应项目及Bambuddy数据、密钥和配置。\n"
-            "恢复Bambuddy数据库时服务必须停止，旧db-wal/db-shm不能混入恢复库；保留旧数据以便回退。\n"
-            "备份文件全部收紧为600；验证恢复保留源文件修改时间，并仅恢复原有的拥有者执行位，普通文件600、可执行文件700。\n"
-            "恢复副本不继承组/其他用户权限和SUID/SGID；环境重建后再次doctor并读取实际设备状态。\n"
-            "数据库快照完整；文件逐个稳定复制，不保证跨文件同一瞬间。重要批准包备份前应停止修改。\n"
-            "SHA256用于发现损坏，不是签名，不能证明不可信来源的备份真实性。\n", encoding="utf-8")
+            "PrintLab 私有本地備份\n\n"
+            "本目錄含設備憑據和數據庫，請保持目錄權限700、文件600，不上傳公共倉庫。\n"
+            "這是本機副本，不是異地災備。node_modules、虛擬環境、vendor、緩存和日誌未備份；按鎖定版本重建。\n"
+            "驗證：python3 Harness/backup.py verify <本備份目錄>\n"
+            "驗證只將payload恢復到新的Runtime/evidence/recovery-*目錄，不覆蓋在線資料。\n"
+            "實際恢復需先停止相關服務，保留當前狀態副本，再由用戶明確選擇恢復目錄和版本。\n"
+            "先校驗manifest的全部SHA256與SQLite quick_check，再複製相應項目及Bambuddy數據、密鑰和配置。\n"
+            "恢復Bambuddy數據庫時服務必須停止，舊db-wal/db-shm不能混入恢復庫；保留舊數據以便回退。\n"
+            "備份文件全部收緊為600；驗證恢復保留源文件修改時間，並僅恢復原有的擁有者執行位，普通文件600、可執行文件700。\n"
+            "恢復副本不繼承組/其他用戶權限和SUID/SGID；環境重建後再次doctor並讀取實際設備狀態。\n"
+            "數據庫快照完整；文件逐個穩定複製，不保證跨文件同一瞬間。重要批准包備份前應停止修改。\n"
+            "SHA256用於發現損壞，不是簽名，不能證明不可信來源的備份真實性。\n", encoding="utf-8")
         readme.chmod(0o600)
         partial.rename(final)
         return final

@@ -41,7 +41,7 @@ def test_does_not_guess_from_other_errors(message):
 
 
 def test_mode_failure_does_not_create_uncertain_dispatch(workspace):
-    native_job(workspace);core.approve('P001','Jtest','确认打印',True)
+    native_job(workspace);core.approve('P001','Jtest','確認打印',True)
     dev=NativeDevice();get=dev.get
     def current(path):
         row=get(path)
@@ -135,7 +135,7 @@ def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(w
 
 def test_history_recovery_preserves_error_and_never_resends(workspace):
     native_job(workspace)
-    approval=core.approve('P001','Jtest','确认打印',True)
+    approval=core.approve('P001','Jtest','確認打印',True)
     p,jd=workspace
     old_dir=p/'Print/Jold';old_dir.mkdir()
     old,receipt,_,_,live,_=facts()
@@ -159,7 +159,7 @@ def test_history_recovery_preserves_error_and_never_resends(workspace):
 
 
 def test_unknown_timeout_remains_blocking_even_when_idle_and_plate_clear(workspace):
-    native_job(workspace);approval=core.approve('P001','Jtest','确认打印',True)
+    native_job(workspace);approval=core.approve('P001','Jtest','確認打印',True)
     p,jd=workspace;old_dir=p/'Print/Jold';old_dir.mkdir()
     old,receipt,*_=facts();old['project_id']='P001';receipt['error']='Timed out; possible acceptance'
     core.write_json(old_dir/'job.json',old);core.write_json(old_dir/'dispatch.json',receipt)
@@ -182,7 +182,7 @@ def test_official_copy_is_same_gcode_unapproved_and_source_cannot_dispatch(works
     with zipfile.ZipFile(workspace[1]/old['artifact']) as a,zipfile.ZipFile(jd/job['artifact']) as b:
         assert a.read('Metadata/plate_1.gcode')==b.read('Metadata/plate_1.gcode')
         assert a.read('Metadata/project_settings.config')==b.read('Metadata/project_settings.config')
-    core.approve('P001',job['id'],'确认打印',True)
+    core.approve('P001',job['id'],'確認打印',True)
     dev=NativeDevice()
     r=official.submit('P001',job['id'],True,client_factory=lambda:dev,inspector=lambda *a:{'ok':True})
     assert r['reserved'] and not r['executed'] and not dev.writes

@@ -93,7 +93,7 @@ def card(pid, jid=None, device=None):
     plate = core.read_json(core.DEVICE_CARD,{}).get('user_confirmed',{}).get('build_plate_description')
     if not jid:
         return {'project_id':project['id'],'project_name':project['name'],'revision':project.get('current_revision'),
-                'job_id':None,'plate_type':plate,'missing':[{'key':'slice','label':'尚未准备具体切片任务','needs_user':False}],
+                'job_id':None,'plate_type':plate,'missing':[{'key':'slice','label':'尚未準備具體切片任務','needs_user':False}],
                 'can_approve':False,'already_dispatched':False,'facts':{}}
     jd = core.job_path(pid,jid)
     job = core.read_json(jd/'job.json')

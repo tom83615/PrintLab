@@ -217,7 +217,7 @@ def view(force=False, client_factory=None):
                     'message': '在 OpenSpoolMan 查看它已記錄的列印；這些記錄未匯入 PrintLab。'}
         if type(pid) is not int:
             return {'state': 'unconfigured', 'stale': False, 'items': [],
-                    'message': '连接 Bambuddy 并配置打印机后，这里会显示已捕获的打印历史。'}
+                    'message': '連接 Bambuddy 並配置打印機後，這裡會顯示已捕獲的打印歷史。'}
         if cached.get('printer_id') != pid:
             cached = {}
         stamp = timestamp(cached.get('updated_at'))
@@ -272,12 +272,12 @@ def view(force=False, client_factory=None):
                                    'all_recorded_pages_loaded': True, 'all_lifetime_prints_verified': False,
                                    'cloud_history_synced': False},
                       'recovery': recovery,
-                      'message': '已读取 Bambuddy 保存的全部分页记录。账号旧历史导入已排除在本轮开发范围外。'}
+                      'message': '已讀取 Bambuddy 保存的全部分頁記錄。帳號舊歷史導入已排除在本輪開發範圍外。'}
             core.write_json(cache_path, result)
             return result
         except (httpx.HTTPError, core.WorkflowError, OSError, ValueError, KeyError, TypeError):
             return {**cached, 'state': 'unavailable', 'stale': True, 'items': cached.get('items', []),
-                    'message': '历史同步失败，保留上次成功记录；本次没有确认完整覆盖。'}
+                    'message': '歷史同步失敗，保留上次成功記錄；本次沒有確認完整覆蓋。'}
         finally:
             if client:
                 client.close()

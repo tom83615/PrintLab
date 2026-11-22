@@ -141,7 +141,7 @@ def build_envelope(pid):
     area = facts['device']['printable_area']['value']
     height = facts['device']['printable_height']['value']
     if area is None or height is None or facts['official_profile_changed'] or facts['device_verification'] == 'identity_conflict':
-        return {'known': False, 'reason': '当前设备打印空间缺少有效来源，需在切片前核对'}
+        return {'known': False, 'reason': '當前設備打印空間缺少有效來源，需在切片前核對'}
     try:
         points = [[float(n) for n in point.strip().split('x')] for point in area]
         if len(points) < 3 or any(len(point) != 2 or any(not math.isfinite(n) for n in point) for point in points):
@@ -151,7 +151,7 @@ def build_envelope(pid):
         if any(not math.isfinite(n) or n <= 0 for n in dimensions):
             raise ValueError()
     except (TypeError, ValueError, AttributeError):
-        return {'known': False, 'reason': '设备打印空间格式无效，需要核对实际官方配置'}
+        return {'known': False, 'reason': '設備打印空間格式無效，需要核對實際官方配置'}
     return {'known': True, 'dimensions_mm': dimensions, 'model': facts['device']['model']['value'],
             'source': facts['inputs']['device'],
             'scope': 'Axis-aligned envelope only; slicing checks placement, exclusion regions and the actual toolpath'}

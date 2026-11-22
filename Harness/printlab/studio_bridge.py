@@ -31,7 +31,7 @@ BUNDLE = '/Applications/BambuStudio.app'
 def display_name():
     value = core.config().get('studio_printer_name')
     if not isinstance(value, str) or not value.strip():
-        raise core.WorkflowError('请在 Runtime/config.json 设置 Studio 中显示的打印机名称 studio_printer_name')
+        raise core.WorkflowError('請在 Runtime/config.json 設置 Studio 中顯示的打印機名稱 studio_printer_name')
     return value.strip()
 
 
@@ -72,7 +72,7 @@ def _build_manifest_path():
 def build_helper():
     """Build and install a dedicated local app; never requests privacy permission."""
     if sys.platform != "darwin":
-        raise core.WorkflowError("发送助手构建需要 macOS。Windows 使用 docs/WINDOWS.md 中的官方 Studio 流程。")
+        raise core.WorkflowError("發送助手構建需要 macOS。Windows 使用 docs/WINDOWS.md 中的官方 Studio 流程。")
     source = core.ROOT / 'Harness/macos/StudioBridge.swift'
     build_root = core.ROOT / 'Runtime/macos-build'
     build_root.mkdir(parents=True, exist_ok=True)
@@ -85,7 +85,7 @@ def build_helper():
         info={'CFBundleIdentifier':HELPER_BUNDLE_ID,'CFBundleName':HELPER_APP_NAME,'CFBundleDisplayName':HELPER_APP_NAME,
               'CFBundleExecutable':'StudioBridge','CFBundlePackageType':'APPL','CFBundleShortVersionString':'1.0',
               'CFBundleVersion':'1','LSMinimumSystemVersion':'14.0','LSUIElement':True,'NSHighResolutionCapable':True,
-              'NSPrincipalClass':'NSApplication','NSHumanReadableCopyright':'PrintLab 本机发送桥，不包含账号或打印机凭据'}
+              'NSPrincipalClass':'NSApplication','NSHumanReadableCopyright':'PrintLab 本機發送橋，不包含帳號或打印機憑據'}
         icon=core.ROOT/'Harness/macos/Assets/PrintLab.icns'
         if icon.is_file():
             shutil.copy2(icon,resources/'PrintLab.icns');info['CFBundleIconFile']='PrintLab'
@@ -110,7 +110,7 @@ def _verify_bundle():
             or manifest.get('binary_sha256') != core.digest(_helper_path())
             or manifest.get('info_sha256') != core.digest(_bundle_path()/'Contents/Info.plist')
             or manifest.get('bundle_id') != HELPER_BUNDLE_ID):
-        raise core.WorkflowError('PrintLab发送助手未安装或发生变化，需要重新构建和验证')
+        raise core.WorkflowError('PrintLab发送助手未安裝或發生變化，需要重新構建和驗證')
     subprocess.run(['/usr/bin/codesign','--verify','--strict',str(_bundle_path())],check=True,capture_output=True,timeout=10)
 
 
@@ -137,14 +137,14 @@ def _run(*args, timeout=20):
         try:data=json.loads(response.read_text(encoding="utf-8"))
         except (OSError,ValueError,TypeError):
             detail = (process.stderr or '').strip()[:600]
-            raise HelperError(f'发送助手没有返回有效回执（退出码 {process.returncode}）{": " + detail if detail else ""}；保留本次回执目录：{private}', code='receipt_missing', stage='ipc') from None
-        if not isinstance(data, dict):raise core.WorkflowError('发送助手回执格式无效')
-        if data.get('request_id') != request_id:raise core.WorkflowError('发送助手回执不属于本次请求')
+            raise HelperError(f'發送助手沒有返回有效回執（退出碼 {process.returncode}）{": " + detail if detail else ""}；保留本次回執目錄：{private}', code='receipt_missing', stage='ipc') from None
+        if not isinstance(data, dict):raise core.WorkflowError('發送助手回執格式無效')
+        if data.get('request_id') != request_id:raise core.WorkflowError('發送助手回執不屬於本次請求')
         receipt_read = True
         if data.get('ok') is not True:
-            raise HelperError(data.get('error','发送助手执行失败'),
+            raise HelperError(data.get('error','發送助手執行失敗'),
                               code=data.get('code','helper_failed'), stage=data.get('stage','helper'))
-        if process.returncode:raise core.WorkflowError(f'发送助手启动命令异常退出（退出码 {process.returncode}），执行结果仍需核实')
+        if process.returncode:raise core.WorkflowError(f'發送助手啟動命令異常退出（退出碼 {process.returncode}），執行結果仍需核實')
         return data
     finally:
         # An unacknowledged helper can still be running. Keep its exact private
@@ -162,7 +162,7 @@ def observe_window(studio_pid, title, *, recover=False):
     if sys.platform != 'darwin':
         raise core.WorkflowError('窗口助手需要 macOS')
     if type(studio_pid) is not int or studio_pid <= 0 or not isinstance(title, str) or not title.strip():
-        raise core.WorkflowError('需要明确的 Studio 进程 ID 和完整窗口标题')
+        raise core.WorkflowError('需要明確的 Studio 進程 ID 和完整窗口標題')
     with core.lock('studio-bridge'):
         return _run('recover-window' if recover else 'snapshot', studio_pid, title)
 
@@ -184,10 +184,10 @@ def open_preview_panel(studio_pid, title):
         raise core.WorkflowError('窗口助手需要 macOS')
     if (type(studio_pid) is not int or studio_pid <= 0 or not isinstance(title, str)
             or not title.endswith('.gcode') or '*' in title):
-        raise core.WorkflowError('需要明确的 Studio 进程 ID 和完整 .gcode 预览窗口标题')
+        raise core.WorkflowError('需要明確的 Studio 進程 ID 和完整 .gcode 預覽窗口標題')
     observed = window_status()
     if observed.get('studio_version') != STUDIO_VERSION:
-        raise core.WorkflowError('Studio 版本变更，需重新验证界面适配器')
+        raise core.WorkflowError('Studio 版本變更，需重新驗證界面適配器')
     with core.lock('studio-bridge'):
         return _run('open-panel', studio_pid, title)
 
@@ -215,22 +215,22 @@ def open_preview_file(path, expected_sha256):
     if sys.platform != 'darwin':
         raise core.WorkflowError('窗口助手需要 macOS')
     if not isinstance(path, (str, Path)) or not str(path).strip():
-        raise core.WorkflowError('需要明确的 .gcode.3mf 切片文件')
+        raise core.WorkflowError('需要明確的 .gcode.3mf 切片文件')
     artifact = Path(path).expanduser().resolve()
     if not artifact.is_file() or not artifact.name.endswith('.gcode.3mf') or '*' in artifact.name:
-        raise core.WorkflowError('需要明确的 .gcode.3mf 切片文件')
+        raise core.WorkflowError('需要明確的 .gcode.3mf 切片文件')
     if not isinstance(expected_sha256, str) or not re.fullmatch(r'[0-9a-f]{64}', expected_sha256):
-        raise core.WorkflowError('需要当前切片文件的 SHA-256，避免打开错误或变化后的文件')
+        raise core.WorkflowError('需要當前切片文件的 SHA-256，避免打開錯誤或變化後的文件')
     if core.digest(artifact) != expected_sha256:
         raise core.WorkflowError('Artifact changed')
     with core.lock('studio-bridge'):
         observed = window_status()
         if observed.get('studio_version') != STUDIO_VERSION:
-            raise core.WorkflowError('Studio 版本变更，需重新验证界面适配器')
+            raise core.WorkflowError('Studio 版本變更，需重新驗證界面適配器')
         if not observed.get('accessibility') or not observed.get('screen_capture'):
-            raise core.WorkflowError('PrintLab发送助手需要辅助功能和屏幕读取权限')
+            raise core.WorkflowError('PrintLab发送助手需要輔助功能和屏幕讀取權限')
         if not observed.get('session_on_console') or observed.get('screen_locked'):
-            raise core.WorkflowError('需要已登录且未锁屏的桌面会话')
+            raise core.WorkflowError('需要已登錄且未鎖屏的桌面會話')
         # A CLI slice can contain editable meshes. Studio then opens Prepare
         # instead of the executable preview. Use the same byte-checked copy
         # routine as official handoff; never reslice or alter the original.
@@ -260,34 +260,34 @@ def setup_permissions():
     The caller should later re-run capability to observe the user's OS choices.
     """
     if sys.platform != 'darwin':
-        raise core.WorkflowError('此发送助手使用 macOS 系统接口。Windows 请按 docs/WINDOWS.md 交接到官方 Studio。')
+        raise core.WorkflowError('此發送助手使用 macOS 系統接口。Windows 請按 docs/WINDOWS.md 交接到官方 Studio。')
     _verify_bundle()
     subprocess.run(['/usr/bin/open','-n','-a',str(_bundle_path()),'--args','request-permissions'],
                    check=True,capture_output=True,text=True,timeout=10)
     return {'requested':True,'printed':False,'granted':None,'requires_recheck':True,
             'app_name':HELPER_APP_NAME,'app_path':str(_bundle_path()),'bundle_id':HELPER_BUNDLE_ID,
-            'message':'系统将为 PrintLab发送助手 请求辅助功能和屏幕读取权限；授权后回到工作台重新核验。'}
+            'message':'系統將為 PrintLab发送助手 請求輔助功能和屏幕讀取權限；授權後回到工作台重新核驗。'}
 
 
 def _job_supported(job):
     m = job.get('mapping', {})
     reasons = []
-    if m.get('transport') != 'bambu_studio': reasons.append('需要官方 Studio 发送副本')
-    if job.get('plate') != 1: reasons.append('脚本当前仅验证单盘 plate 1')
-    if m.get('use_ams') is not True or len(m.get('ams_mapping', [])) != 1: reasons.append('脚本当前仅验证单主料 AMS 路线')
+    if m.get('transport') != 'bambu_studio': reasons.append('需要官方 Studio 發送副本')
+    if job.get('plate') != 1: reasons.append('腳本當前僅驗證單盤 plate 1')
+    if m.get('use_ams') is not True or len(m.get('ams_mapping', [])) != 1: reasons.append('腳本當前僅驗證單主料 AMS 路線')
     slots = m.get('ams_mapping', [])
-    if len(slots) != 1 or type(slots[0]) is not int or not 0 <= slots[0] <= 7: reasons.append('AMS 槽位不在已验证范围 A1–B4')
-    if m.get('extruder_mapping') != [1]: reasons.append('脚本当前仅验证左主喷嘴')
-    if len(m.get('filament_types', [])) != 1 or m['filament_types'][0] not in {'PETG', 'PLA'}: reasons.append('脚本当前仅验证单种 PLA/PETG')
-    if job.get('curr_bed_type') != 'Textured PEI Plate': reasons.append('脚本当前仅验证纹理 PEI 板')
-    if job.get('sliced_printer_model') not in {'Bambu Lab X2D', 'X2D'}: reasons.append('脚本当前仅验证 X2D')
+    if len(slots) != 1 or type(slots[0]) is not int or not 0 <= slots[0] <= 7: reasons.append('AMS 槽位不在已驗證範圍 A1–B4')
+    if m.get('extruder_mapping') != [1]: reasons.append('腳本當前僅驗證左主噴嘴')
+    if len(m.get('filament_types', [])) != 1 or m['filament_types'][0] not in {'PETG', 'PLA'}: reasons.append('腳本當前僅驗證單種 PLA/PETG')
+    if job.get('curr_bed_type') != 'Textured PEI Plate': reasons.append('腳本當前僅驗證紋理 PEI 板')
+    if job.get('sliced_printer_model') not in {'Bambu Lab X2D', 'X2D'}: reasons.append('腳本當前僅驗證 X2D')
     return reasons
 
 
 def capability(pid=None, jid=None):
     """Read-only live capability, optionally constrained to an exact job."""
     if sys.platform != 'darwin':
-        message = 'Windows 使用官方 Bambu Studio 交接流程。核对具体任务并记录批准后，在 Studio 中确认发送，步骤见 docs/WINDOWS.md。'
+        message = 'Windows 使用官方 Bambu Studio 交接流程。核對具體任務並記錄批准後，在 Studio 中確認發送，步驟見 docs/WINDOWS.md。'
         return {'available': False, 'setup_supported': False, 'message': message,
                 'blockers': [message], 'transport': 'bambu_studio_manual'}
     blockers = []
@@ -297,18 +297,18 @@ def capability(pid=None, jid=None):
         blockers.append(str(exc))
     try:
         observed = _run('probe', timeout=10)
-        if observed.get('helper_bundle_id') != HELPER_BUNDLE_ID: blockers.append('发送助手未通过专用 App 身份运行')
-        if observed.get('studio_version') != STUDIO_VERSION: blockers.append('Studio 版本变更，需重新验证界面适配器')
-        if not observed.get('accessibility'): blockers.append('PrintLab发送助手 尚未获得辅助功能权限')
-        if not observed.get('screen_capture'): blockers.append('PrintLab发送助手 尚未获得屏幕读取权限')
-        if not observed.get('session_on_console') or observed.get('screen_locked'): blockers.append('需要本机已登录且未锁屏的桌面会话')
+        if observed.get('helper_bundle_id') != HELPER_BUNDLE_ID: blockers.append('發送助手未通過專用 App 身份運行')
+        if observed.get('studio_version') != STUDIO_VERSION: blockers.append('Studio 版本變更，需重新驗證界面適配器')
+        if not observed.get('accessibility'): blockers.append('PrintLab发送助手 尚未獲得輔助功能權限')
+        if not observed.get('screen_capture'): blockers.append('PrintLab发送助手 尚未獲得屏幕讀取權限')
+        if not observed.get('session_on_console') or observed.get('screen_locked'): blockers.append('需要本機已登錄且未鎖屏的桌面會話')
         if pid is not None and jid is not None:
             job = core.read_json(core.job_path(pid,jid)/'job.json')
             blockers.extend(_job_supported(job))
-            if (core.job_path(pid,jid)/'HOLD-DO-NOT-PRINT.md').exists(): blockers.append('该任务仍保留暂缓打印标记；需新的启动要求后解除，本轮不打印')
-        return {'available': not blockers, 'message': '可通过本机 Studio 脚本发送；发送前仍逐项核验窗口和具体任务' if not blockers else '；'.join(blockers),
+            if (core.job_path(pid,jid)/'HOLD-DO-NOT-PRINT.md').exists(): blockers.append('該任務仍保留暫緩打印標記；需新的啟動要求後解除，本輪不打印')
+        return {'available': not blockers, 'message': '可通過本機 Studio 腳本發送；發送前仍逐項核驗窗口和具體任務' if not blockers else '；'.join(blockers),
                 'blockers': blockers, 'transport': 'bambu_studio_script', 'observation': observed,
-                'limitations': ['仅已验证的中文 Studio 版本', '仅 X2D 单主料 AMS、左主喷嘴、纹理 PEI 单盘', '需要已登录且未锁屏桌面', '发送成功仍需设备读回，不自动重发']}
+                'limitations': ['僅已驗證的中文 Studio 版本', '僅 X2D 單主料 AMS、左主噴嘴、紋理 PEI 單盤', '需要已登錄且未鎖屏桌面', '發送成功仍需設備讀回，不自動重發']}
     except (core.WorkflowError, OSError, ValueError, subprocess.SubprocessError) as exc:
         return {'available': False, 'message': str(exc), 'blockers': [str(exc)], 'transport': 'bambu_studio_script'}
 
@@ -325,25 +325,25 @@ def _green(token):
 
 
 def _validate_snapshot_identity(shot, job):
-    if shot.get('title') != '发送打印任务' or shot.get('active') is not True: raise core.WorkflowError('Studio 发送窗口不是当前活动窗口')
+    if shot.get('title') != '发送打印任务' or shot.get('active') is not True: raise core.WorkflowError('Studio 發送窗口不是當前活動窗口')
     bounds = shot.get('bounds', {})
     ratio_x = shot.get('width', 0) / max(bounds.get('Width', 0), 1)
     ratio_y = shot.get('height', 0) / max(bounds.get('Height', 0), 1)
-    if not 0.9 <= ratio_x <= 3 or abs(ratio_x-ratio_y) > .02: raise core.WorkflowError('窗口截图与当前实际尺寸不一致')
+    if not 0.9 <= ratio_x <= 3 or abs(ratio_x-ratio_y) > .02: raise core.WorkflowError('窗口截圖與當前實際尺寸不一致')
     tokens = shot.get('tokens', [])
     texts = [t.get('text','') for t in tokens]
     if {'允许', '不允许', '打开系统设置'} & set(texts):
-        raise core.WorkflowError('系统弹窗遮挡发送窗口，请先处理系统提示再继续')
+        raise core.WorkflowError('系統彈窗遮擋發送窗口，請先處理系統提示再繼續')
     expected = job['id'] + '.gcode'
     jobs = [s.rstrip(' /') for s in texts if re.match(r'^J\d{8}-\d{6}-[a-z0-9]+\.gcode', s)]
-    if jobs != [expected]: raise core.WorkflowError('发送窗口任务名不唯一或不匹配')
+    if jobs != [expected]: raise core.WorkflowError('發送窗口任務名不唯一或不匹配')
     if texts.count(display_name()) != 1:
-        raise core.WorkflowError('发送窗口打印机或喷嘴配置不匹配')
+        raise core.WorkflowError('發送窗口打印機或噴嘴配置不匹配')
     models = [t.casefold() for t in texts if t.casefold().startswith('bambu lab ')]
     if models == ['bambu lab x2d 0.4mm']:
-        raise IncompleteDeviceInfoError('Studio 尚未显示完整双喷嘴信息，需要刷新设备卡')
+        raise IncompleteDeviceInfoError('Studio 尚未顯示完整雙噴嘴信息，需要刷新設備卡')
     if models != ['bambu lab x2d 0.4/0.4mm']:
-        raise core.WorkflowError('发送窗口打印机或喷嘴配置不匹配')
+        raise core.WorkflowError('發送窗口打印機或噴嘴配置不匹配')
 
 
 def validate_snapshot(shot, job):
@@ -354,20 +354,20 @@ def validate_snapshot(shot, job):
     m = job['mapping']; slot = m['ams_mapping'][0]
     wanted_slot = chr(ord('A')+slot//4) + str(slot%4+1)
     shown_slots = [(re.sub(r'[VvY∨▼⌄]+$', '',t['text']),t) for t in tokens if re.fullmatch(r'[A-D][1-4][VvY∨▼⌄]*', t['text'])]
-    if len(shown_slots) != 1 or shown_slots[0][0] != wanted_slot or shown_slots[0][1]['x'] >= .5: raise core.WorkflowError('AMS 槽位或主辅喷嘴不匹配')
+    if len(shown_slots) != 1 or shown_slots[0][0] != wanted_slot or shown_slots[0][1]['x'] >= .5: raise core.WorkflowError('AMS 槽位或主輔噴嘴不匹配')
     materials = [t for t in tokens if t['text'] in {'PLA','PETG','ABS','ASA','TPU','PA','PC','Sup.PLA','Support'}]
-    if len(materials) != 1 or materials[0]['text'] != m['filament_types'][0] or materials[0]['x'] >= .5: raise core.WorkflowError('窗口材料或喷嘴分组不匹配')
-    if texts.count('PEI') != 1: raise core.WorkflowError('发送窗口未识别 PEI 板')
+    if len(materials) != 1 or materials[0]['text'] != m['filament_types'][0] or materials[0]['x'] >= .5: raise core.WorkflowError('窗口材料或噴嘴分組不匹配')
+    if texts.count('PEI') != 1: raise core.WorkflowError('發送窗口未識別 PEI 板')
     for label, selected, side in [('延时摄影','关闭','left'),('动态流量校准','打开','left'),('自动热床调平','打开','right'),('喷嘴偏移校准','关闭','right')]:
         rows = [t for t in tokens if t['text'].startswith(label)]
-        if len(rows) != 1: raise core.WorkflowError(f'无法核验{label}选项')
+        if len(rows) != 1: raise core.WorkflowError(f'無法核驗{label}選項')
         row = rows[0]
         options = [t for t in tokens if abs(t['y']-row['y']) < .025 and (t['x'] < .5) == (side=='left') and selected in t['text'] and _green(t)]
-        # Vision sometimes joins 自动 + 打开. Green text must be in the second half.
+        # Vision sometimes joins 自動 + 打開. Green text must be in the second half.
         options = [t for t in options if t['text'] == selected or (t['text']=='自动打开' and selected=='打开' and t['green_center_x']>.60)]
-        if len(options) != 1: raise core.WorkflowError(f'{label}未处于要求的{selected}状态')
+        if len(options) != 1: raise core.WorkflowError(f'{label}未處於要求的{selected}狀態')
     sends = [t for t in tokens if t['text']=='发送' and t.get('confidence',0)>=.5 and _green(t) and t['y']>.85]
-    if len(sends) != 1: raise core.WorkflowError('未识别唯一可用的发送按钮')
+    if len(sends) != 1: raise core.WorkflowError('未識別唯一可用的發送按鈕')
     return {'job_id':job['id'], 'display_name':display_name(), 'slot':wanted_slot, 'filament':m['filament_types'][0], 'snapshot_sha256':shot['sha256'], 'options_verified':True}
 
 
@@ -391,7 +391,7 @@ def _open_prepared(pid,jid):
     except core.WorkflowError as exc:
         # Only the timelapse setting is changed by this adapter. Other failures
         # must remain visible before any preparation click is attempted.
-        if str(exc) != '延时摄影未处于要求的关闭状态':
+        if str(exc) != '延时摄影未處於要求的关闭狀態':
             raise
         shot = _run('prepare-options',target,jid+'.gcode')
         proof = validate_snapshot(shot,job)
@@ -453,7 +453,7 @@ def _dispatch_impl(pid,jid,phase):
 
 def dispatch(pid,jid):
     if sys.platform != 'darwin':
-        raise BeforeSendError('请按 docs/WINDOWS.md 使用官方 Studio 交接流程')
+        raise BeforeSendError('請按 docs/WINDOWS.md 使用官方 Studio 交接流程')
     phase={'final_helper_invoked':False,'reservation_entered':False}
     try:
         return _dispatch_impl(pid,jid,phase)

@@ -89,7 +89,7 @@ def test_bambu_grouped_standard_temperatures_use_one_variant_per_filament(monkey
 
 def test_original_incident_and_real_official_candidate_are_distinguished():
     root=Path(__file__).resolve().parents[2]
-    old=root/'Project/P005-Beni闪电耳/Print/J20261025-183358-2ac5e7/job.gcode.3mf'
+    old=root/'Project/P005-Beni閃電耳/Print/J20261025-183358-2ac5e7/job.gcode.3mf'
     candidate=root/'Runtime/evidence/native-profile-candidate-20261025-190330/isolated-lab/Project/P005-candidate-offline/Print/J20261025-190538-de848b/job.gcode.3mf'
     if not old.exists() or not candidate.exists():pytest.skip('Local real regression fixtures unavailable')
     bad=slicer_guard.inspect_archive(old);good=slicer_guard.inspect_archive(candidate)
@@ -99,7 +99,7 @@ def test_original_incident_and_real_official_candidate_are_distinguished():
 
 def test_bad_startup_cannot_be_approved_or_dispatched_even_with_fresh_metadata(workspace):
     p,jd=workspace
-    approval=core.approve('P001','Jtest','确认打印',True)
+    approval=core.approve('P001','Jtest','確認打印',True)
     artifact=jd/'job.gcode.3mf'
     with zipfile.ZipFile(artifact) as archive:members={name:archive.read(name) for name in archive.namelist()}
     members['Metadata/plate_1.gcode']=b'M109 S220\n; CHANGE_LAYER\nG1 E1'
@@ -112,7 +112,7 @@ def test_bad_startup_cannot_be_approved_or_dispatched_even_with_fresh_metadata(w
         bambuddy.submit('P001','Jtest',True,client_factory=lambda **kwargs:device)
     assert not device.writes and not (jd/'dispatch.json').exists()
     with pytest.raises(core.WorkflowError,match='initial AMS'):
-        core.approve('P001','Jtest','确认打印',True)
+        core.approve('P001','Jtest','確認打印',True)
 
 
 def test_dual_nozzle_variants_and_inactive_precooling_do_not_mask_wrong_active_heat(monkeypatch):
@@ -142,13 +142,13 @@ def test_vendor_new_material_temperature_follows_pending_material_not_a_index():
 
 
 def test_real_studio_custom_plate_mapping_and_temperatures():
-    path=(Path(__file__).resolve().parents[2] / 'Project/P011-Apple50笔触表面改装/Review/dispatch-20261105/plate1-current.gcode.3mf')
+    path=(Path(__file__).resolve().parents[2] / 'Project/P011-Apple50筆觸表面改裝/Review/dispatch-20261105/plate1-current.gcode.3mf')
     if not path.exists():pytest.skip('Local Studio custom plate fixture unavailable')
     assert slicer_guard.assert_safe_archive(path)['ok']
 
 
 def test_plate_mapping_disagreement_is_rejected(tmp_path):
-    path=(Path(__file__).resolve().parents[2] / 'Project/P011-Apple50笔触表面改装/Review/dispatch-20261105/plate1-current.gcode.3mf')
+    path=(Path(__file__).resolve().parents[2] / 'Project/P011-Apple50筆觸表面改裝/Review/dispatch-20261105/plate1-current.gcode.3mf')
     if not path.exists():pytest.skip('Local Studio custom plate fixture unavailable')
     with zipfile.ZipFile(path) as src,zipfile.ZipFile(tmp_path/'bad.3mf','w') as dst:
         for n in src.namelist():

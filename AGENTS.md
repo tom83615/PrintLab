@@ -50,7 +50,7 @@ Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和
 
 遵循 `Context/image-to-print.md`，新外形兩次選圖後進入正式模型。真實模型按選定外形比較，介面、公差、裝入路徑、壁厚和承力分別檢查。保留可編輯源，試模與成品共用介面參數，詳見 `Context/cad-master-design.md`。
 
-每次最終制作檢查品質、可靠性、列印總時間、支撐、材料切換和後處理。記錄實際切片比較，模板見 `Templates/Project/Review/x2d-final-review.md`。
+每次最終製作檢查品質、可靠性、列印總時間、支撐、材料切換和後處理。記錄實際切片比較，模板見 `Templates/Project/Review/x2d-final-review.md`。
 
 列印批准綁定具體模型版本、切片文件與設備身份，使用 `printlab approve / submit / reconcile` 的同一任務記錄。材料/FTS/噴嘴路線/設備就緒/清板/列印授權的逐任務確認不是必要條件，缺少或過期不得單獨阻擋。使用者仍須主動啟動送印；實際離線、忙碌、故障、明確等待清板、檔案損壞及結果不明任務仍須處理。首次設定、建模、切片、測試均保持無設備動作。結果不明先對賬，避免重複發送。官方 Studio 路線見 `Context/official-studio-dispatch.md`。
 

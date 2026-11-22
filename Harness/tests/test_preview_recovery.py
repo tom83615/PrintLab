@@ -38,7 +38,7 @@ def client(rows):
 
 @pytest.fixture
 def workspace(tmp_path, monkeypatch):
-    root = tmp_path / '工作空间 with spaces'
+    root = tmp_path / '工作空間 with spaces'
     root.mkdir()
     monkeypatch.setattr(core, 'ROOT', root)
     core.write_json(root / 'Runtime/config.json', {'printer_id': 2})
@@ -46,7 +46,7 @@ def workspace(tmp_path, monkeypatch):
 
 
 def manifest(root, rows=None, filename='bindings.json'):
-    source = root / '预览 来源.png'
+    source = root / '預覽 來源.png'
     source.write_bytes(png())
     entries = rows if rows is not None else [{'printer_id': 2, 'archive_id': 8, 'profile_id': '123',
                                              'plate': 2, 'file': source.name}]
@@ -95,7 +95,7 @@ def test_existing_legacy_and_other_devices_are_preserved(workspace):
 
 
 def test_3mf_exact_plate_and_missing_identity(workspace):
-    source = workspace / '双盘.3mf'
+    source = workspace / '雙盤.3mf'
     with zipfile.ZipFile(source, 'w') as package:
         package.writestr('Metadata/plate_1.png', png('blue'))
         package.writestr('Metadata/plate_2.png', png())
@@ -136,7 +136,7 @@ def test_cfurl_inline_external_file_conflict_and_no_private_url(workspace):
 
 @pytest.mark.parametrize('blob', [False, True])
 def test_webkit_inline_and_blob(workspace, blob):
-    cache = workspace / '缓存'
+    cache = workspace / '緩存'
     records = cache / 'WebKit/NetworkCache/Version 17/Records/hash'
     records.mkdir(parents=True)
     record = records / 'entry'
@@ -184,7 +184,7 @@ def test_explicit_portable_source_and_cli(workspace, monkeypatch, capsys):
 
 
 def test_manifest_mismatch_conflict_and_interrupted_write(workspace, monkeypatch):
-    base = {'printer_id': 2, 'archive_id': 8, 'profile_id': '123', 'plate': 2, 'file': '预览 来源.png'}
+    base = {'printer_id': 2, 'archive_id': 8, 'profile_id': '123', 'plate': 2, 'file': '預覽 來源.png'}
     path = manifest(workspace, [{**base, 'printer_id': 3}, {**base, 'plate': 1}])
     report = recovery.recover(manifest=path, client_factory=client([archive()]))
     assert report['counts'] == {'not_found': 1} and report['issues']['unmatched_manifest_entries'] == 2
@@ -215,7 +215,7 @@ class Client:
     def close(self): pass
 r.recover(printer_id=pid, manifest=sys.argv[1], apply=True, client_factory=Client)
 '''
-    other = manifest(workspace, [{'printer_id': 3, 'archive_id': 8, 'profile_id': '123', 'plate': 2, 'file': '预览 来源.png'}], 'other.json')
+    other = manifest(workspace, [{'printer_id': 3, 'archive_id': 8, 'profile_id': '123', 'plate': 2, 'file': '預覽 來源.png'}], 'other.json')
     env = dict(os.environ, PRINTLAB_ROOT=str(workspace), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
     def run(pair):
         subprocess.run([sys.executable, '-c', script, str(pair[0]), str(pair[1])], env=env, check=True, timeout=30)

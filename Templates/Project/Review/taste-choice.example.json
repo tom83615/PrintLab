@@ -1,8 +1,8 @@
 {
   "id": "YYYYMMDD-shape-round-01",
   "stage": "shape",
-  "purpose": "在同一用途下比较外形",
-  "occurred_at": "填写实际日期；未知为null",
+  "purpose": "在同一用途下比較外形",
+  "occurred_at": "填寫實際日期；未知為null",
   "outcome": "selected",
   "options": [
     {
@@ -24,12 +24,12 @@
     "A"
   ],
   "user_feedback": {
-    "quote": "填写真实用户原话",
-    "source": "消息/问题ID或带出处的项目记录",
+    "quote": "填寫真實用戶原話",
+    "source": "消息/問題ID或帶出處的項目記錄",
     "reason": null,
     "modifications": []
   },
   "choice_basis": "unknown",
   "supersedes": null,
-  "notes": "助手描述、质量问题及缺失资料另记；不冒充用户理由"
+  "notes": "助手描述、質量問題及缺失資料另記；不冒充用戶理由"
 }

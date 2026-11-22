@@ -15,18 +15,18 @@ from printlab.api import app
 @pytest.fixture
 def ledger(tmp_path, monkeypatch):
     monkeypatch.setattr(core, 'ROOT', tmp_path)
-    core.new_project('测试项目甲')
-    core.new_project('测试项目乙')
+    core.new_project('測試項目甲')
+    core.new_project('測試項目乙')
     return tmp_path
 
 
 def part(**extra):
-    return {'id':'magnet','name':'测试磁铁','category':'磁铁','unit':'个','quantity':4,
-            'specification':{'直径':'6 mm','厚度':'2 mm','等级':'N52'},'spec_verified':True,**extra}
+    return {'id':'magnet','name':'測試磁鐵','category':'磁鐵','unit':'個','quantity':4,
+            'specification':{'直徑':'6 mm','厚度':'2 mm','等級':'N52'},'spec_verified':True,**extra}
 
 
 def confirm(pid):
-    return shop.confirm(pid, '测试用户明确决定制作', 'isolated test session', shop.load()['version'])
+    return shop.confirm(pid, '測試用戶明確決定製作', 'isolated test session', shop.load()['version'])
 
 
 def sync(pid, rows):
@@ -40,7 +40,7 @@ def stock(key, existing, purchased):
 def test_decision_gate_unknowns_and_no_print_permission(ledger):
     with pytest.raises(core.WorkflowError, match='explicit decision'):
         sync('P001', [part()])
-    confirm('测试项目甲')
+    confirm('測試項目甲')
     assert shop.view()['projects']['P001']['parts_reviewed'] is False
     row=sync('P001', [part(quantity=None,specification={},spec_verified=False)])['items'][0]
     assert row['to_buy'] is None and row['existing'] is None and row['status']=='unverified'
@@ -54,12 +54,12 @@ def test_decision_gate_unknowns_and_no_print_permission(ledger):
 def test_merge_idempotency_and_exact_spec_boundaries(ledger):
     confirm('P001'); confirm('P002')
     sync('P001',[part()]); sync('P001',[part()])
-    result=sync('P002',[part(name='同规格不同名称',quantity=6)])
+    result=sync('P002',[part(name='同規格不同名稱',quantity=6)])
     assert len(result['items'])==1
     row=result['items'][0]
     assert row['required']==10 and len(row['sources'])==2
-    assert shop.view('测试项目甲')['items'][0]['required']==10
-    changed=sync('P002',[part(quantity=6,specification={'直径':'8 mm','厚度':'2 mm','等级':'N52'})])
+    assert shop.view('測試項目甲')['items'][0]['required']==10
+    changed=sync('P002',[part(quantity=6,specification={'直徑':'8 mm','厚度':'2 mm','等級':'N52'})])
     assert len(changed['items'])==2
     sync('P001',[part(spec_verified=False)]);sync('P002',[part(spec_verified=False)])
     assert len(shop.view()['items'])==2
@@ -128,7 +128,7 @@ def test_api_context_and_project_association(ledger):
     assert client.get('/api/shop?project=P002').json()['items']==[]
     assert client.get('/api/projects/P001').json()['shop']['count']==1
     assert client.post('/api/shop',json={}).status_code==405
-    assert core.context('测试项目甲')['shopping']['projects']['P001']['decision']['quote']=='测试用户明确决定制作'
+    assert core.context('測試項目甲')['shopping']['projects']['P001']['decision']['quote']=='測試用戶明確決定製作'
 
 
 def test_separate_cli_sessions_share_state(ledger):
@@ -138,10 +138,10 @@ def test_separate_cli_sessions_share_state(ledger):
         result=subprocess.run([sys.executable,'-m','printlab.cli','shop',*args],env=env,capture_output=True,text=True)
         assert result.returncode==0,result.stderr
         return json.loads(result.stdout)
-    cli('confirm','P001','--quote','测试制作决定','--source','isolated-session-A','--expect','0')
+    cli('confirm','P001','--quote','測試製作決定','--source','isolated-session-A','--expect','0')
     path=ledger/'parts.json';path.write_text(json.dumps([part()]))
     cli('sync','P001','--file',str(path),'--source','isolated-session-B','--expect','1')
-    result=cli('list','测试项目甲')
+    result=cli('list','測試項目甲')
     key=result['items'][0]['id']
     cli('stock',key,'--existing','0','--purchased','4','--note','TEST ONLY','--expect','2')
     assert cli('list')['items'][0]['status']=='purchased'

@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 from printlab.platforms import venv_python, tool_defaults, protect_directory
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get('PRINTLAB_ROOT', Path(__file__).resolve().parent.parent)).resolve()
+CONFIG = Path(__file__).resolve().parent.parent / 'config'
 
 
 def write_new(path, value, private=False):
@@ -30,7 +31,7 @@ def main():
         destination = ROOT / 'Context' / name
         if not destination.exists():
             with destination.open('x', encoding='utf-8') as stream:
-                stream.write((ROOT / 'config' / (name + '.example')).read_text(encoding="utf-8").replace('{{workspace_root}}', str(ROOT)))
+                stream.write((CONFIG / (name + '.example')).read_text(encoding="utf-8").replace('{{workspace_root}}', str(ROOT)))
     write_new(ROOT / 'Runtime/config.json', {
         'bambuddy_url': 'http://127.0.0.1:8017', 'printer_id': None,
         'cad_python': str(venv_python(ROOT / 'Runtime/venv')),

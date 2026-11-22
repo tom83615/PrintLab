@@ -1,0 +1,13 @@
+name: printlab-production
+services:
+  studio:
+    image: ${PRINTLAB_IMAGE:?Run the production deployment script}
+    pull_policy: never
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:10818:10818'
+    volumes:
+      - ${PRINTLAB_PRODUCTION_ROOT:?Set the production workspace}/Project:/app/Project
+      - ${PRINTLAB_PRODUCTION_ROOT}/Context:/app/Context
+      - ${PRINTLAB_PRODUCTION_ROOT}/Library:/app/Library
+      - ${PRINTLAB_PRODUCTION_ROOT}/Runtime:/app/Runtime

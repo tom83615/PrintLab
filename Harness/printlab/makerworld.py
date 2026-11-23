@@ -59,6 +59,14 @@ def _cover(value, site):
     return None
 
 
+def _model_cover(model, site):
+    for field in ('cover', 'coverUrl', 'coverPortrait'):
+        url = _cover(model.get(field), site)
+        if url:
+            return url
+    return None
+
+
 def _fetch(region, token):
     site = SITES[region]
     with httpx.Client(base_url=API_ROOTS[region],
@@ -115,9 +123,11 @@ def _fetch(region, token):
                         'id': f'makerworld-{region}-{mid}', 'title': title,
                         'source_url': f'https://{site}/{locale}/models/{mid}',
                         'source_author': author if isinstance(author, str) else None,
-                        'preview_url': _cover(model.get('coverUrl'), site),
+                        'preview_url': None,
                         'collection_ids': [],
                     })
+                    if not item['preview_url']:
+                        item['preview_url'] = _model_cover(model, site)
                     item['collection_ids'].append(cid)
                 if len(seen) == count:
                     break

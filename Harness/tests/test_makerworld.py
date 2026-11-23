@@ -7,6 +7,20 @@ from fastapi.testclient import TestClient
 from printlab import api, core, makerworld
 
 
+@pytest.mark.parametrize(('model', 'expected'), [
+    ({'cover': 'https://makerworld.bblmw.com/cover.jpg',
+      'coverUrl': 'https://makerworld.bblmw.com/legacy.jpg'}, 'cover.jpg'),
+    ({'cover': 'https://elsewhere.example/cover.jpg',
+      'coverUrl': 'https://makerworld.bblmw.com/legacy.jpg'}, 'legacy.jpg'),
+    ({'coverPortrait': 'https://makerworld.bblmw.com/portrait.jpg'}, 'portrait.jpg'),
+    ({'cover': 'https://elsewhere.example/cover.jpg',
+      'coverPortrait': 'http://makerworld.bblmw.com/portrait.jpg'}, None),
+])
+def test_collection_cover_fields_use_trusted_https_urls(model, expected):
+    url = makerworld._model_cover(model, 'makerworld.com')
+    assert url == (f'https://makerworld.bblmw.com/{expected}' if expected else None)
+
+
 def test_favorites_sync_reads_all_pages_and_keeps_last_complete_snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(core, 'ROOT', tmp_path)
     monkeypatch.setenv('PRINTLAB_STUDIO_PORT', '8018')
@@ -32,7 +46,7 @@ def test_favorites_sync_reads_all_pages_and_keeps_last_complete_snapshot(tmp_pat
             if scenario == 'removed':
                 return httpx.Response(200, json={'total': 0, 'hits': []})
             hits = (
-                [{'id': 202, 'title': '遙控器座'}] if offset else
+                [{'id': 202, 'title': '遙控器座', 'cover': 'https://makerworld.bblmw.com/model.jpg'}] if offset else
                 [{'id': 101, 'title': '螺絲起子座', 'coverUrl': 'https://elsewhere.example/cover.jpg'}]
             )
             if offset and scenario == 'partial':
@@ -53,6 +67,7 @@ def test_favorites_sync_reads_all_pages_and_keeps_last_complete_snapshot(tmp_pat
     data = makerworld.view()
     assert data['items'][0] == dict(local, collection_ids=[20, 10])
     assert data['items'][1]['id'] == 'makerworld-cn-202'
+    assert data['items'][1]['preview_url'] == 'https://makerworld.bblmw.com/model.jpg'
     assert 'sample-test-token-only' not in str(data)
     with TestClient(api.app, base_url='http://localhost:8018') as browser:
         response = browser.get('/api/favorites')

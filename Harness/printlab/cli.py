@@ -12,6 +12,11 @@ from . import bambuddy, core, shop, supplies
 def parser():
     p = argparse.ArgumentParser(prog="printlab", description="PrintLab file-based design and approved printing workflow")
     sub = p.add_subparsers(dest="command", required=True)
+    favorites = sub.add_parser('makerworld', help='Read-only MakerWorld favorites sync')
+    favorites_commands = favorites.add_subparsers(dest='makerworld_command', required=True)
+    connect_favorites = favorites_commands.add_parser('connect', help='Validate and connect with a hidden local token prompt')
+    connect_favorites.add_argument('--region', choices=['cn', 'global'], required=True)
+    favorites_commands.add_parser('sync', help='Refresh MakerWorld favorites now')
     onboarding_parser = sub.add_parser('onboarding', help='Resume first-run setup and host-managed role creation')
     onboarding_commands = onboarding_parser.add_subparsers(dest='onboarding_command', required=True)
     onboarding_status = onboarding_commands.add_parser('status')
@@ -274,7 +279,16 @@ def parser():
 def main(argv=None):
     a = parser().parse_args(argv)
     try:
-        if a.command == 'workspace':
+        if a.command == 'makerworld':
+            from . import makerworld
+            if a.makerworld_command == 'connect':
+                import getpass
+                if not sys.stdin.isatty():
+                    raise core.WorkflowError('請在本機互動式終端輸入 MakerWorld 登入憑據。')
+                result = makerworld.connect(a.region, getpass.getpass('MakerWorld access token: ').strip())
+            else:
+                result = makerworld.sync(force=True)
+        elif a.command == 'workspace':
             from . import workspace
             expected = None if getattr(a, 'expect_sha', None) == 'missing' else getattr(a, 'expect_sha', None)
             if a.workspace_command == 'show':
@@ -474,6 +488,8 @@ def main(argv=None):
         else:
             result = core.doctor()
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        if a.command == 'makerworld' and result['state'] != 'synced':
+            return 2
         if a.command == 'design-check' and result.get('status') != 'passed':
             return 2
         if a.command == 'image3d' and (result.get('integrity') == 'failed' or result.get('status') in {'unavailable', 'incomplete'}):

@@ -10,7 +10,7 @@
 | Windows / macOS | 本機 PNG 或 3MF 與綁定清單 | `--manifest` 讀取明確綁定的設備、檔案、設定和板號，從 3MF 提取指定板 PNG |
 | 任意系統 | 從 Mac 複製的 CFURL / WebKit 緩存 | `--cache-dir` 讀取上述已知格式；Windows 原生 Studio 緩存解析尚未實現 |
 
-緩存可能已被清理、只有 URL 或缺少圖片本體，預設會報告 `not_found`。預設讀取現存圖片字節，聯網請求限於設定的 Bambuddy 檔案 GET 介面。緩存仍有官方圖片 URL 時，可加 `--fetch-missing` 嘗試補回圖片本體，沿用舊腳本的下載能力。下載限定已識別的官方 HTTPS 圖片域名、禁止跳轉並限制圖片大小，過期 URL 計入 `failed_downloads`。帳號舊列印歷史與 MakerWorld 帳號收藏匯入已排除在本輪開發範圍外。
+緩存可能已被清理、只有 URL 或缺少圖片本體，預設會報告 `not_found`。預設讀取現存圖片字節，聯網請求限於設定的 Bambuddy 檔案 GET 介面。緩存仍有官方圖片 URL 時，可加 `--fetch-missing` 嘗試補回圖片本體，沿用舊腳本的下載能力。下載限定已識別的官方 HTTPS 圖片域名、禁止跳轉並限制圖片大小，過期 URL 計入 `failed_downloads`。MakerWorld 收藏的連線方式請見[同步排查](SYNC_TROUBLESHOOTING.md)。
 
 ## Mac 操作
 

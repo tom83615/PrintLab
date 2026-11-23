@@ -10,8 +10,8 @@ from pydantic import BaseModel, ConfigDict
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import __version__, bambuddy, core, shop, history, supplies
-from .prepared_api import router as prepared_router, _session
+from . import __version__, bambuddy, core, shop, history, makerworld, supplies
+from .prepared_api import router as prepared_router, _origin, _session
 from . import project_delete
 
 @asynccontextmanager
@@ -26,23 +26,27 @@ async def lifespan(app):
                 logging.getLogger("printlab").exception("Read-only reconciliation failed")
             await asyncio.sleep(30)
     task = asyncio.create_task(observe())
-    async def sync_history():
+    async def sync_source(read, name):
         while True:
             try:
-                await asyncio.to_thread(history.view)
+                await asyncio.to_thread(read)
             except Exception:
-                logging.getLogger('printlab').exception('Read-only history sync failed')
+                logging.getLogger('printlab').error('Read-only %s sync failed', name, exc_info=name == 'history')
             await asyncio.sleep(60)
-    history_task = asyncio.create_task(sync_history())
+    history_task = asyncio.create_task(sync_source(history.view, 'history'))
+    favorites_task = asyncio.create_task(sync_source(makerworld.sync, 'MakerWorld'))
     try:
         yield
     finally:
         task.cancel()
         history_task.cancel()
+        favorites_task.cancel()
         with suppress(asyncio.CancelledError):
             await task
         with suppress(asyncio.CancelledError):
             await history_task
+        with suppress(asyncio.CancelledError):
+            await favorites_task
 
 
 app = FastAPI(title="PrintLab Studio", version=__version__, docs_url=None, redoc_url=None, lifespan=lifespan)
@@ -59,7 +63,8 @@ async def security_headers(request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "same-origin"
     # Embedding in the local Bambuddy panel is intentional. Never allow scripts in user documents.
-    response.headers["Cache-Control"] = "no-store" if request.url.path.startswith("/api/prepared") else "no-cache"
+    private = request.url.path.startswith("/api/prepared") or request.url.path == "/api/favorites"
+    response.headers["Cache-Control"] = "no-store" if private else "no-cache"
     if request.url.path.startswith("/api/prepared"):
         response.headers["X-Frame-Options"] = "DENY"
     return response
@@ -74,6 +79,12 @@ def health():
 @app.get('/api/history')
 def print_history():
     return history.view()
+
+
+@app.get('/api/favorites')
+def favorites(request: Request):
+    _origin(request)
+    return makerworld.view()
 
 
 @app.get('/api/onboarding')

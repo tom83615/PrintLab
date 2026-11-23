@@ -29,15 +29,17 @@ def test_card_remembers_answers_and_structured_quote_needs_no_magic_phrase(works
     assert not (jd/'dispatch.json').exists()
 
 
-def test_confirmation_veto_after_old_event_revokes_existing_approval(workspace):
-    p,jd=workspace
+def test_withdrawn_confirmation_is_recorded_without_revoking_task_approval(workspace):
+    _,jd=workspace
     event=confirmation.record('P001','Jtest',{'plate_clear':True,'print_authorized':True},'test approval','test')
     core.approve('P001','Jtest',confirmation_event_id=event['id'])
     confirmation.record('P001','Jtest',{'print_authorized':False},'先不要發','later-session')
-    assert core.read_json(jd/'job.json')['state']=='awaiting_approval'
-    assert core.read_json(jd/'approval.json')['revoked'] is True
-    with pytest.raises(core.WorkflowError,match='authorization'):
-        core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    assert core.read_json(jd/'job.json')['state']=='approved'
+    assert not core.read_json(jd/'approval.json').get('revoked')
+    approval=core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    fact=approval['confirmation_facts']['print_authorized']
+    assert fact['value'] is False and fact['source']=='later-session'
+    assert not (jd/'dispatch.json').exists()
 
 
 def test_stale_plate_fact_is_not_extended_by_new_print_approval(workspace):
@@ -46,9 +48,10 @@ def test_stale_plate_fact_is_not_extended_by_new_print_approval(workspace):
     path=jd/'Confirmations'/(old['id']+'.json')
     old['recorded_at']=(dt.datetime.now(dt.timezone.utc)-dt.timedelta(minutes=31)).isoformat();core.write_json(path,old)
     event=confirmation.record('P001','Jtest',{'print_authorized':True},'go ahead','test')
-    with pytest.raises(core.WorkflowError,match='cleared-plate'):
-        core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    assert 'plate_clear' in [r['key'] for r in confirmation.card('P001','Jtest',DEVICE)['missing']]
+    approval=core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    assert approval['confirmation_facts']['plate_clear']['fresh'] is False
+    assert approval['plate_clear'] is False
+    assert confirmation.card('P001','Jtest',DEVICE)['can_approve']
 
 
 def test_new_attempt_is_current_and_dispatched_card_never_reasks(workspace):
@@ -143,8 +146,9 @@ def test_reapproval_retains_original_plate_confirmation_time(workspace):
     old['recorded_at']=original;core.write_json(jd/'Confirmations'/(old['id']+'.json'),old)
     event=confirmation.record('P001','Jtest',{'print_authorized':True},'proceed','session B')
     receipt=core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    assert receipt['plate_clear_confirmed_at']==original and receipt['approved_at']==original
-    assert receipt['recorded_at']>original
+    assert receipt['confirmation_facts']['plate_clear']['recorded_at']==original
+    assert receipt['confirmation_event_id']==event['id']
+    assert receipt['approved_at']==receipt['recorded_at'] and receipt['approved_at']>original
 
 
 @pytest.mark.parametrize("infill_error", [None, "marker", "3MF", "G-code", "Slicer returned a failure"])
@@ -255,8 +259,10 @@ def test_controlled_3mf_rejects_material_partition_lost_by_slicer(workspace):
 def test_old_message_timestamp_cannot_be_replayed_as_fresh_confirmation(workspace):
     past=(dt.datetime.now(dt.timezone.utc)-dt.timedelta(hours=1)).isoformat()
     event=confirmation.record('P001','Jtest',{'print_authorized':True,'plate_clear':True},'old quote','old thread',confirmed_at=past)
-    with pytest.raises(core.WorkflowError,match='cleared-plate'):
-        core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    approval=core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    for name in ('plate_clear','print_authorized'):
+        fact=approval['confirmation_facts'][name]
+        assert fact['recorded_at']==past and fact['fresh'] is False
 
 
 def test_retry_preserves_target_project_when_other_projects_follow(workspace,monkeypatch):

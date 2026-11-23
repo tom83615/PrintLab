@@ -68,7 +68,10 @@ def main():
             port = listener.getsockname()[1]
         patch.setenv('PRINTLAB_STUDIO_PORT',str(port))
         from printlab.api import app
-        server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, log_level='warning'))
+        server = uvicorn.Server(uvicorn.Config(
+            app, host='127.0.0.1', port=port, log_level='warning',
+            timeout_keep_alive=1, timeout_graceful_shutdown=5,
+        ))
         thread = threading.Thread(target=server.run, daemon=True)
         thread.start()
         try:
@@ -91,11 +94,11 @@ def main():
                 if sys.platform == 'darwin':
                     page.get_by_role('heading',name='核驗通過',exact=True).wait_for()
                     button = page.get_by_role('button',name='啟動列印',exact=True)
-                    expect(button).to_be_disabled()
-                    page.get_by_role('checkbox').check()
                     expect(button).to_be_enabled()
                     page.screenshot(path=str(output/'prepared-ready.png'),full_page=True)
-                    button.click()
+                    with page.expect_request(lambda request: request.method == 'POST' and request.url.endswith('/start')) as start:
+                        button.click()
+                    assert set(start.value.post_data_json) == {'check_token', 'request_id'}
                     page.get_by_text('已提交，等待設備確認',exact=True).wait_for(timeout=30000)
                     assert sends == ['send-once']
                     assert core.read_json(job_dir/'official-inspection.json')['receipt']['evidence'] == 'file-only'
@@ -113,12 +116,12 @@ def main():
             report = {'ok':True, 'os':sys.platform, 'real_browser_click':True, 'real_file_inspection':True,
                       'simulated_gui_send_count':len(sends), 'printer_contacted':False, 'browser_errors':errors,
                       'windows_sender_blocked':sys.platform != 'darwin'}
-            (output/'prepared-browser.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-            print(json.dumps(report))
         finally:
             server.should_exit = True
             thread.join(timeout=20)
             assert not thread.is_alive(), 'Fixture server did not stop'
+        (output/'prepared-browser.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+        print(json.dumps(report))
 
 
 if __name__ == '__main__':

@@ -101,12 +101,14 @@ def test_paths_and_symlink_cannot_expose_runtime(workspace):
         core.public_document("Library/../Runtime/private/key.json")
 
 
-def test_approval_requires_explicit_print_and_plate(workspace):
-    with pytest.raises(core.WorkflowError):
-        core.approve("P001", "Jtest", "模型看著不錯", True)
-    with pytest.raises(core.WorkflowError):
-        core.approve("P001", "Jtest", "確認打印", False)
-    assert approve(workspace)["plate_clear"] is True
+def test_approval_binds_exact_task_without_plate_confirmation(workspace):
+    p, jd = workspace
+    approval = core.approve("P001", "Jtest")
+    job = core.read_json(jd / "job.json")
+    assert job["state"] == "approved"
+    assert approval["fingerprint"] == core.job_fingerprint(p, jd, job)
+    assert approval["plate_clear"] is False
+    assert not (jd / "dispatch.json").exists()
 
 
 @pytest.mark.parametrize("target", ["Design/v001/params.json", "Exports/v001/model.stl", "Print/Jtest/Profiles/machine.json", "Print/Jtest/job.gcode.3mf"])
@@ -251,7 +253,11 @@ def test_trial_inspection_extracts_estimates_but_cannot_approve(workspace):
     result = core.inspect_slice("P001", "Jtest", refresh=True)
     assert result["state"] == "awaiting_configuration"
     assert result["trial_only"] is True
-    assert len(result["configuration_issues"]) == 4
+    assert set(result["configuration_issues"]) == {
+        "未綁定實際打印機",
+        "缺少切片耗材料槽資料",
+        "未明確確認實際打印板；切片中的板型僅為試算配置",
+    }
     assert result["estimates"]["prediction_seconds"] == 7120
     assert result["estimates"]["weight_grams"] == 33.02
     assert result["curr_bed_type"] == "Textured PEI Plate"

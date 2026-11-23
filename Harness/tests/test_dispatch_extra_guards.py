@@ -40,7 +40,7 @@ def test_revoked_or_future_approval_cannot_dispatch(workspace):
     with pytest.raises(core.WorkflowError,match='approval'):
         bambuddy.submit('P001','Jtest',True,client_factory=lambda **kwargs:SimulatedBambuddy())
     core.write_json(jd/'approval.json',{**approval,'approved_at':(dt.datetime.now(dt.timezone.utc)+dt.timedelta(minutes=20)).isoformat()})
-    with pytest.raises(core.WorkflowError,match='confirmation'):
+    with pytest.raises(core.WorkflowError,match='Task approval expired'):
         bambuddy.submit('P001','Jtest',True,client_factory=lambda **kwargs:SimulatedBambuddy())
     assert not (jd/'dispatch.json').exists()
 

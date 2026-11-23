@@ -45,15 +45,20 @@ def test_boot_recovery_fails_closed(isolated):
 def test_send_exception_without_receipt_is_unknown(isolated, monkeypatch):
     record = op('c'*32, 'checking')
     record.update(fingerprint='fingerprint', confirmed_at=core.now())
-    monkeypatch.setattr(workbench, 'check', lambda *a, **kw: {'ready': True, 'fingerprint': 'fingerprint'})
-    monkeypatch.setattr(workbench.confirmation, 'record', lambda *a, **kw: {'id': 'confirmation'})
+    monkeypatch.setattr(workbench, 'check', lambda *a: {
+        'ready': True, 'fingerprint': 'fingerprint', 'transport': {'kind': 'bambu_studio'},
+    })
     monkeypatch.setattr(core, 'approve', lambda *a, **kw: None)
     monkeypatch.setattr(core, 'job_path', lambda *a: isolated / 'job')
-    def fail(*args):
+    sends = []
+    def fail(pid, jid):
+        state = core.read_json(workbench._operation_path(record['id']))['state']
+        sends.append((pid, jid, state))
         raise RuntimeError('simulated exception after send began')
     from printlab import studio_bridge
     monkeypatch.setattr(studio_bridge, 'dispatch', fail)
     workbench._run(record)
+    assert sends == [('P009', 'J1', 'dispatching')]
     assert not (isolated / 'job/dispatch.json').exists()
     assert core.read_json(workbench._operation_path(record['id']))['state'] == 'unknown'
 
@@ -90,13 +95,17 @@ def test_readback_error_after_click_stays_unknown(isolated, monkeypatch):
     from printlab import studio_bridge
     record = op('e'*32, 'checking')
     record.update(fingerprint='fingerprint', confirmed_at=core.now())
-    monkeypatch.setattr(workbench, 'check', lambda *a, **kw: {'ready': True, 'fingerprint': 'fingerprint'})
-    monkeypatch.setattr(workbench.confirmation, 'record', lambda *a, **kw: {'id': 'confirmation'})
+    monkeypatch.setattr(workbench, 'check', lambda *a: {
+        'ready': True, 'fingerprint': 'fingerprint', 'transport': {'kind': 'bambu_studio'},
+    })
     monkeypatch.setattr(core, 'approve', lambda *a, **kw: None)
     monkeypatch.setattr(core, 'job_path', lambda *a: isolated / 'job')
     monkeypatch.setattr(studio_bridge, 'dispatch', lambda *a: {'command_sent': True, 'executed': True})
+    readbacks = []
     def fail(*a):
+        readbacks.append(record['state'])
         raise RuntimeError('simulated readback failure')
     monkeypatch.setattr(workbench.bambuddy, 'reconcile', fail)
     workbench._run(record)
+    assert readbacks == ['submitted']
     assert core.read_json(workbench._operation_path(record['id']))['state'] == 'unknown'

@@ -33,18 +33,16 @@ def test_unavailable_transport_no_ticket(client,monkeypatch):
     r=client.post('/api/prepared/P009/J1/check',headers=headers(client)).json()
     assert not r['ready'] and 'check_token' not in r
 
-def test_start_requires_true_single_use_and_idempotency(client,monkeypatch):
+def test_start_without_plate_confirmation_is_single_use_and_idempotent(client,monkeypatch):
     monkeypatch.setattr(prepared,'check',lambda *a,**kw:report())
     monkeypatch.setattr(workbench,'capability',lambda r:{'available':True,'message':'test'})
     launches=[]
     monkeypatch.setattr(workbench,'_launch',launches.append)
     h=headers(client)
     token=client.post('/api/prepared/P009/J1/check',headers=h).json()['check_token']
-    body={'check_token':token,'plate_clear':False,'request_id':str(uuid.uuid4())}
-    assert client.post('/api/prepared/P009/J1/start',headers=h,json=body).status_code==409
-    body['plate_clear']='true'
-    assert client.post('/api/prepared/P009/J1/start',headers=h,json=body).status_code==422
-    body['plate_clear']=True
+    body={'check_token':token,'request_id':str(uuid.uuid4())}
+    invalid={**body,'plate_clear':'true'}
+    assert client.post('/api/prepared/P009/J1/start',headers=h,json=invalid).status_code==422
     r=client.post('/api/prepared/P009/J1/start',headers=h,json=body)
     assert r.status_code==202 and len(launches)==1
     again=client.post('/api/prepared/P009/J1/start',headers=h,json=body)
@@ -66,7 +64,7 @@ def test_stale_ticket_and_other_browser(client,monkeypatch):
 def test_second_check_blocks_material_change(tmp_path,monkeypatch):
     monkeypatch.setattr(core,'ROOT',tmp_path)
     monkeypatch.setattr(workbench,'check',lambda *a:{**report(),'ready':False})
-    monkeypatch.setattr(workbench.confirmation,'record',lambda *a,**kw:pytest.fail('must not authorize'))
+    monkeypatch.setattr(core,'approve',lambda *a,**kw:pytest.fail('must not approve'))
     op={'id':'a'*32,'project_id':'P009','job_id':'J1','fingerprint':'abc','confirmed_at':core.now()}
     workbench._run(op)
     assert core.read_json(workbench._operation_path(op['id']))['state']=='blocked'

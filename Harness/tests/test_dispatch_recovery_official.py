@@ -122,7 +122,7 @@ def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(w
 
 def test_history_recovery_preserves_error_and_never_resends(workspace):
     native_job(workspace)
-    approval=core.approve('P001','Jtest','確認打印',True)
+    approval=core.approve('P001','Jtest')
     p,jd=workspace
     old_dir=p/'Print/Jold';old_dir.mkdir()
     old,receipt,_,_,live,_=facts()
@@ -135,7 +135,11 @@ def test_history_recovery_preserves_error_and_never_resends(workspace):
         if path.startswith('printers/'):result.update(live)
         return result
     dev.get=current
-    result=recovery.before_submit(jd,core.read_json(jd/'job.json'),approval,dev)
+    job=core.read_json(jd/'job.json')
+    with pytest.raises(core.WorkflowError,match='requires reconciliation'):
+        recovery.before_submit(jd,job,approval,dev)
+    assert core.read_json(old_dir/'job.json')['state']=='dispatch_unknown'
+    result=recovery.before_submit(jd,job,{**approval,'plate_clear':True},dev)
     assert result==[{'job_id':'Jold','state':'dispatch_rejected'}]
     assert (old_dir/'dispatch.json').read_bytes()==original
     proof=core.read_json(old_dir/'dispatch-resolution.json')
@@ -146,11 +150,11 @@ def test_history_recovery_preserves_error_and_never_resends(workspace):
 
 
 def test_unknown_timeout_remains_blocking_even_when_idle_and_plate_clear(workspace):
-    native_job(workspace);approval=core.approve('P001','Jtest','確認打印',True)
+    native_job(workspace);approval={**core.approve('P001','Jtest'),'plate_clear':True}
     p,jd=workspace;old_dir=p/'Print/Jold';old_dir.mkdir()
     old,receipt,*_=facts();old['project_id']='P001';receipt['error']='Timed out; possible acceptance'
     core.write_json(old_dir/'job.json',old);core.write_json(old_dir/'dispatch.json',receipt)
-    dev=NativeDevice()
+    dev=NativeDevice(state='IDLE')
     with pytest.raises(core.WorkflowError,match='requires reconciliation'):
         recovery.before_submit(jd,core.read_json(jd/'job.json'),approval,dev)
     assert core.read_json(old_dir/'job.json')['state']=='dispatch_unknown' and not dev.writes

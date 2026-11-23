@@ -186,7 +186,8 @@ def parser():
     d = sub.add_parser("submit")
     d.add_argument("project")
     d.add_argument("job")
-    d.add_argument("--execute", action="store_true", help="Send this approved task; default only validates")
+    d.add_argument("--execute", action="store_true",
+                   help="Execute supported dispatch routes; Windows manual Studio always only validates")
     so = sub.add_parser('studio-copy', help='Prepare an unapproved official-app package with identical G-code; never sends')
     so.add_argument('project')
     so.add_argument('job')

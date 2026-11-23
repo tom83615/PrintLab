@@ -16,6 +16,7 @@ license: PolyForm Noncommercial 1.0.0; see the PrintLab repository LICENSE.md an
 - 外形、CAD、切片：按 Context/image-to-print.md 和 Context/cad-master-design.md 繼承已選方案；真實源模型匯出預覽，關鍵介面與實測獨立核對。依據當前機器比較列印方向、材料、支撐、分盤及完整工時。
 - 切片交付：提供切片檔、版本、分盤、預估時間和用量，在交接記錄等待使用者回饋。此階段省略建立回執、加入待列印列表和送印。
 - 列印：收到使用者明確要求後，先讀 docs/PRINTING.md，經工作台/CLI 的統一批准和發送入口綁定具體模型版本、切片文件與設備。結果未知先對賬，不自動重發；不借第三方外掛程式繞過 PrintLab 檢查。
+- Windows 無 Bambuddy 的官方 Studio 手動列印由 Agent 準備和預檢正式檔案。使用者在 Studio 直接按「送出」，跳過 `submit --execute` 和送印前回執。送印後由 Agent 依相符的 Studio 任務名稱與實際結果對帳。
 - 共同記錄：使用 workspace 命令的哈希檢查追加偏好、事實與經驗，衝突後重讀。使用者確認擁有的其他耗材通過 material-intake 寫入已設定的庫存來源；Spoolman 可用 --preview 先核對品項，超時後使用相同請求標識對賬。
 - 交接：用 CLI handoff 儲存完成項、當前版本、證據、未知項與下一步，再通過 context 讀回。設備已結束不等於實物合格。
 

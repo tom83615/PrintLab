@@ -82,9 +82,11 @@ def test_manual_studio_binds_identity_without_nozzle_route(workspace):
     result = official.submit('P001','Jtest',True,
         client_factory=lambda:pytest.fail('manual Studio must not contact Bambuddy'),
         inspector=lambda *args:{'ok':True})
-    assert result['reserved'] and result['executed'] is False
-    receipt = core.read_json(workspace[1]/'dispatch.json')
-    assert receipt['route'] == 'manual_windows_studio' and receipt['command_sent'] is False
+    assert result['ready'] and not result['reserved'] and not result['executed']
+    assert not (workspace[1]/'dispatch.json').exists()
+    assert core.read_json(workspace[1]/'job.json')['state'] == 'approved'
+    result = bambuddy.reconcile('P001','Jtest',client=pytest.fail)
+    assert result['state'] == 'unknown' and 'Studio observation' in result['message']
 
 
 @pytest.mark.parametrize('missing', ['device_ready','material_loaded','plate_clear','print_authorized'])
@@ -98,20 +100,42 @@ def test_manual_studio_approval_accepts_missing_exact_task_fact(workspace, missi
     assert missing not in approval['confirmation_facts']
 
 
-def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(workspace):
-    from printlab import confirmation
+@pytest.mark.parametrize('legacy_reservation', [False, True])
+def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(
+        workspace, legacy_reservation, monkeypatch, capsys):
+    from printlab import cli, confirmation
     manual_studio_job(workspace)
     event = confirmation.record('P001','Jtest',
         {'device_ready':True,'material_loaded':True,'plate_clear':True,'print_authorized':True},
         'Synthetic exact-task confirmation','unit test')
-    core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    official.submit('P001','Jtest',True,inspector=lambda *args:{'ok':True})
+    approval = core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    _, jd = workspace
+    if legacy_reservation:
+        job = core.read_json(jd/'job.json')
+        job['state'] = 'dispatching'
+        core.write_json(jd/'job.json', job)
+        core.write_json(jd/'dispatch.json', {
+            'job_id':'Jtest', 'transport':'bambu_studio', 'route':'manual_windows_studio',
+            'expected_task_name':'Jtest.gcode', 'fingerprint':approval['fingerprint'],
+            'state':'awaiting_ui_send', 'command_sent':False, 'send_deadline':'2020-01-01T00:00:00+00:00'})
     with pytest.raises(core.WorkflowError,match='does not match'):
         official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='wrong.gcode',
                            evidence='synthetic',source='unit test',client=pytest.fail)
-    result = official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='Jtest.gcode',
-                                evidence='synthetic completion observation',source='unit test',client=pytest.fail)
+    if not legacy_reservation:
+        core.write_json(jd/'approval.json', {**approval, 'fingerprint':'stale'})
+        with pytest.raises(core.WorkflowError,match='Valid approval'):
+            official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='Jtest.gcode',
+                               evidence='synthetic',source='unit test',client=pytest.fail)
+        assert not (jd/'dispatch.json').exists()
+        core.write_json(jd/'approval.json', approval)
+    monkeypatch.setattr(bambuddy, 'Client', lambda: pytest.fail('Manual reconciliation must stay offline'))
+    assert cli.main(['reconcile', 'P001', 'Jtest', '--outcome', 'completed', '--task-name', 'Jtest.gcode',
+                     '--evidence', 'synthetic completion observation', '--source', 'unit test']) == 0
+    result = json.loads(capsys.readouterr().out)
     assert result['state'] == 'completed' and not result['replayed']
+    receipt = core.read_json(jd/'dispatch.json')
+    assert receipt['state'] == 'observed_by_user'
+    assert ('send_deadline' in receipt) is legacy_reservation
     replay = official.reconcile('P001','Jtest',manual_outcome='completed',expected_task='Jtest.gcode',
                                 evidence='synthetic completion observation',source='unit test',client=pytest.fail)
     assert replay['replayed']

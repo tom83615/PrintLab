@@ -406,7 +406,8 @@ def submit(pid, jid, execute=False, client_factory=None):
 def reconcile(pid, jid, client=None, manual_outcome=None, expected_task=None, evidence=None, source=None):
     jd = core.job_path(pid, jid)
     receipt = core.read_json(jd / "dispatch.json", {})
-    if receipt.get('transport') == 'bambu_studio':
+    if (receipt.get('transport') == 'bambu_studio'
+            or (not receipt and core.read_json(jd / 'job.json', {}).get('printer_provider') == 'official_studio')):
         from . import official
         return official.reconcile(pid, jid, client, manual_outcome, expected_task, evidence, source)
     if receipt.get("transport") == "bambu_native":

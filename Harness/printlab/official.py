@@ -1,6 +1,6 @@
 """Audited official Studio handoff through the same single-dispatch ledger.
 
-No GUI automation lives here. After submit --execute, the operator/agent uses
+No GUI automation lives here. On the automated route, after submit --execute the helper uses
 the official UI once; reconciliation never sends or repeats that UI action.
 """
 import copy
@@ -91,7 +91,7 @@ def prepare(pid, jid):
 
 def submit(pid,jid,execute=False,client_factory=None,inspector=None):
     if core.read_json(core.job_path(pid,jid)/'job.json').get('printer_provider') == 'official_studio':
-        return _submit_manual_studio(pid, jid, execute, inspector)
+        return _preflight_manual_studio(pid, jid, inspector)
     with core.lock('printer'):
         p,jd=core.project_path(pid),core.job_path(pid,jid)
         job,approval=core.read_json(jd/'job.json'),core.read_json(jd/'approval.json')
@@ -122,8 +122,8 @@ def submit(pid,jid,execute=False,client_factory=None,inspector=None):
         finally:client.close()
 
 
-def _submit_manual_studio(pid, jid, execute=False, inspector=None):
-    """Reserve a Windows Studio handoff using exact-task user observations only."""
+def _preflight_manual_studio(pid, jid, inspector=None):
+    """Verify the approved file for direct manual sending in Studio."""
     from . import slicer_guard
     with core.lock('printer'):
         p, jd = core.project_path(pid), core.job_path(pid, jid)
@@ -136,7 +136,6 @@ def _submit_manual_studio(pid, jid, execute=False, inspector=None):
             raise core.WorkflowError('Task is not approved or already has a dispatch receipt; reconcile before retrying')
         if not approval or approval.get('revoked') or approval.get('fingerprint') != core.job_fingerprint(p, jd, job):
             raise core.WorkflowError('Valid approval for this exact Studio device, file and route is required')
-        facts = {}
         if core.print_configuration_issues(job):
             raise core.WorkflowError('Printer, route, or physical plate configuration is incomplete')
         slicer_guard.assert_safe_archive(core.safe_path(jd, job['artifact']), job.get('plate', 1))
@@ -144,24 +143,10 @@ def _submit_manual_studio(pid, jid, execute=False, inspector=None):
         if not inspected or inspected.get('ok') is not True:
             raise core.WorkflowError('Official package failed the independent G-code audit')
         core.write_json(jd/'official-inspection.json', {'at':core.now(), **inspected})
-        if execute:
-            receipt = {'job_id':jid, 'transport':'bambu_studio', 'route':'manual_windows_studio',
-                       'printer_provider':'official_studio', 'state':'awaiting_ui_send',
-                       'created_at':core.now(), 'fingerprint':approval['fingerprint'],
-                       'artifact_sha256':job['artifact_sha256'], 'expected_task_name':jid+'.gcode',
-                       'studio_device_binding':job['studio_device_binding'],
-                       'send_deadline':(dt.datetime.now(dt.timezone.utc)+dt.timedelta(seconds=60)).isoformat(),
-                       'command_sent':False}
-            core.write_json(jd/'dispatch.json',receipt)
-            job.update(state='dispatching',updated_at=core.now())
-            core.write_json(jd/'job.json',job)
-            project=core.read_json(p/'project.json')
-            project.update(current_job_id=jid,status='dispatching',updated_at=core.now())
-            core.write_json(p/'project.json',project)
-        return {'ready':True, 'executed':False, 'reserved':execute, 'transport':'bambu_studio_manual',
+        return {'ready':True, 'executed':False, 'reserved':False, 'transport':'bambu_studio_manual',
                 'file':str(jd/job['artifact']), 'job_id':jid,
                 'printer':job['studio_device_binding'],
-                'next':'On Windows, open this exact file in official Bambu Studio, verify the bound printer, route and plate, then send once within 60 seconds. Record the observed result with reconcile; no automatic retry.'}
+                'next':'Open this exact file in Bambu Studio, verify the printer, plate and filament, then click Send. Record the observed result with reconcile.'}
 
 
 def profile_title_archive_match(jd, job, receipt, live, client):
@@ -214,7 +199,7 @@ def profile_title_archive_match(jd, job, receipt, live, client):
 
 def reconcile(pid,jid,client=None,manual_outcome=None,expected_task=None,evidence=None,source=None):
     p,jd=core.project_path(pid),core.job_path(pid,jid)
-    job,receipt=core.read_json(jd/'job.json'),core.read_json(jd/'dispatch.json')
+    job,receipt=core.read_json(jd/'job.json'),core.read_json(jd/'dispatch.json', {})
     if job.get('printer_provider') == 'official_studio' and not job.get('bambuddy_url'):
         if manual_outcome is not None:
             return record_manual_observation(pid, jid, manual_outcome, expected_task, evidence, source)
@@ -223,7 +208,7 @@ def reconcile(pid,jid,client=None,manual_outcome=None,expected_task=None,evidenc
             return {'state':observations[-1]['outcome'], 'job':job,
                     'observation':observations[-1], 'source':'user_observation'}
         return {'state':'unknown','job':job,'receipt':receipt,
-                'message':'No Bambuddy telemetry is configured. Record an observation of this exact Studio task before considering its result; do not resubmit.'}
+                'message':'No Studio observation is recorded for this task. If already sent, verify its result in Studio before sending again.'}
     if (receipt.get('job_id')!=jid or receipt.get('transport')!='bambu_studio'
             or job.get('printer_id')!=core.config().get('printer_id')
             or job.get('bambuddy_url')!=core.config().get('bambuddy_url')):
@@ -271,30 +256,49 @@ def record_manual_observation(pid, jid, outcome, expected_task, evidence, source
         raise core.WorkflowError('Observed Studio task name does not match this task')
     with core.lock('printer'):
         p,jd=core.project_path(pid),core.job_path(pid,jid)
-        job,receipt=core.read_json(jd/'job.json'),core.read_json(jd/'dispatch.json')
+        job = core.read_json(jd/'job.json')
+        receipt_path = jd/'dispatch.json'
         if (job.get('printer_provider')!='official_studio' or job.get('bambuddy_url')
-                or receipt.get('job_id')!=jid or receipt.get('transport')!='bambu_studio'
-                or receipt.get('route')!='manual_windows_studio'
-                or receipt.get('expected_task_name')!=expected_task):
-            raise core.WorkflowError('No matching no-Bambuddy manual Studio dispatch receipt exists')
-        if receipt.get('fingerprint')!=core.job_fingerprint(p,jd,job):
-            raise core.WorkflowError('Task changed after dispatch reservation; preserve the receipt and reconcile manually')
+                or job.get('mapping', {}).get('transport')!='bambu_studio'):
+            raise core.WorkflowError('Task is not bound to the no-Bambuddy manual Studio route')
+        if receipt_path.exists():
+            receipt = core.read_json(receipt_path)
+            if (receipt.get('job_id')!=jid or receipt.get('transport')!='bambu_studio'
+                    or receipt.get('route')!='manual_windows_studio'
+                    or receipt.get('expected_task_name')!=expected_task):
+                raise core.WorkflowError('Existing dispatch record does not match this manual Studio task')
+            if receipt.get('fingerprint')!=core.job_fingerprint(p,jd,job):
+                raise core.WorkflowError('Task changed after dispatch was recorded')
+        else:
+            approval = core.read_json(jd/'approval.json', {})
+            if (job.get('state')!='approved' or approval.get('job_id')!=jid or approval.get('revoked')
+                    or approval.get('fingerprint')!=core.job_fingerprint(p,jd,job)):
+                raise core.WorkflowError('Valid approval for this exact Studio task is required')
+            receipt = {'job_id':jid, 'transport':'bambu_studio', 'route':'manual_windows_studio',
+                       'printer_provider':'official_studio', 'created_at':core.now(),
+                       'fingerprint':approval['fingerprint'], 'artifact_sha256':job['artifact_sha256'],
+                       'expected_task_name':expected_task, 'studio_device_binding':job['studio_device_binding']}
         prior = receipt.get('manual_observations', [])
+        replayed = False
         if prior and prior[-1].get('outcome') in {'completed','failed','cancelled'}:
-            if prior[-1].get('outcome') == outcome and prior[-1].get('evidence') == evidence and prior[-1].get('source') == source:
-                return {'state':outcome,'job':job,'observation':prior[-1],'replayed':True}
-            raise core.WorkflowError('A terminal manual observation is already recorded for this task')
-        row={'outcome':outcome,'task_name':expected_task,'evidence':evidence,'source':source,'observed_at':core.now()}
-        receipt.setdefault('manual_observations', []).append(row)
-        receipt.update(state='observed_by_user',observed_at=row['observed_at'],command_sent=True)
+            if (prior[-1].get('outcome'), prior[-1].get('evidence'), prior[-1].get('source')) != (outcome, evidence, source):
+                raise core.WorkflowError('A terminal manual observation is already recorded for this task')
+            row = prior[-1]
+            replayed = True
+        else:
+            row={'outcome':outcome,'task_name':expected_task,'evidence':evidence,'source':source,'observed_at':core.now()}
+            receipt.setdefault('manual_observations', []).append(row)
+            receipt.update(state='observed_by_user',observed_at=row['observed_at'],command_sent=True)
+            core.write_json(receipt_path,receipt)
         job_state={'printing':'printing','completed':'awaiting_physical_review','failed':'failed','cancelled':'cancelled'}[outcome]
-        job.update(state=job_state,updated_at=row['observed_at'],reconciliation={
+        reconciliation={
             'state':'user_observation','outcome':outcome,'observed_at':row['observed_at'],
-            'task_name':expected_task,'source':source,'evidence':evidence})
-        core.write_json(jd/'dispatch.json',receipt)
-        core.write_json(jd/'job.json',job)
+            'task_name':expected_task,'source':source,'evidence':evidence}
+        if job.get('reconciliation') != reconciliation:
+            job.update(state=job_state,updated_at=row['observed_at'],reconciliation=reconciliation)
+            core.write_json(jd/'job.json',job)
         project=core.read_json(p/'project.json')
-        if core.is_current_attempt(p,job):
-            project.update(current_job_id=jid,status=job_state,updated_at=row['observed_at'])
+        if core.is_current_attempt(p,job) and (project.get('current_job_id'), project.get('status')) != (jid, job['state']):
+            project.update(current_job_id=jid,status=job['state'],updated_at=row['observed_at'])
             core.write_json(p/'project.json',project)
-        return {'state':outcome,'job':job,'observation':row,'replayed':False}
+        return {'state':outcome,'job':job,'observation':row,'replayed':replayed}

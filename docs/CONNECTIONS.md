@@ -35,7 +35,7 @@ Bambuddy 文件對較新韌體的完整第三方控制要求 LAN Only 與 Develo
 - `openspoolman_url`：從 OpenSpoolMan 首頁辨識 AMS 與外掛料卷卡片。目前此部署未提供 OpenAPI 文件或印表機 REST 端點，工作台只讀取並解析首頁；本機讀取時間不代表來源遙測時間。資料僅用於設計準備，設備連線與實際重量須另外核對。頁面格式不支援或服務不可用時，工作台會顯示來源不可用。
 - 用 `printlab onboarding status --refresh` 讀回兩個來源。僅設定 OpenSpoolMan 時，「列印歷史」提供其原生歷史頁入口；PrintLab 不匯入或判定該頁的列印結果。既有 Bambuddy 列印預檢、任務對帳和歷史匯入仍使用原先的連接設定。
 
-Windows 上不使用 Bambuddy 發送時，先在 `Runtime/config.json` 綁定本機 Bambu Studio 中已核實的印表機名稱、機型和序號：`printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。此身份只用來綁定工作，不代表設備即時在線。逐任務的設備就緒、裝料、清板與列印授權確認不是必要條件；`submit --execute` 只建立一次 60 秒官方 Studio 手動交接預約，使用者再主動於 Studio 發送。完成或結果不明後，以 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記使用者觀察；它不查詢或重送設備任務。詳細步驟見 [Windows 列印](WINDOWS.md)。
+Windows 上使用官方 Studio 手動送印時，先在 `Runtime/config.json` 綁定 Studio 中已核實的印表機名稱、機型和序號，可使用 `printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。身份綁定僅用於確認任務目標，設備即時狀態以 Studio 顯示為準。使用者在 Studio 直接送出已核對的檔案。觀察到同名任務結果後，Agent 可用 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記。詳細步驟見 [Windows 列印](WINDOWS.md)。
 
 ## 手機訪問
 

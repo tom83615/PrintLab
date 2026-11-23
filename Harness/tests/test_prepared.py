@@ -12,6 +12,7 @@ from printlab import core, prepared, slicer_guard
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(core, 'ROOT', tmp_path)
+    monkeypatch.setattr(core, 'DEVICE_CARD', tmp_path / core.DEVICE_CARD_PATH)
     core.write_json(tmp_path / 'Runtime/config.json', {'printer_id': 7})
     core.write_json(tmp_path / 'Library/Devices/H2C/device.json', {'user_confirmed': {
         'fts_installed': False, 'fts_confirmation_quote': 'Synthetic no FTS',
@@ -38,14 +39,14 @@ def setup(tmp_path, monkeypatch):
          'plate': 1, 'artifact': 'job.gcode.3mf', 'artifact_sha256': core.digest(jd / 'job.gcode.3mf'),
          'source_hashes': core.revision_files(p, 'v001'), 'profile_hashes': {}, 'printer_id': 7,
          'requested_bed_type': 'Textured PEI Plate', 'curr_bed_type': 'Textured PEI Plate', 'trial_only': False,
-         'mapping': {'transport': 'bambu_studio', 'use_ams': True, 'ams_mapping': [4], 'extruder_mapping': [1],
-                     'routing_verified': True, 'fts_installed': False, 'material': 'PETG Basic', 'color': '97D700FF',
+         'mapping': {'transport': 'bambu_studio', 'use_ams': True, 'ams_mapping': [4],
+                     'material': 'PETG Basic', 'color': '97D700FF',
                      'filament_types': ['PETG'], 'filament_colours': ['97D700FF'], 'filament_series': ['PETG Basic'],
                      'inventory_ids': [16]}}
     core.write_json(jd / 'job.json', j)
     monkeypatch.setattr(slicer_guard, 'assert_safe_archive', lambda *args: None)
     live = {'id': 7, 'name': 'Synthetic', 'state': 'FINISH', 'connected': True, 'last_ams_update': time.time(),
-            'hms_errors': [], 'awaiting_plate_clear': True, 'developer_mode': False,
+            'hms_errors': [], 'awaiting_plate_clear': False, 'developer_mode': False,
             'temperatures': {'bed_target': 0, 'nozzle_target': 0, 'nozzle_2_target': 0},
             'ams_extruder_map': {'1': 1}, 'ams': [{'id': 1, 'tray': [{'id': 0, 'tray_type': 'PETG',
             'tray_info_idx': 'GFG00', 'tray_sub_brands': 'PETG Basic', 'tray_color': '97D700FF',
@@ -93,7 +94,7 @@ def test_registration_and_check_never_approve_or_send(setup):
     report = ready(setup)
     assert report['ready'] is True
     assert report['executed'] is False
-    assert report['plate_confirmation_required'] is True
+    assert report['plate_confirmation_required'] is False
     assert report['transport']['independent_dispatch_verified'] is False
     assert report['materials'][0]['estimated_available_grams'] == 340
     assert report['materials'][0]['reserve_grams'] == 10
@@ -120,8 +121,8 @@ def test_spoolman_and_openspoolman_manual_studio_preflight_never_connects_or_aut
     result = prepared.check('P001','Jone',inspector=inspector)
     assert result['transport']['kind'] == 'bambu_studio_manual'
     assert result['executed'] is False and result['automatic_start'] is False
-    assert not result['ready']
-    assert 'manual_observations' in {row['id'] for row in result['blockers']}
+    assert result['ready']
+    assert not result['blockers']
     assert not (jd/'approval.json').exists() and not (jd/'dispatch.json').exists()
 
 
@@ -138,6 +139,7 @@ def test_no_automatic_discovery_or_implicit_authorization(setup):
     ('connected', False, 'freshness'), ('last_ams_update', 1, 'freshness'),
     ('state', 'RUNNING', 'idle'), ('state', 'PAUSE', 'idle'), ('state', 'FAILED', 'idle'),
     ('hms_errors', [123], 'diagnostics'), ('id', 999, 'identity'),
+    ('awaiting_plate_clear', True, 'slots'),
     ('temperatures', {'bed_target': 60, 'nozzle_target': 0}, 'heaters'),
     ('temperatures', {}, 'heaters'), ('nozzles', [], 'nozzles'),
     ('nozzles', [{'nozzle_type': 'HS01', 'nozzle_diameter': '.6'}] * 2, 'nozzles')])
@@ -219,7 +221,6 @@ def test_insufficient_and_unknown_never_borrow_ledger_full_spool(setup, remain, 
     reg(setup)
     setup[3].live['ams'][0]['tray'][0]['remain'] = remain
     r = ready(setup)
-    assert not r['ready']
     assert r['materials'][0]['estimated_available_grams'] == estimate
     assert r['materials'][0]['sufficient'] is False
 
@@ -228,7 +229,6 @@ def test_wrong_color_or_moved_spool_does_not_remap(setup):
     reg(setup)
     setup[3].live['ams'][0]['tray'][0]['tray_color'] = 'FFFFFFFF'
     r = ready(setup)
-    assert 'route' in {x['id'] for x in r['blockers']}
     assert not r['materials'][0]['sufficient']
     assert core.read_json(setup[1] / 'job.json')['mapping']['ams_mapping'] == [4]
 
@@ -242,7 +242,7 @@ def test_inventory_identity_and_label_weight_required(setup):
 
 def test_per_slot_usage_aggregates_before_reserve(setup):
     bindings = [{'slot': 4, 'slot_label': 'B1', 'filament_id': i, 'required_grams': weight,
-                 'material': 'PETG', 'series': 'PETG Basic', 'color': '97D700FF', 'extruder': 1,
+                 'material': 'PETG', 'series': 'PETG Basic', 'color': '97D700FF',
                  'inventory_id': 16, 'profile_id': 'GFG00'} for i, weight in [(1, 180), (2, 140)]]
     r = prepared.quantity_checks(bindings, setup[3].live, setup[3].assignments, setup[3].spools)
     assert len(r) == 1

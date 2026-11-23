@@ -47,7 +47,7 @@ MLX 圖生模型路線適用於 Apple Silicon。Windows 的圖生模型工具需
 
 Windows 的待列印頁按任務綁定的通道處理。既有且已設定 Bambuddy 的 `bambuddy_queue` 任務仍按既有記錄對帳。無 Bambuddy 的官方 Studio 任務透過下方手動交接，無需安裝或設定 Bambuddy。Mac 專用視窗助手仍需 macOS。
 
-1. 在 PrintLab 儲存當前版本、切片包、印表機身份、板型、材料映射和用量；材料/路線/設備就緒/清板/授權確認事件不是必需條件。
+1. 在 PrintLab 儲存當前版本、切片包、印表機身份、板型、材料映射和用量；材料/設備就緒/清板/授權確認事件不是必需條件。
 2. 沒有 Bambuddy 時，先用 `workspace studio-device` 綁定官方 Studio 顯示的名稱、機型和序號。使用 `studio-copy 專案ID 作業ID` 準備官方 Studio 副本，核對返回的任務 ID 和文件雜湊。
 3. 使用者主動批准該任務，`submit --execute` 只建立 60 秒有效的單次交接回執，不會控制印表機。在官方 Studio 開啟回執指定檔案並由使用者手動發送一次。實際設備離線、忙碌、故障或明確等待清板仍會阻擋。
 

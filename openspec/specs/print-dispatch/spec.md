@@ -29,19 +29,23 @@ When Bambuddy is not configured, PrintLab SHALL bind each prepared task to the l
 - **THEN** the existing approval becomes invalid and PrintLab requires a newly bound task
 
 ### Requirement: Block dispatch when required evidence is unknown
-PrintLab SHALL NOT block solely because task-specific readiness, material, route, plate-clear, or authorization facts are missing, stale, or withdrawn. Unknown SHALL remain distinct from confirmed. FTS declaration changes alone SHALL NOT invalidate a task fingerprint. Sending SHALL be user-initiated. Live offline, active/unknown, error, or awaiting-clear device states SHALL still block sending.
+PrintLab SHALL 由使用者主動啟動送印。缺少逐任務的就緒、裝料、清板及授權事實 SHALL NOT 單獨阻擋送印。即時設備狀態顯示離線、忙碌、故障、明確等待清板或發送結果不明時 SHALL 繼續阻擋。
 
 #### Scenario: Required routing cannot be verified
-- **WHEN** the approved task requires a slot or nozzle route that is unknown or only inferred from an unverified snapshot
-- **THEN** PrintLab retains the route as unverified information and does not block dispatch solely because task-level route confirmation is absent
+- **WHEN** 使用者準備、批准或送出未指定噴嘴路線的任務
+- **THEN** PrintLab SHALL 接受通過其他檢查的任務，且略過舊任務記錄的噴嘴路線欄位
 
 #### Scenario: Current device readiness is unavailable
-- **WHEN** task-specific readiness or clear-plate confirmation is missing
-- **THEN** PrintLab does not require those confirmation events; it still blocks when live telemetry reports an actual unsafe device state
+- **WHEN** 缺少逐任務的就緒或清板確認
+- **THEN** PrintLab SHALL 依即時設備狀態執行適用的檢查
 
 #### Scenario: Manual Studio handoff requires current observations
-- **WHEN** a task uses the no-Bambuddy manual Studio route without fresh exact-task readiness, route, loaded-material, clear-plate, or authorization facts
-- **THEN** PrintLab allows the user-initiated handoff if file integrity and printer identity requirements pass, without synthesizing missing facts
+- **WHEN** 使用者執行官方 Studio 手動交接
+- **THEN** PrintLab SHALL 依檔案完整性與印表機身份核對交接條件
+
+#### Scenario: 檢查材料與文件
+- **WHEN** 送印流程核對切片及實際料槽
+- **THEN** PrintLab SHALL 保留板型、材料來源及身份、切片完整性和設備身份檢查
 
 ### Requirement: Reconcile the same approved task without a Bambuddy queue
 PrintLab SHALL preserve task identity and report dispatch outcome as unknown until the official Studio handoff has an observable result; it SHALL NOT retry an uncertain dispatch automatically.

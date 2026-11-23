@@ -79,12 +79,11 @@ def _slice_info(jd, job):
 def _bindings(job, rows):
     mapping = job.get('mapping', {})
     slots = mapping.get('ams_mapping', [])
-    extruders = mapping.get('extruder_mapping', [])
     ids = mapping.get('project_filament_ids', list(range(1, len(slots) + 1)))
-    if (not slots or len(slots) != len(extruders) or len(ids) != len(slots)
+    if (not slots or not isinstance(ids, list) or len(ids) != len(slots)
             or any(type(i) is not int or i < 1 for i in ids) or len(set(ids)) != len(ids)
             or any(type(s) is not int or s < 0 for s in slots)):
-        raise core.WorkflowError('材料和噴嘴映射不完整')
+        raise core.WorkflowError('耗材料槽映射不完整')
     if set(ids) != {r['id'] for r in rows}:
         raise core.WorkflowError('任務材料編號與本盤實際使用編號不一致')
     by_id = {r['id']: r for r in rows}
@@ -95,7 +94,7 @@ def _bindings(job, rows):
             values = mapping.get(key, [])
             return values[index] if isinstance(values, list) and index < len(values) else fallback
         result.append({'filament_id': fid, 'slot': slots[index], 'slot_label': slot_label(slots[index]),
-            'extruder': extruders[index], 'required_grams': row['used_g'],
+            'required_grams': row['used_g'],
             'material': mapped('filament_types', row.get('type')),
             'series': mapped('filament_series', mapping.get('material') or row.get('type')),
             'color': mapped('filament_colours', mapping.get('color') or row.get('color')),
@@ -250,7 +249,7 @@ def quantity_checks(bindings, status, assignments, spools):
         item = grouped.setdefault(slot, {**bound, 'filament_ids': [], 'required_grams': 0.0})
         item['required_grams'] += bound['required_grams']
         item['filament_ids'].append(bound['filament_id'])
-        if any(item.get(k) != bound.get(k) for k in ('extruder', 'material', 'series', 'color', 'inventory_id', 'profile_id')):
+        if any(item.get(k) != bound.get(k) for k in ('material', 'series', 'color', 'inventory_id', 'profile_id')):
             item['binding_conflict'] = True
     seen_spools = {}
     result = []
@@ -269,7 +268,7 @@ def quantity_checks(bindings, status, assignments, spools):
         estimate = percent * label_weight / 100 if percent is not None and label_weight else None
         reserve = max(10.0, item['required_grams'] * .1)
         sufficient = estimate is not None and estimate >= item['required_grams'] + reserve
-        row = {k: item.get(k) for k in ('slot', 'slot_label', 'filament_ids', 'material', 'series', 'color', 'name', 'extruder')}
+        row = {k: item.get(k) for k in ('slot', 'slot_label', 'filament_ids', 'material', 'series', 'color', 'name')}
         row.update(required_grams=round(item['required_grams'], 2), reserve_grams=round(reserve, 2),
                    reported_remaining_percent=percent, label_weight_grams=label_weight,
                    estimated_available_grams=round(estimate, 2) if estimate is not None else None,
@@ -352,7 +351,7 @@ def check(pid, jid, *, client=None, inspector=None):
                 'device':{'name':(binding or {}).get('studio_printer_name'),
                           'model':(binding or {}).get('studio_printer_model'),'state':'user_verified_at_task'},
                 'device_facts':facts,'plate_confirmation_required':False,'executed':False,'automatic_start':False,
-                'quantity_note':'Spoolman 餘量是台帳估算；未核實的實際裝料與料路會保留為未知。'}
+                'quantity_note':'Spoolman 餘量是台帳估算；實際裝料狀態仍未知。'}
     own_client = client is None
     try:
         client = client or bambuddy.Client()
@@ -374,12 +373,11 @@ def check(pid, jid, *, client=None, inspector=None):
                      and all(_number(v) == 0 for k, v in temps.items() if k.endswith('_target')))
             record('heaters', '加熱與其他作業', quiet, '沒有正在執行的加熱目標', '設備正在加熱，或加熱狀態未知')
             if bindings and fresh:
-                def route():
+                def check_slots():
                     bambuddy.verify_machine_identity(client, job)
-                    bambuddy.validate_ready(status, job['mapping'], cleared_finished=True,
-                                           printer_model=job.get('sliced_printer_model'))
+                    bambuddy.validate_ready(status, job['mapping'], cleared_finished=True)
                     return True
-                probe('route', '設備路線結構', route, '設備連線與 AMS 路線資料可讀', '設備路線資料不可讀或設備狀態不允許發送')
+                probe('slots', '設備料槽', check_slots, '設備連線與料槽資料可讀', '料槽資料不可讀或設備狀態不允許發送')
                 expected = (inspection or {}).get('inspection', {}).get('nozzleDiameters')
                 actual = [_number(n.get('nozzle_diameter')) for n in status.get('nozzles', [])]
                 nozzle_ok = (isinstance(expected, list) and len(expected) == len(actual) and bool(actual)
@@ -398,7 +396,7 @@ def check(pid, jid, *, client=None, inspector=None):
                 except Exception:
                     quantities = []
             else:
-                record('route', '顏色、材料與供料路線', False, '', '文件或實時數據未通過，無法核驗供料')
+                record('slots', '設備料槽', False, '', '文件或實時數據未通過，無法核驗料槽')
                 record('quantity', '耗材餘量', False, '', '實時數據不足，無法核驗餘量')
             physical_plate = core.read_json(core.DEVICE_CARD, {}).get('user_confirmed', {}).get('build_plate_description')
             record('plate_type', '打印板類型', physical_plate == job.get('requested_bed_type') == job.get('curr_bed_type'), '切片與已確認的打印板類型一致，仍需確認板面乾淨', '切片板型與當前設備卡不一致或未確認')

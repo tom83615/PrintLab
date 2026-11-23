@@ -106,15 +106,6 @@ def studio_device_binding():
             ('studio_printer_name', 'studio_printer_model', 'studio_printer_serial')}
 
 
-def fts_declaration():
-    confirmed = read_json(DEVICE_CARD, {}).get("user_confirmed", {})
-    value = confirmed.get("fts_installed")
-    # A missing/null machine field alone never establishes that hardware is absent.
-    if type(value) is not bool or not confirmed.get("fts_confirmation_quote") or not confirmed.get("fts_confirmation_date"):
-        return None
-    return value
-
-
 def safe_path(base: Path, rel: str, require_file=True):
     if not rel or "\x00" in rel or Path(rel).is_absolute():
         raise WorkflowError("Invalid relative path")
@@ -260,10 +251,19 @@ def detail(pid):
     rev = data.get("current_revision")
     data["build"] = read_json(p / "Exports" / str(rev) / "build.json") if rev else None
     data["prints"] = [read_json(f) for f in sorted((p / "Print").glob("*/job.json"), reverse=True)]
+    for job in data["prints"]:
+        if isinstance(job.get("mapping"), dict):
+            job["mapping"] = print_material_mapping(job["mapping"])
+        if job.get("state") == "awaiting_configuration":
+            issues = print_configuration_issues(job)
+            job.update(configuration_issues=issues, trial_only=bool(issues),
+                       state="awaiting_configuration" if issues else "awaiting_approval")
     data["current_attempt"] = current_attempt(p, data, data["prints"])
     if data["current_attempt"]:
         attempt = data["current_attempt"]
         attempt["has_dispatch_receipt"] = (p / "Print" / attempt["id"] / "dispatch.json").is_file()
+        if data.get("status") == "awaiting_configuration" and attempt.get("state") == "awaiting_approval":
+            data["status"] = attempt["state"]
     data["reviews"] = texts(p / "Review")
     data["sessions"] = texts(p / "Sessions")
     return data
@@ -506,8 +506,8 @@ def print_configuration_issues(job):
     mapping = job.get("mapping", {})
     if job.get('printer_provider') == 'official_studio' and mapping.get('transport') != 'bambu_studio':
         issues.append('未選擇官方 Bambu Studio 手動交接路線')
-    if not mapping.get("ams_mapping") or not mapping.get("extruder_mapping"):
-        issues.append("缺少切片耗材與噴嘴路線資料")
+    if not mapping.get("ams_mapping"):
+        issues.append("缺少切片耗材料槽資料")
     card = read_json(DEVICE_CARD, {})
     model = card.get('user_confirmed', {}).get('model') or card.get('model')
     if model and job.get('sliced_printer_model') and machine_profiles.model_id(model) != machine_profiles.model_id(job['sliced_printer_model']):
@@ -538,7 +538,15 @@ def inspect_slice(pid, jid, refresh=False):
         return inspected
 
 
+def print_material_mapping(mapping):
+    if not isinstance(mapping, dict):
+        raise WorkflowError("Print mapping must be an object")
+    obsolete = {"extruder_mapping", "nozzle_mapping", "routing_verified", "fts_installed"}
+    return {key: value for key, value in mapping.items() if key not in obsolete}
+
+
 def slice_project(pid, machine, process, filaments, revision=None, plate=1, mapping=None, bed_type=None, input_3mf=None, preserve_layout=False):
+    mapping = print_material_mapping({} if mapping is None else mapping)
     p = project_path(pid)
     revision = revision or read_json(p / "project.json").get("current_revision")
     if not revision:
@@ -858,6 +866,7 @@ def retry_job(pid, jid, note, mapping=None):
                "root_attempt_id":old.get("root_attempt_id",jid)}
         if not isinstance(job["mapping"], dict):
             raise WorkflowError("Retry mapping must be an object")
+        job["mapping"] = print_material_mapping(job["mapping"])
         issues = print_configuration_issues(job)
         job.update(state="awaiting_configuration" if issues else "awaiting_approval", trial_only=bool(issues), configuration_issues=issues)
         job_fingerprint(p, new_dir, job)

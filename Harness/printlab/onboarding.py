@@ -263,7 +263,7 @@ def view(device=None, inventory=None):
         if role['status'] != 'introduced':
             next_actions.append({'kind': 'role', 'role': role['role'], 'text': f"完成 {role['title']} 的創建與首次介紹"})
     if external_slots:
-        next_actions.append({'kind': 'device', 'text': 'OpenSpoolMan 槽位供設計參考；核對實機噴嘴、列印板和供料路線'})
+        next_actions.append({'kind': 'device', 'text': 'OpenSpoolMan 槽位供設計參考；核對實機噴嘴規格與列印板'})
         if core.printer_provider() == 'official_studio' and core.studio_device_binding() is None:
             next_actions.append({'kind': 'studio_device',
                 'text': '在 Runtime/config.json 記錄官方 Studio 顯示的印表機名稱、機型與序號，才能綁定手動列印任務'})

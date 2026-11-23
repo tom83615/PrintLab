@@ -108,7 +108,7 @@ def slot_state(tray):
     return "unknown"
 
 
-def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, now=None, printer_model=None):
+def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, now=None):
     """Normalize raw printer status. Returned IDs never include tags or serials."""
     now = datetime.now(timezone.utc).timestamp() if now is None else now
     source_at = _stamp(status.get("last_ams_update"))
@@ -118,25 +118,13 @@ def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, n
     assigned = {(a.get("ams_id"), a.get("tray_id")): a.get("spool_id") for a in assignments
                 if type(status.get("id")) is int and a.get("printer_id") == status["id"]}
     modules = []
-    mapping = status.get("ams_extruder_map") or {}
-    from .machine_profiles import single_nozzle_model
-    single_nozzle = single_nozzle_model(printer_model)
-    for index, ams in enumerate(status.get("ams") or []):
+    for ams in status.get("ams") or []:
         aid = ams.get("id")
         trays = {t.get("id"): t for t in ams.get("tray", []) if type(t.get("id")) is int}
         # This workspace has a four-slot AMS. Do not invent four slots for a
         # future single-tray AMS-HT that explicitly says it is HT.
         count = 1 if ams.get("is_ams_ht") is True else 4
-        extruder = mapping.get(str(aid), mapping.get(aid))
-        extruder = extruder if type(extruder) is int and extruder in {0, 1} else None
-        if single_nozzle and extruder is None:
-            extruder = 0
         name = "AMS " + chr(ord("A") + aid) if type(aid) is int and 0 <= aid <= 25 else f"AMS {aid}"
-        logical_nozzle = {1: 1, 0: 2}.get(extruder)
-        nozzle_label = {1: "左主噴嘴 1", 0: "右輔噴嘴 2"}.get(extruder)
-        if single_nozzle:
-            logical_nozzle = 1 if extruder == 0 else None
-            nozzle_label = '單噴嘴 1' if extruder == 0 else '路線衝突，待核實'
         slots = []
         for tid in range(count):
             tray = trays.get(tid, {})
@@ -167,12 +155,9 @@ def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, n
                           "spool_id": spool_id if matched else None, "assignment_matches": matched,
                           "reported_remaining_percent": remain, "remaining_basis": "device_report" if remain is not None else "unknown",
                           "actual_remaining_weight": None, "fresh": fresh, "source_timestamp": status.get("last_ams_update"),
-                          "route": {"ams_label": name, "nozzle_number": logical_nozzle,
-                                    "firmware_extruder_id": extruder,
-                                    "text": f"{name} → {nozzle_label}" if nozzle_label else f"{name} → 噴嘴待核實"},
-                          "diagnostics": {"ams_id": aid, "tray_id": tid, "physical_extruder_id": extruder,
+                          "diagnostics": {"ams_id": aid, "tray_id": tid,
                                           "reported_state": tray.get("state"), "assigned_spool_id": spool_id}})
         modules.append({"name": name, "slots": slots})
     return {"modules": modules, "observed_at": observed_at, "source_timestamp": status.get("last_ams_update"),
             "age_seconds": age, "fresh": fresh,
-            "note": "槽位按1–4顯示；單噴嘴可通過換料完成多色。餘量是設備報告，可能滯後。" if single_nozzle else "槽位按1–4顯示；餘量是設備報告，可能滯後。多色不等於使用兩個噴嘴。"}
+            "note": "餘量是設備報告，可能滯後。"}

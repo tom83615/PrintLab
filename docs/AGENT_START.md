@@ -84,7 +84,7 @@ Runtime/venv/bin/python scripts/verify_onboarding.py
 
 開始新外形前讀取 `Context/image-to-print.md`，在記錄使用者選擇時從 `Templates/Project/Review/design-target.json` 初始化專案對應文件，填寫實際圖片、哈希和選擇。模型選擇讀取 `Context/agent-policy.json`，空值時使用使用者當前可用的模型，並記錄實際執行者。
 
-首次設備接入遵循 [安裝指南](SETUP.md)。實際列印按 [列印說明](PRINTING.md) 綁定具體文件與印表機身份；逐任務材料/路線/設備就緒/清板確認不作為必要門檻。
+首次設備接入遵循 [安裝指南](SETUP.md)。實際列印按 [列印說明](PRINTING.md) 綁定具體文件與印表機身份；逐任務材料/設備就緒/清板確認不作為必要門檻。
 
 ## 交付給使用者
 

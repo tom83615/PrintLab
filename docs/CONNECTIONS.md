@@ -32,10 +32,10 @@ Bambuddy 文件對較新韌體的完整第三方控制要求 LAN Only 與 Develo
 在本機 `Runtime/config.json` 設定 `spoolman_url` 和 `openspoolman_url`（服務根網址）。可分開啟用。已設定來源但服務故障時，PrintLab 會標示該來源不可用，不會改用 Bambuddy 資料；未設定來源時，過渡相容路徑仍可讀取 Bambuddy，介面會標明來源。HTTPS 使用系統信任的憑證。
 
 - `spoolman_url`：用 Spoolman 的 `/api/v1/spool` 讀取未封存料卷，供 `materials`、工作台及新設計的製造條件使用。餘量是台帳估算。新增料卷可以在工作台「管理庫存」開啟 Spoolman，或使用 `material-intake` 登記已確認的料卷。可先用 `--preview` 核對材料品項和重量，詳見 [首次設定](ONBOARDING.md)。
-- `openspoolman_url`：從 OpenSpoolMan 首頁辨識 AMS 與外掛料卷卡片。目前此部署未提供 OpenAPI 文件或印表機 REST 端點，工作台只讀取並解析首頁；本機讀取時間不代表來源遙測時間。資料僅用於設計準備，設備連線、實際重量與噴嘴路線須另外核對。頁面格式不支援或服務不可用時，工作台會顯示來源不可用。
+- `openspoolman_url`：從 OpenSpoolMan 首頁辨識 AMS 與外掛料卷卡片。目前此部署未提供 OpenAPI 文件或印表機 REST 端點，工作台只讀取並解析首頁；本機讀取時間不代表來源遙測時間。資料僅用於設計準備，設備連線與實際重量須另外核對。頁面格式不支援或服務不可用時，工作台會顯示來源不可用。
 - 用 `printlab onboarding status --refresh` 讀回兩個來源。僅設定 OpenSpoolMan 時，「列印歷史」提供其原生歷史頁入口；PrintLab 不匯入或判定該頁的列印結果。既有 Bambuddy 列印預檢、任務對帳和歷史匯入仍使用原先的連接設定。
 
-Windows 上不使用 Bambuddy 發送時，先在 `Runtime/config.json` 綁定本機 Bambu Studio 中已核實的印表機名稱、機型和序號：`printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。此身份只用來綁定工作，不代表設備即時在線或料路已確認。逐任務的設備就緒、實際料路、裝料、清板與列印授權確認不是必要條件；`submit --execute` 只建立一次 60 秒官方 Studio 手動交接預約，使用者再主動於 Studio 發送。完成或結果不明後，以 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記使用者觀察；它不查詢或重送設備任務。詳細步驟見 [Windows 列印](WINDOWS.md)。
+Windows 上不使用 Bambuddy 發送時，先在 `Runtime/config.json` 綁定本機 Bambu Studio 中已核實的印表機名稱、機型和序號：`printlab workspace studio-device --name "Bambu Lab H2C" --model "Bambu Lab H2C" --serial "<序號>" --expect-sha <workspace connection 顯示的 sha256>`。此身份只用來綁定工作，不代表設備即時在線。逐任務的設備就緒、裝料、清板與列印授權確認不是必要條件；`submit --execute` 只建立一次 60 秒官方 Studio 手動交接預約，使用者再主動於 Studio 發送。完成或結果不明後，以 `printlab reconcile <專案> <任務> --outcome <printing|completed|failed|cancelled> --task-name <任務名.gcode> --evidence <觀察內容> --source <觀察來源>` 登記使用者觀察；它不查詢或重送設備任務。詳細步驟見 [Windows 列印](WINDOWS.md)。
 
 ## 手機訪問
 

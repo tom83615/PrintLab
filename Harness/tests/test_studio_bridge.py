@@ -21,23 +21,27 @@ class StudioBridgeTests(unittest.TestCase):
         configured_name.start()
         self.addCleanup(configured_name.stop)
         self.shot=json.loads((Path(__file__).parent/'fixtures/studio-single-petg-unsent.json').read_text())
-        self.job={'id':'J20261107-141042-93f972','plate':1,'mapping':{'transport':'bambu_studio','use_ams':True,'ams_mapping':[4], 'extruder_mapping':[1],'filament_types':['PETG']},'curr_bed_type':'Textured PEI Plate','sliced_printer_model':'Bambu Lab X2D'}
+        self.job={'id':'J20261107-141042-93f972','plate':1,'mapping':{'transport':'bambu_studio','use_ams':True,'ams_mapping':[4],'filament_types':['PETG']},'curr_bed_type':'Textured PEI Plate','sliced_printer_model':'Bambu Lab X2D'}
 
     def test_real_unsent_observation_passes(self):
         self.assertEqual(bridge.validate_snapshot(self.shot,self.job)['slot'],'B1')
         self.assertEqual(bridge._job_supported(self.job),[])
 
-    def test_wrong_job_slot_nozzle_or_material_fails(self):
+    def test_wrong_job_slot_or_material_fails(self):
         mutations=[lambda j:j.update(id='J20261107-000000-ffffff'),lambda j:j['mapping'].update(ams_mapping=[0]),lambda j:j['mapping'].update(filament_types=['PLA'])]
         for mutate in mutations:
             job=copy.deepcopy(self.job);mutate(job)
             with self.assertRaises(core.WorkflowError):bridge.validate_snapshot(self.shot,job)
-        shot=copy.deepcopy(self.shot)
-        next(t for t in shot['tokens'] if t['text'].startswith('B1'))['x']=.65
-        with self.assertRaises(core.WorkflowError):bridge.validate_snapshot(shot,self.job)
 
-    def test_multi_material_and_aux_routes_not_available(self):
-        for field,value in [('ams_mapping',[4,0]),('extruder_mapping',[0]),('transport','bambu_native'),('use_ams',False)]:
+    def test_slot_and_material_in_right_column_are_accepted(self):
+        shot=copy.deepcopy(self.shot)
+        for token in shot['tokens']:
+            if token['text'].startswith('B1') or token['text'] == 'PETG':
+                token['x'] = .65
+        self.assertEqual(bridge.validate_snapshot(shot,self.job)['slot'],'B1')
+
+    def test_multiple_materials_and_unsupported_transports_are_rejected(self):
+        for field,value in [('ams_mapping',[4,0]),('transport','bambu_native'),('use_ams',False)]:
             job=copy.deepcopy(self.job);job['mapping'][field]=value
             self.assertTrue(bridge._job_supported(job))
 

@@ -194,7 +194,6 @@ def _slots(page, rows):
             'english_label': materials.english_label(item) if state in {'loaded', 'unidentified'} else None,
             'spool_id': spool_id, 'ledger_conflict_ids': conflicts, 'fresh': False,
             'reported_remaining_percent': None, 'remaining_basis': 'unknown',
-            'route': {'text': '噴嘴路線待核實', 'nozzle_number': None},
             'diagnostics': {'ams_id': aid, 'tray_id': tid}})
     if not modules:
         raise ValueError('OpenSpoolMan page contains no recognizable tray slots')
@@ -237,7 +236,7 @@ def device():
         modules = _slots(page, rows)
         stamp = core.now()
         result.update(state='snapshot', printer={'name': ' '.join(page.title) or 'OpenSpoolMan'}, updated_at=stamp,
-                      message='已讀取 OpenSpoolMan 槽位快照；設備在線狀態、更新時間與噴嘴路線待核實。',
+                      message='已讀取 OpenSpoolMan 槽位快照；設備在線狀態與來源更新時間未知。',
                       material_slots={'modules': modules, 'observed_at': stamp, 'source_timestamp': None,
                                       'fresh': False, 'source': 'openspoolman',
                                       'note': 'OpenSpoolMan 頁面快照；未提供印表機遙測時間或實際餘量。'})

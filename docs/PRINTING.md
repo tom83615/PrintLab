@@ -7,8 +7,8 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 | 路線 | 當前範圍 |
 | --- | --- |
 | 官方 Studio，由 Codex 操作介面 | Agent 開啟具體切片包，核對機型、板型、材料與發送選項，使用 PrintLab 的批准與單次預約記錄，點選一次發送後讀回設備。需要當前 Codex 具備桌面控制能力。 |
-| Windows 官方 Studio 手動交接 | 無需 Bambuddy；任務綁定本機記錄的 Studio 名稱、機型與序號。材料、噴嘴/料槽路線、設備就緒、清板與列印授權不要求逐任務確認；使用者在 Bambu Studio 主動發送。沒有即時遙測時，結果保持未知，須以同一任務名稱記錄觀察結果。 |
-| 工作台按鈕呼叫本機發送助手 | 中文 Studio 02.08.02.61、X2D、0.4 mm、單主料 PLA/PETG、AMS 左主噴嘴、紋理 PEI、單盤。需要 macOS 14+、使用者登入且桌面解鎖、輔助功能與螢幕讀取權限。 |
+| Windows 官方 Studio 手動交接 | 無需 Bambuddy；任務綁定本機記錄的 Studio 名稱、機型與序號。材料、設備就緒、清板與列印授權不要求逐任務確認；使用者在 Bambu Studio 主動發送。沒有即時遙測時，結果保持未知，須以同一任務名稱記錄觀察結果。 |
+| 工作台按鈕呼叫本機發送助手 | 中文 Studio 02.08.02.61、X2D、0.4 mm、單主料 PLA/PETG、AMS、紋理 PEI、單盤。需要 macOS 14+、使用者登入且桌面解鎖、輔助功能與螢幕讀取權限。 |
 | 工作台按鈕呼叫 Bambuddy 佇列 | Mac/Windows 共用 HTTP 發送程式碼，當前接入 A1、A1 mini、P1S、X1 Carbon 的 AMS 路線。需綁定 `bambuddy_queue`、讀回正確機型、可用儲存卡、IDLE 與具體材料；文件、排隊、啟動及異常對賬使用原任務記錄。軟體模擬已通過，實際設備接受與首層待現場驗證。 |
 | 歷史原生 MCP 發送 | 發佈首版未提供可執行客戶端。來源和獨立安裝邊界見 DEPENDENCIES.md。 |
 
@@ -19,7 +19,7 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 ## 準備一次具體列印
 
 1. Codex 根據當前版本、選定材料、板型、噴嘴和機器生成切片包，儲存模型和切片 SHA。
-   - H2C 已安裝 FTS 時，預設以左噴嘴設計與切片，因左側可用列印空間較大；實際 AMS 槽位路線可保持未核實，不要求逐任務確認。
+   - H2C 已安裝 FTS 時，可依使用者偏好以左噴嘴較大的列印空間規劃設計與切片。
 2. 交付切片檔，展示真實模型、關鍵尺寸、分盤、材料映射、預計耗時與用量。到此等待使用者回饋，省略建立回執及送印。使用者明確要求列印時再繼續下列步驟。
 3. 使用者以 approve/啟動/Studio Send 主動開始該任務；不要求額外列印授權或清板確認事件。批准有效期仍為 30 分鐘。
 4. 使用 `printlab approve --help`、`printlab submit --help` 確認當前參數。`submit` 預設預檢，真實執行需要明確 `--execute`。
@@ -47,7 +47,7 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 .\Harness\bin\printlab.ps1 workspace studio-device --name 'Studio 顯示名稱' --model 'Bambu Lab H2C' --serial 'Studio 顯示的序號' --expect-sha '上一步返回的 SHA256'
 ```
 
-準備具體列印任務後，不必記錄 `device_ready`、`routing_verified`、`material_loaded`、`plate_clear` 或 `print_authorized` 逐任務確認。`approve` 綁定任務檔案與印表機身份；`submit --execute` 只建立 60 秒有效的單次交接回執，使用者再於 Studio 開啟指定檔案並主動發送。即時設備離線、忙碌、故障或明確等待清板仍會阻擋。
+準備具體列印任務後，不必記錄 `device_ready`、`material_loaded`、`plate_clear` 或 `print_authorized` 逐任務確認。`approve` 綁定任務檔案與印表機身份；`submit --execute` 只建立 60 秒有效的單次交接回執，使用者再於 Studio 開啟指定檔案並主動發送。即時設備離線、忙碌、故障或明確等待清板仍會阻擋。
 
 沒有 Bambuddy 遙測時，`reconcile` 不會查詢印表機，也不會重送。使用者觀察到這個確切任務後，可記錄結果：
 
@@ -65,7 +65,7 @@ PrintLab 工作台可在未連接設備時啟動。接入 Bambuddy 後提供狀�
 
 ## 設定跨平臺佇列路線
 
-先使用 `workspace profiles --model 機型` 找到實際官方預設，解析機型、工藝和材料設定後切片。單噴嘴的 `extruder_mapping` 使用切片所需噴嘴索引；AMS/材料資訊作為映射資料保存，`routing_verified` 可為未知且不阻擋任務批准。
+先使用 `workspace profiles --model 機型` 找到實際官方預設，解析機型、工藝和材料設定後切片。材料與 AMS 槽位的對應作為任務資料保存。
 
 準備佇列任務時明確設定 `mapping.transport` 為 `bambuddy_queue`。已有官方 Studio 包保留其綁定，轉換通道時重新準備任務和具體批准。Bambuddy 寫入憑據需能上傳文件、維護佇列並啟動任務。工作台按鈕執行同一 `submit`，先上傳、讀回唯一佇列項，再發送一次啟動請求。超時保留回執並對賬。
 

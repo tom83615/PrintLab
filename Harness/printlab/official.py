@@ -74,7 +74,7 @@ def prepare(pid, jid):
             job.pop(key,None)
         job.update(id=new_id, state='awaiting_approval', created_at=core.now(), updated_at=core.now(),
                    artifact=artifact, artifact_sha256=core.digest(jd/artifact))
-        job['mapping']['transport']='bambu_studio'
+        job['mapping'] = core.print_material_mapping({**job['mapping'], 'transport': 'bambu_studio'})
         job['official_copy_of']={'job_id':jid,'artifact_sha256':old['artifact_sha256']}
         core.write_json(jd/'job.json',job)
         core.job_fingerprint(p,jd,job)

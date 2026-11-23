@@ -6,7 +6,7 @@ import re
 import uuid
 from . import core
 
-FACTS = {'print_authorized', 'plate_clear', 'material_loaded', 'device_ready', 'routing_verified',
+FACTS = {'print_authorized', 'plate_clear', 'material_loaded', 'device_ready',
          'design_selected', 'colors_selected'}
 
 
@@ -69,7 +69,7 @@ def resolve(jd, job, fingerprint, event_id=None):
             if name in FACTS:
                 facts[name] = {'value':value,'quote':row.get('quote'),'source':row.get('source'),
                                'recorded_at':row.get('confirmed_at') or row.get('recorded_at'),'event_id':row.get('id')}
-    for name in ('plate_clear','print_authorized','material_loaded','device_ready','routing_verified'):
+    for name in ('plate_clear','print_authorized','material_loaded','device_ready'):
         fact = facts.get(name)
         if fact:
             age = _age(fact['recorded_at'])
@@ -109,7 +109,7 @@ def card(pid, jid=None, device=None):
     if device is None:
         from . import supplies
         device=supplies.device()
-    routes=[]
+    material_slots=[]
     mapping=job.get('mapping',{})
     raw=(device or {}).get('printer') or {}
     trays={u.get('id',0)*4+t.get('id',0):t for u in raw.get('ams',[]) for t in u.get('tray',[])}
@@ -118,19 +118,17 @@ def card(pid, jid=None, device=None):
     for i,slot in enumerate(mapping.get('ams_mapping',[])):
         t=trays.get(slot,{})
         normalized=normalized_slots.get(slot,{})
-        routes.append({'filament_index':i+1,'slot_number':slot%4+1,'ams_id':slot//4,
-                       'physical_extruder':mapping.get('extruder_mapping',[])[i] if i<len(mapping.get('extruder_mapping',[])) else None,
+        material_slots.append({'filament_index':i+1,'slot_number':slot%4+1,'ams_id':slot//4,
                        'material':t.get('tray_sub_brands') or mapping.get('material'),'material_type':t.get('tray_type'),
                        'color':t.get('tray_color') or mapping.get('color'),
                        'english_label':normalized.get('english_label'), 'material_number':normalized.get('material_number'),
-                       'route_text':normalized.get('route',{}).get('text'), 'slot_state':normalized.get('state'),
-                       'route_matches':normalized.get('diagnostics',{}).get('physical_extruder_id') == (mapping.get('extruder_mapping',[])[i] if i<len(mapping.get('extruder_mapping',[])) else None) if normalized else None})
+                       'slot_state':normalized.get('state')})
     fresh_device=(device or {}).get('state')=='online' and (device or {}).get('stale') is False
     return {'project_id':project['id'],'project_name':project['name'],'revision':job['revision'],'job_id':jid,
             'state':job['state'],'plate_type':job.get('curr_bed_type') or plate,'known_plate_type':plate,
             'artifact_sha256':job.get('artifact_sha256'),'estimates':job.get('estimates'),
-            'routes':routes,'facts':facts,'missing':missing,'already_dispatched':dispatched,
+            'material_slots':material_slots,'facts':facts,'missing':missing,'already_dispatched':dispatched,
             'can_approve':not missing and not dispatched and job.get('state') in {'awaiting_configuration','awaiting_approval','approved'},
             'device_fresh':fresh_device,'observed_at':(device or {}).get('updated_at'),
             'studio_device_binding':job.get('studio_device_binding'),
-            'device_note':'未確認的設備就緒、材料、路線與清板事實保持未知；依實際設備狀態檢查發送條件。'}
+            'device_note':'未確認的設備就緒、材料與清板事實保持未知；依實際設備狀態檢查發送條件。'}

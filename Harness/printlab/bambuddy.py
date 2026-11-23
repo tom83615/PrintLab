@@ -61,7 +61,7 @@ def telemetry_age(status):
 
 
 def sanitize_device(raw):
-    allowed = {"id", "name", "connected", "state", "current_print", "progress", "remaining_time", "layer_num", "total_layers", "temperatures", "ams_extruder_map", "awaiting_plate_clear", "hms_errors", "firmware_version", "developer_mode", "sdcard"}
+    allowed = {"id", "name", "connected", "state", "current_print", "progress", "remaining_time", "layer_num", "total_layers", "temperatures", "awaiting_plate_clear", "hms_errors", "firmware_version", "developer_mode", "sdcard"}
     printer = {k: v for k, v in raw.items() if k in allowed}
     tray_fields = {"id", "tray_info_idx", "tray_id_name", "tray_color", "tray_type", "tray_sub_brands", "remain", "nozzle_temp_min", "nozzle_temp_max", "state", "exists"}
     def tray(value):
@@ -105,20 +105,7 @@ def device():
         except (httpx.HTTPError, ValueError, core.WorkflowError):
             pass  # Failure to enrich names must not turn a connected device into offline.
         result["material_slots"] = materials.slot_overview(raw, assignments, spools,
-            observed_at=result["updated_at"], printer_model=printer.get('model'))
-        reported_fts = (printer.get("fila_switch") or {}).get("installed")
-        declared_fts = core.fts_declaration()
-        fts_resolution = "conflict" if reported_fts is True and declared_fts is False else "reported_present" if reported_fts is True else "user_confirmed_absent" if declared_fts is False else "unknown"
-        result["routing_evidence"] = {"source": "Bambuddy status + confirmed device card", "observed_at": result["updated_at"],
-                                      "ams_extruder_map": printer.get("ams_extruder_map"),
-                                      "fts_reported_installed": reported_fts,
-                                      "fts_user_confirmed_installed": declared_fts, "fts_resolution": fts_resolution,
-                                      "validated_for_dispatch": False,
-                                      "message": "設備回報與工作區的 FTS 資料不同；此資訊不單獨阻擋任務。" if fts_resolution == "conflict" else "工作區記錄沒有 FTS；設備未回報不代表設備已證實。" if fts_resolution == "user_confirmed_absent" else "FTS 狀態未知；不要求逐任務確認或因此阻擋。"}
-        from .machine_profiles import single_nozzle_model
-        if single_nozzle_model(printer.get('model')):
-            result['routing_evidence'].update(fts_resolution='not_applicable',
-                message='已識別單噴嘴機型，按當前 AMS 槽位與切片核對供料。')
+            observed_at=result["updated_at"])
     except (httpx.HTTPError, core.WorkflowError, ValueError):
         result.update(state="offline", message="無法讀取 Bambuddy；設備狀態未知。")
     finally:
@@ -160,15 +147,13 @@ def reported_trays(status):
     for tray in external:
         slot = tray.get('id')
         if slot not in (254, 255) or slot in seen:
-            raise core.WorkflowError('External spool report has missing or duplicate nozzle identities')
+            raise core.WorkflowError('External spool report has missing or duplicate slot IDs')
         seen.add(slot)
         trays[slot] = tray
     return trays
 
 
-def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint=None, printer_model=None):
-    from .machine_profiles import single_nozzle_model
-    single_nozzle = single_nozzle_model(printer_model)
+def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint=None):
     if status.get("connected") is not True:
         raise core.WorkflowError("Printer is disconnected")
     from . import cancelled_transition
@@ -190,31 +175,15 @@ def validate_ready(status, mapping, *, cleared_finished=False, cancelled_reprint
     if status.get("hms_errors"):
         raise core.WorkflowError("Resolve printer diagnostics before dispatch")
     if mapping.get("use_ams") is not True:
-        raise core.WorkflowError("First adapter supports the verified AMS route only")
+        raise core.WorkflowError("This adapter requires AMS mode")
     ams = mapping.get("ams_mapping")
-    extruders = mapping.get("extruder_mapping")
     if not isinstance(ams, list) or not ams or not all(type(x) is int and x >= 0 for x in ams):
         raise core.WorkflowError("Explicit AMS mapping is required")
-    if not isinstance(extruders, list) or len(extruders) != len(ams) or not all(type(x) is int and x in {0, 1} for x in extruders):
-        raise core.WorkflowError("Explicit matching extruder mapping is required")
-    if "nozzle_mapping" in mapping:
-        raise core.WorkflowError("nozzle_mapping is an H2C rack field, not X2D extruder IDs")
     trays = reported_trays(status)
-    for slot, extruder in zip(ams, extruders):
+    for slot in ams:
         tray = trays.get(slot)
         if not tray or tray.get("exists") is False or tray.get("state") == 9 or not tray.get("tray_type"):
             raise core.WorkflowError("Mapped AMS slot is missing, empty, or has unknown material")
-        if slot >= 254:
-            if single_nozzle:
-                raise core.WorkflowError('This single-nozzle adapter currently requires an observed AMS slot')
-            if mapping.get('transport') not in {'bambu_native', 'bambu_studio'} or slot != {0: 255, 1: 254}[extruder]:
-                raise core.WorkflowError('External spool does not match its bound X2D physical nozzle')
-        elif single_nozzle:
-            if extruder != 0:
-                raise core.WorkflowError('The selected single-nozzle machine requires physical extruder 0')
-            observed = status.get('ams_extruder_map', {}).get(str(slot // 4))
-            if observed is not None and observed != 0:
-                raise core.WorkflowError('Reported AMS route contradicts the single-nozzle mapping')
 
 
 def verify_machine_identity(client, job):
@@ -253,51 +222,34 @@ def validate_support_profile_identity(settings, tray, index):
         raise ValueError("Support filament preset ID is missing or differs from live tray_info_idx")
 
 
-def validate_slice_route(jd, job, status):
-    """Require actual slice assignments, not the slicer's preferred/nozzle-auto setting.
-
-    This narrow parser deliberately rejects legacy slices without an explicit
-    nozzle table; the pinned upstream parser has broader fallback heuristics.
-    """
+def validate_slice_materials(jd, job, status):
+    """Match the selected plate and its active filament IDs to loaded materials."""
     try:
         with zipfile.ZipFile(core.safe_path(jd, job["artifact"])) as z:
             settings = json.loads(z.read("Metadata/project_settings.config"))
             root = ET.fromstring(z.read("Metadata/slice_info.config"))
         if settings.get("curr_bed_type") != job.get("requested_bed_type"):
             raise ValueError("Sliced plate type differs from the explicitly confirmed physical plate")
-        physical = settings["physical_extruder_map"]
         plates = [p for p in root.findall(".//plate") if any(m.get("key") == "index" and m.get("value") == str(job["plate"]) for m in p.findall("metadata"))]
         if len(plates) != 1:
             raise ValueError("Selected plate metadata missing")
-        plate = plates[0]
-        groups = {}
-        for n in plate.findall(".//nozzle"):
-            group, index = int(n.attrib["id"]), int(n.attrib["extruder_id"]) - 1
-            if index < 0 or group in groups and groups[group] != index:
-                raise ValueError("Ambiguous nozzle table")
-            groups[group] = index
-        actual = {}
-        for f in plate.findall(".//filament"):
-            slot = int(f.attrib["id"])
-            if slot < 1 or slot in actual:
-                raise ValueError("Invalid or duplicate sliced filament ID")
-            actual[slot] = int(physical[groups[int(f.attrib["group_id"])]])
+        actual_ids = [int(f.attrib["id"]) for f in plates[0].findall(".//filament")]
+        if not actual_ids or any(i < 1 for i in actual_ids) or len(set(actual_ids)) != len(actual_ids):
+            raise ValueError("Invalid or duplicate sliced filament ID")
         mapping = job["mapping"]
-        # Studio retains project-wide IDs when exporting one plate (e.g. 3, 9).
-        # Bind every active ID explicitly; never infer or omit a sliced filament.
-        ids = mapping.get("project_filament_ids", list(range(1, len(mapping["extruder_mapping"]) + 1)))
-        if (not isinstance(ids, list) or len(ids) != len(mapping["extruder_mapping"])
-                or len(ids) != len(mapping["ams_mapping"])
+        slots = mapping["ams_mapping"]
+        # Studio retains project-wide filament IDs when exporting one plate.
+        ids = mapping.get("project_filament_ids", list(range(1, len(slots) + 1)))
+        if (not isinstance(ids, list) or len(ids) != len(slots)
                 or any(type(i) is not int or i < 1 for i in ids) or len(set(ids)) != len(ids)):
             raise ValueError("Invalid project filament ID mapping")
         if "project_filament_ids" in mapping and mapping.get("transport") != "bambu_studio":
             raise ValueError("Explicit project filament IDs require the official Studio route")
-        expected = dict(zip(ids, mapping["extruder_mapping"]))
-        if actual != expected:
-            raise ValueError("Slice assignment differs from approved mapping")
+        if set(actual_ids) != set(ids):
+            raise ValueError("Sliced filament IDs differ from approved mapping")
         types = settings["filament_type"]
         trays = reported_trays(status)
-        for filament_id, slot in zip(ids, mapping["ams_mapping"]):
+        for filament_id, slot in zip(ids, slots):
             i = filament_id - 1
             validate_support_profile_identity(settings, trays[slot], i)
             sliced_type = str(types[i]).upper()
@@ -310,7 +262,7 @@ def validate_slice_route(jd, job, status):
             if sliced_type != live_type and not gfs05_alias:
                 raise ValueError("Loaded material differs from sliced filament profile")
     except (KeyError, ValueError, IndexError, TypeError, ET.ParseError) as exc:
-        raise core.WorkflowError("Cannot verify exact sliced nozzle/material route; inspect in Bambu Studio. " + str(exc)) from exc
+        raise core.WorkflowError("Cannot verify sliced plate and materials; inspect in Bambu Studio. " + str(exc)) from exc
 
 
 def validate_native_filaments(status, mapping):
@@ -368,8 +320,7 @@ def preflight(p, jd, job, approval, client, *, native=False, official=False):
         raise core.WorkflowError('Official route is not bound to approval')
     from . import cancelled_transition
     cancelled_reprint = cancelled_transition.clearance(p, jd, job, approval) if native else None
-    validate_ready(status, job["mapping"], cleared_finished=native or official, cancelled_reprint=cancelled_reprint,
-                   printer_model=job.get('sliced_printer_model'))
+    validate_ready(status, job["mapping"], cleared_finished=native or official, cancelled_reprint=cancelled_reprint)
     queue = client.get("queue/")
     # Reject even unassigned pending jobs: releasing a printer must never dispatch another job.
     if any(item.get("status") in {"pending", "printing"} for item in queue):
@@ -424,8 +375,8 @@ def submit(pid, jid, execute=False, client_factory=None):
                     raise core.WorkflowError("Another task entered the queue while staging")
                 verify_machine_identity(client, job)
                 current_status = client.get(f"printers/{job['printer_id']}/status")
-                validate_ready(current_status, job["mapping"], printer_model=job.get('sliced_printer_model'))
-                validate_slice_route(jd, job, current_status)
+                validate_ready(current_status, job["mapping"])
+                validate_slice_materials(jd, job, current_status)
                 original_trays, current_trays = reported_trays(status), reported_trays(current_status)
                 identity_fields = ('tray_type', 'tray_color', 'tray_sub_brands', 'tray_info_idx', 'tray_id_name')
                 if any(original_trays[slot].get(field) != current_trays[slot].get(field)

@@ -53,16 +53,6 @@ def test_mode_failure_does_not_create_uncertain_dispatch(workspace):
     assert not (workspace[1]/'dispatch.json').exists() and not dev.writes
 
 
-def test_official_support_route_still_checks_the_physical_nozzle(workspace):
-    from test_workflow import ready
-    live=ready();live['vt_tray']=[{'id':255,'tray_type':'PLA'}]
-    mapping={'transport':'bambu_studio','use_ams':True,'routing_verified':True,
-             'fts_installed':False,'ams_mapping':[255],'extruder_mapping':[0]}
-    bambuddy.validate_ready(live,mapping)
-    with pytest.raises(core.WorkflowError,match='physical nozzle'):
-        bambuddy.validate_ready(live,{**mapping,'extruder_mapping':[1]})
-
-
 def manual_studio_job(workspace):
     p, jd = workspace
     config = core.config()
@@ -79,8 +69,7 @@ def manual_studio_job(workspace):
     return job
 
 
-def test_manual_studio_binds_identity_and_requires_all_five_fresh_facts(workspace):
-    from printlab import confirmation
+def test_manual_studio_binds_identity_without_nozzle_route(workspace):
     job = manual_studio_job(workspace)
     fingerprint = core.job_fingerprint(*workspace, job)
     assert job['printer_id'] == 'studio:TEST-SERIAL'
@@ -88,9 +77,7 @@ def test_manual_studio_binds_identity_and_requires_all_five_fresh_facts(workspac
     with pytest.raises(core.WorkflowError, match='Target printer changed'):
         core.job_fingerprint(*workspace, job)
     config['studio_printer_serial'] = 'TEST-SERIAL'; core.write_json(core.ROOT/'Runtime/config.json', config)
-    facts = {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True}
-    event = confirmation.record('P001','Jtest',facts,'Synthetic exact-task confirmation','unit test')
-    approval = core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    approval = core.approve('P001','Jtest')
     assert approval['fingerprint'] == fingerprint
     result = official.submit('P001','Jtest',True,
         client_factory=lambda:pytest.fail('manual Studio must not contact Bambuddy'),
@@ -100,22 +87,22 @@ def test_manual_studio_binds_identity_and_requires_all_five_fresh_facts(workspac
     assert receipt['route'] == 'manual_windows_studio' and receipt['command_sent'] is False
 
 
-@pytest.mark.parametrize('missing', ['device_ready','routing_verified','material_loaded','plate_clear','print_authorized'])
-def test_manual_studio_rejects_missing_exact_task_fact(workspace, missing):
+@pytest.mark.parametrize('missing', ['device_ready','material_loaded','plate_clear','print_authorized'])
+def test_manual_studio_approval_accepts_missing_exact_task_fact(workspace, missing):
     from printlab import confirmation
     manual_studio_job(workspace)
-    facts = {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True}
+    facts = {'device_ready':True,'material_loaded':True,'plate_clear':True,'print_authorized':True}
     facts.pop(missing)
     event = confirmation.record('P001','Jtest',facts,'Synthetic exact-task confirmation','unit test')
-    with pytest.raises(core.WorkflowError):
-        core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    approval = core.approve('P001','Jtest',confirmation_event_id=event['id'])
+    assert missing not in approval['confirmation_facts']
 
 
 def test_manual_studio_reconciliation_is_exact_task_observation_without_resend(workspace):
     from printlab import confirmation
     manual_studio_job(workspace)
     event = confirmation.record('P001','Jtest',
-        {'device_ready':True,'routing_verified':True,'material_loaded':True,'plate_clear':True,'print_authorized':True},
+        {'device_ready':True,'material_loaded':True,'plate_clear':True,'print_authorized':True},
         'Synthetic exact-task confirmation','unit test')
     core.approve('P001','Jtest',confirmation_event_id=event['id'])
     official.submit('P001','Jtest',True,inspector=lambda *args:{'ok':True})

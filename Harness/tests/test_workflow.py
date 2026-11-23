@@ -16,6 +16,7 @@ def workspace(tmp_path, monkeypatch):
     templates = {key: 'SYNTHETIC TEST TEMPLATE: ' + key for key in slicer_guard.FIELDS}
     monkeypatch.setattr(slicer_guard, 'official_templates', lambda: templates)
     monkeypatch.setattr(core, "ROOT", tmp_path)
+    monkeypatch.setattr(core, "DEVICE_CARD", tmp_path / core.DEVICE_CARD_PATH)
     core.write_json(tmp_path / "Runtime/config.json", {"printer_id": 7})
     core.write_json(tmp_path / "Library/Devices/H2C/device.json", {"user_confirmed": {"fts_installed": False, "fts_confirmation_quote": "Synthetic test operator explicitly confirms no FTS", "fts_confirmation_date": "2026-10-25"}})
     core.new_project("Route validation fixture")
@@ -36,7 +37,7 @@ def workspace(tmp_path, monkeypatch):
         z.writestr("Metadata/project_settings.config", json.dumps({**templates,"printer_model":"Bambu Lab X2D","nozzle_temperature_initial_layer":[220],"nozzle_temperature":[220],"physical_extruder_map": [0, 1], "filament_map": [1], "filament_type": ["PLA"], "curr_bed_type": "Textured PEI Plate"}))
         z.writestr("Metadata/slice_info.config", '<config><plate><metadata key="index" value="1"/><metadata key="prediction" value="7120"/><metadata key="weight" value="33.02"/><nozzle id="0" extruder_id="1"/><filament id="1" group_id="0"/></plate></config>')
     job = {"id": "Jtest", "project_id": "P001", "revision": "v001", "state": "awaiting_approval", "plate": 1,
-           "mapping": {"use_ams": True, "ams_mapping": [0], "extruder_mapping": [0], "routing_verified": True, "fts_installed": False},
+           "mapping": {"use_ams": True, "ams_mapping": [0]},
            "source_hashes": core.revision_files(p, "v001"), "profile_hashes": {"Profiles/machine.json": core.digest(jd / "Profiles/machine.json")},
            "printer_id": 7, "requested_bed_type": "Textured PEI Plate", "curr_bed_type": "Textured PEI Plate", "trial_only": False,
            "artifact": "job.gcode.3mf", "artifact_sha256": core.digest(jd / "job.gcode.3mf")}
@@ -131,7 +132,7 @@ def test_mapping_and_new_revision_invalidate_approval(workspace):
         core.job_fingerprint(p, jd, job)
 
 
-@pytest.mark.parametrize("update", [{"state": "RUNNING"}, {"connected": False}, {"last_ams_update": 0}, {"last_ams_update": time.time() - 300}, {"awaiting_plate_clear": True}, {"fila_switch": {"installed": True}}])
+@pytest.mark.parametrize("update", [{"state": "RUNNING"}, {"connected": False}, {"last_ams_update": 0}, {"last_ams_update": time.time() - 300}, {"awaiting_plate_clear": True}, {"hms_errors": ["synthetic diagnostic"]}])
 def test_not_ready_never_passes(workspace, update):
     _, jd = workspace
     status = {**ready(), **update}
@@ -139,14 +140,14 @@ def test_not_ready_never_passes(workspace, update):
         bambuddy.validate_ready(status, core.read_json(jd / "job.json")["mapping"])
 
 
-def test_actual_slice_route_and_material_must_match(workspace):
+def test_actual_slice_and_material_must_match(workspace):
     _, jd = workspace
     job = core.read_json(jd / "job.json")
-    bambuddy.validate_slice_route(jd, job, ready())
+    bambuddy.validate_slice_materials(jd, job, ready())
     status = ready()
     status["ams"][0]["tray"][0]["tray_type"] = "ABS"
     with pytest.raises(core.WorkflowError):
-        bambuddy.validate_slice_route(jd, job, status)
+        bambuddy.validate_slice_materials(jd, job, status)
 
 
 def test_preflight_never_writes(workspace):
@@ -324,29 +325,18 @@ def test_public_device_removes_nested_identifiers_but_preserves_material_state()
     assert "secret" not in json.dumps(result)
     assert result["ams"][0]["tray"][0]["remain"] == 60
     assert result["ams"][0]["tray"][0]["tray_type"] == "PLA"
-    assert result["ams_extruder_map"] == {"0": 0}
+    assert "ams_extruder_map" not in result
     assert result["vt_tray"][0] == {"id": 254, "tray_type": "PLA"}
 
 
-def test_null_fts_accepted_only_with_explicit_user_absence_and_bound_route(workspace):
-    _, jd = workspace
-    mapping = core.read_json(jd / "job.json")["mapping"]
-    status = {**ready(), "fila_switch": None}
-    bambuddy.validate_ready(status, mapping)
-    with pytest.raises(core.WorkflowError, match="bind"):
-        bambuddy.validate_ready(status, {k: v for k, v in mapping.items() if k != "fts_installed"})
-    core.write_json(core.ROOT / "Library/Devices/H2C/device.json", {"user_confirmed": {}})
-    with pytest.raises(core.WorkflowError, match="explicit dated user confirmation"):
-        bambuddy.validate_ready(status, mapping)
-
-
-def test_changed_fts_declaration_invalidates_existing_approval(workspace):
+def test_changed_fts_declaration_preserves_existing_approval(workspace):
     p, jd = workspace
-    approve(workspace)
     job = core.read_json(jd / "job.json")
+    job["mapping"].update(extruder_mapping=[0], routing_verified=True, fts_installed=False)
+    core.write_json(jd / "job.json", job)
+    approve(workspace)
     core.write_json(core.ROOT / "Library/Devices/H2C/device.json", {"user_confirmed": {"fts_installed": True, "fts_confirmation_quote": "Synthetic operator installed FTS", "fts_confirmation_date": "2026-10-26"}})
-    with pytest.raises(core.WorkflowError, match="hardware declaration changed"):
-        core.job_fingerprint(p, jd, job)
+    assert core.job_fingerprint(p, jd, job) == core.read_json(jd / "approval.json")["fingerprint"]
 
 
 def test_explicit_handoff_pointer_survives_changed_restore_mtime(workspace):

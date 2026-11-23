@@ -12,8 +12,7 @@ from test_prepared import setup
 def queue_setup(setup, monkeypatch):
     project, directory, job, base, _, write_archive, settings = setup
     job.update(sliced_printer_model='Bambu Lab A1')
-    job['mapping'].update(transport='bambuddy_queue', extruder_mapping=[0])
-    job['mapping'].pop('fts_installed')
+    job['mapping'].update(transport='bambuddy_queue')
     settings.update(physical_extruder_map=[0], printer_model='Bambu Lab A1')
     write_archive()
     job['artifact_sha256'] = core.digest(directory / job['artifact'])

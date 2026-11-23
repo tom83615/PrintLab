@@ -5,43 +5,48 @@ import pytest
 from printlab import core, manual_project
 
 
-def make_slice(path, *, objects=4, outside='false', green_group='0', support_id='GFS05', support_is_object='false'):
+def make_slice(path, *, objects=4, outside='false', green_group='0', support_id='GFS05',
+               support_is_object='false', missing_filament=None, include_nozzles=True):
     root = ET.Element('config')
     plate = ET.SubElement(root, 'plate')
     ET.SubElement(plate, 'metadata', key='index', value='1')
     ET.SubElement(plate, 'metadata', key='outside', value=outside)
     for _ in range(objects):
         ET.SubElement(plate, 'object', skipped='false')
-    for group, extruder in [('0', '1'), ('1', '2')]:
-        ET.SubElement(plate, 'nozzle', id=group, extruder_id=extruder)
+    if include_nozzles:
+        for group, extruder in [('0', '1'), ('1', '2')]:
+            ET.SubElement(plate, 'nozzle', id=group, extruder_id=extruder)
     for i, group, identifier, obj in [('1','0','GFA01','true'),('2',green_group,'GFA01','true'),('3','1',support_id,support_is_object)]:
-        ET.SubElement(plate, 'filament', id=i, group_id=group, tray_info_idx=identifier, used_for_object=obj, used_g='1')
+        if i != missing_filament:
+            ET.SubElement(plate, 'filament', id=i, group_id=group, tray_info_idx=identifier, used_for_object=obj, used_g='1')
     with zipfile.ZipFile(path, 'w') as z:
         z.writestr('Metadata/slice_info.config', ET.tostring(root))
         z.writestr('Metadata/project_settings.config', json.dumps({'filament_is_support':['0','0','1']}))
 
 
-def test_manual_output_accepts_correct_four_objects_and_route(tmp_path):
-    f=tmp_path/'good.3mf'; make_slice(f)
-    assert manual_project.validate_output(f)['logical_nozzle_map']==[1,1,2]
+@pytest.mark.parametrize('metadata', [{'include_nozzles':False}, {'green_group':'1'}])
+def test_manual_output_accepts_correct_objects_with_any_nozzle_metadata(tmp_path, metadata):
+    f=tmp_path/'good.3mf'; make_slice(f, **metadata)
+    evidence = manual_project.validate_output(f)
+    assert evidence['object_count'] == 4 and evidence['support_id'] == 'GFS05'
 
 
 @pytest.mark.parametrize('change', [
-    {'objects':3}, {'outside':'true'}, {'green_group':'1'},
+    {'objects':3}, {'outside':'true'}, {'missing_filament':'2'},
     {'support_id':'GFA01'}, {'support_is_object':'true'},
 ])
-def test_manual_output_rejects_missing_or_misrouted_parts(tmp_path, change):
+def test_manual_output_rejects_missing_parts_or_incorrect_materials(tmp_path, change):
     f=tmp_path/'bad.3mf'; make_slice(f, **change)
     with pytest.raises(core.WorkflowError):
         manual_project.validate_output(f)
 
 
-def test_main_variant_requires_three_and_original_route(tmp_path):
+def test_main_variant_requires_three_objects(tmp_path):
     f=tmp_path/'main.3mf'; make_slice(f, objects=3)
     assert manual_project.validate_output(f, variant='main-without-front')['object_count']==3
     with pytest.raises(core.WorkflowError):
         manual_project.validate_output(f)
-    for change in ({'objects':4}, {'objects':2}, {'objects':3,'green_group':'1'},
+    for change in ({'objects':4}, {'objects':2}, {'objects':3,'missing_filament':'2'},
                    {'objects':3,'support_is_object':'true'}, {'objects':3,'outside':'true'}):
         make_slice(f, **change)
         with pytest.raises(core.WorkflowError):
@@ -104,7 +109,7 @@ def test_front_subset_bed_alignment_and_unchanged_mesh():
     assert len(selected_settings.findall('plate/model_instance')) == 1
 
 
-@pytest.mark.parametrize('bad', [None, 'extra_body', 'wrong_nozzle', 'support_as_body', 'wrong_skeleton', 'missing_support'])
+@pytest.mark.parametrize('bad', [None, 'extra_body', 'support_as_body', 'wrong_skeleton', 'missing_support'])
 def test_front_output_validates_only_selected_materials(tmp_path, bad):
     f = tmp_path/'front.3mf'; make_slice(f, objects=1)
     with zipfile.ZipFile(f) as z:
@@ -113,7 +118,6 @@ def test_front_output_validates_only_selected_materials(tmp_path, bad):
     p = root.find('plate')
     if bad != 'extra_body': p.remove(p.find("filament[@id='1']"))
     settings['support_filament'] = '1' if bad == 'wrong_skeleton' else '2'
-    if bad == 'wrong_nozzle': p.find("filament[@id='2']").set('group_id', '1')
     if bad == 'support_as_body': p.find("filament[@id='3']").set('used_for_object', 'true')
     if bad == 'missing_support': p.remove(p.find("filament[@id='3']"))
     with zipfile.ZipFile(f, 'w') as z:

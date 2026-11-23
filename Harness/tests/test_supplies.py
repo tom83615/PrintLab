@@ -104,7 +104,7 @@ def test_openspoolman_slots_keep_snapshot_limits_and_duplicate_reference(monkeyp
     slots = snapshot['modules'][0]['slots']
     assert slots[0]['spool_id'] == 11
     assert slots[0]['remaining_basis'] == 'unknown'
-    assert slots[0]['route']['nozzle_number'] is None
+    assert 'route' not in slots[0]
     assert slots[1]['state'] == 'empty'
 
 

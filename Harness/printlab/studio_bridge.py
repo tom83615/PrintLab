@@ -274,10 +274,9 @@ def _job_supported(job):
     reasons = []
     if m.get('transport') != 'bambu_studio': reasons.append('需要官方 Studio 發送副本')
     if job.get('plate') != 1: reasons.append('腳本當前僅驗證單盤 plate 1')
-    if m.get('use_ams') is not True or len(m.get('ams_mapping', [])) != 1: reasons.append('腳本當前僅驗證單主料 AMS 路線')
+    if m.get('use_ams') is not True or len(m.get('ams_mapping', [])) != 1: reasons.append('腳本當前僅驗證單主料 AMS 槽位')
     slots = m.get('ams_mapping', [])
     if len(slots) != 1 or type(slots[0]) is not int or not 0 <= slots[0] <= 7: reasons.append('AMS 槽位不在已驗證範圍 A1–B4')
-    if m.get('extruder_mapping') != [1]: reasons.append('腳本當前僅驗證左主噴嘴')
     if len(m.get('filament_types', [])) != 1 or m['filament_types'][0] not in {'PETG', 'PLA'}: reasons.append('腳本當前僅驗證單種 PLA/PETG')
     if job.get('curr_bed_type') != 'Textured PEI Plate': reasons.append('腳本當前僅驗證紋理 PEI 板')
     if job.get('sliced_printer_model') not in {'Bambu Lab X2D', 'X2D'}: reasons.append('腳本當前僅驗證 X2D')
@@ -308,7 +307,7 @@ def capability(pid=None, jid=None):
             if (core.job_path(pid,jid)/'HOLD-DO-NOT-PRINT.md').exists(): blockers.append('該任務仍保留暫緩打印標記；需新的啟動要求後解除，本輪不打印')
         return {'available': not blockers, 'message': '可通過本機 Studio 腳本發送；發送前仍逐項核驗窗口和具體任務' if not blockers else '；'.join(blockers),
                 'blockers': blockers, 'transport': 'bambu_studio_script', 'observation': observed,
-                'limitations': ['僅已驗證的中文 Studio 版本', '僅 X2D 單主料 AMS、左主噴嘴、紋理 PEI 單盤', '需要已登錄且未鎖屏桌面', '發送成功仍需設備讀回，不自動重發']}
+                'limitations': ['僅已驗證的中文 Studio 版本', '僅 X2D 單主料 AMS、紋理 PEI 單盤', '需要已登錄且未鎖屏桌面', '發送成功仍需設備讀回，不自動重發']}
     except (core.WorkflowError, OSError, ValueError, subprocess.SubprocessError) as exc:
         return {'available': False, 'message': str(exc), 'blockers': [str(exc)], 'transport': 'bambu_studio_script'}
 
@@ -354,9 +353,9 @@ def validate_snapshot(shot, job):
     m = job['mapping']; slot = m['ams_mapping'][0]
     wanted_slot = chr(ord('A')+slot//4) + str(slot%4+1)
     shown_slots = [(re.sub(r'[VvY∨▼⌄]+$', '',t['text']),t) for t in tokens if re.fullmatch(r'[A-D][1-4][VvY∨▼⌄]*', t['text'])]
-    if len(shown_slots) != 1 or shown_slots[0][0] != wanted_slot or shown_slots[0][1]['x'] >= .5: raise core.WorkflowError('AMS 槽位或主輔噴嘴不匹配')
+    if len(shown_slots) != 1 or shown_slots[0][0] != wanted_slot: raise core.WorkflowError('AMS 槽位不匹配')
     materials = [t for t in tokens if t['text'] in {'PLA','PETG','ABS','ASA','TPU','PA','PC','Sup.PLA','Support'}]
-    if len(materials) != 1 or materials[0]['text'] != m['filament_types'][0] or materials[0]['x'] >= .5: raise core.WorkflowError('窗口材料或噴嘴分組不匹配')
+    if len(materials) != 1 or materials[0]['text'] != m['filament_types'][0]: raise core.WorkflowError('窗口材料不匹配')
     if texts.count('PEI') != 1: raise core.WorkflowError('發送窗口未識別 PEI 板')
     for label, selected, side in [('延时摄影','关闭','left'),('动态流量校准','打开','left'),('自动热床调平','打开','right'),('喷嘴偏移校准','关闭','right')]:
         rows = [t for t in tokens if t['text'].startswith(label)]

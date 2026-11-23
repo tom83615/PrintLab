@@ -18,10 +18,12 @@ def test_card_remembers_answers_and_structured_quote_needs_no_magic_phrase(works
     event=confirmation.record('P001','Jtest',{'plate_clear':True,'material_loaded':True},'已經清空裝好','test-session-A')
     card=confirmation.card('P001','Jtest',DEVICE)
     assert card['known_plate_type']=='Textured PEI Plate'
-    assert [v['key'] for v in card['missing']]==['print_authorized']
+    assert not card['missing']
+    assert card['material_slots'][0]['material']=='PLA Basic'
+    assert 'physical_extruder' not in card['material_slots'][0]
     event=confirmation.record('P001','Jtest',{'print_authorized':True},'就按這一份下發吧','test-session-B')
     approval=core.approve('P001','Jtest',confirmation_event_id=event['id'])
-    assert approval['confirmation']=='就按這一份下發吧'
+    assert approval['confirmation_facts']['print_authorized']['quote']=='就按這一份下發吧'
     assert approval['confirmation_facts']['plate_clear']['source']=='test-session-A'
     assert confirmation.card('P001','Jtest',DEVICE)['can_approve']
     assert not (jd/'dispatch.json').exists()
@@ -62,15 +64,34 @@ def test_new_attempt_is_current_and_dispatched_card_never_reasks(workspace):
 
 def test_retry_copies_exact_sliced_bytes_no_approval_and_preserves_old(workspace):
     p,jd=workspace
-    job=core.read_json(jd/'job.json');job['state']='failed';core.write_json(jd/'job.json',job)
+    job=core.read_json(jd/'job.json')
+    job['state']='failed'
+    job['mapping'].update(extruder_mapping=[0], routing_verified=True, fts_installed=False)
+    core.write_json(jd/'job.json',job)
     core.write_json(jd/'dispatch.json',{'state':'submitted','queue_id':4})
     original={f.name:f.read_bytes() for f in jd.iterdir() if f.is_file()}
     new=core.retry_job('P001','Jtest','Explicit earlier failure; prepare only')
     new_dir=core.job_path('P001',new['id'])
     assert new['state']=='awaiting_approval' and new['retry_of']['job_id']=='Jtest'
+    assert new['mapping']=={'use_ams': True, 'ams_mapping': [0]}
     assert (new_dir/new['artifact']).read_bytes()==(jd/job['artifact']).read_bytes()
     assert not (new_dir/'approval.json').exists() and not (new_dir/'dispatch.json').exists()
     assert {f.name:f.read_bytes() for f in jd.iterdir() if f.is_file()}==original
+
+
+def test_legacy_route_issue_is_removed_from_print_detail_without_rewriting_job(workspace):
+    _, jd = workspace
+    job = core.read_json(jd / 'job.json')
+    job.update(state='awaiting_configuration', trial_only=True,
+               configuration_issues=['缺少切片耗材與噴嘴路線資料'])
+    job['mapping'].update(nozzle_mapping=[1])
+    core.write_json(jd / 'job.json', job)
+
+    attempt = core.detail('P001')['current_attempt']
+    assert attempt['state'] == 'awaiting_approval'
+    assert not attempt['trial_only'] and not attempt['configuration_issues']
+    assert 'nozzle_mapping' not in attempt['mapping']
+    assert core.read_json(jd / 'job.json') == job
 
 
 @pytest.mark.parametrize('state',['dispatch_unknown','printing','preparing','paused','submitted','awaiting_approval'])
@@ -181,7 +202,7 @@ def test_controlled_3mf_input_is_snapshotted_and_bound_without_author_settings(w
     monkeypatch.setattr(core.subprocess,'run',fake_run)
     def slice_controlled():
         try:
-            return core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'routing_verified':True,'ams_mapping':[0,1],'extruder_mapping':[0,0],'fts_installed':False},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
+            return core.slice_project('P001',str(machine),str(process),[str(filament),str(filament)],mapping={'ams_mapping':[0,1]},bed_type='Textured PEI Plate',input_3mf='Exports/v001/model.3mf')
         finally:
             assert len(scratch_dirs) == 1 and not scratch_dirs[0].exists()
             assert caller_report.read_text(encoding='utf-8') == 'existing report'

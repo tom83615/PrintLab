@@ -1,4 +1,4 @@
-"""Build a traceable manual-nozzle project from a verified Studio export.
+"""Build a traceable project variant from a verified Studio export.
 
 This module only prepares geometry/settings. It never slices, approves or sends.
 The caller must retain existing PrintLab lineage, job fingerprint, device and
@@ -86,13 +86,6 @@ def prepare(p: Path, revision: str, profiles: list[Path], mapping: dict, output:
         raise core.WorkflowError('Manual project slicer differs from export receipt')
     if receipt.get('bed_type_override') != 'Textured PEI Plate':
         raise core.WorkflowError('Manual project plate type is not verified')
-    single = mapping.get('plate_variant') == 'front-flat-single'
-    expected_extruders = [1, 1, 1] if single else [1, 1, 0]
-    expected_slots = [1, 1, 3] if single else [1, 2, 255]
-    if mapping.get('extruder_mapping') != expected_extruders or mapping.get('ams_mapping') != expected_slots:
-        raise core.WorkflowError('This guarded route requires exactly the verified X2D P009 material routing')
-    if mapping.get('routing_verified') is not True or mapping.get('fts_installed') is not False:
-        raise core.WorkflowError('Manual project requires explicitly verified direct routing')
     project3mf.inspect(original, 3)
     with zipfile.ZipFile(original) as z:
         names = z.namelist()
@@ -104,24 +97,15 @@ def prepare(p: Path, revision: str, profiles: list[Path], mapping: dict, output:
     selected_files = {**files, **selected}
     settings = json.loads(files['Metadata/project_settings.config'])
     if settings.get('filament_ids') != ['GFA01', 'GFA01', 'GFS05'] or settings.get('filament_is_support') != ['0', '0', '1']:
-        raise core.WorkflowError('Manual route filament identities are inconsistent')
+        raise core.WorkflowError('Manual project filament identities are inconsistent')
     model = ET.fromstring(selected_files['Metadata/model_settings.config'])
     plates = model.findall('plate')
     if len(plates) != 1 or len(model.findall('object')) != expected_objects:
         raise core.WorkflowError('Unexpected plate or object count')
-    for key, val in [('filament_map_mode', 'Manual'), ('filament_maps', '1 1 1' if single else '1 1 2'), ('filament_volume_maps', '0 0 0')]:
-        matches = [m for m in plates[0].findall('metadata') if m.get('key') == key]
-        if len(matches) > 1:
-            raise core.WorkflowError('Duplicate plate mapping metadata')
-        element = matches[0] if matches else ET.SubElement(plates[0], 'metadata', key=key)
-        element.set('value', val)
-    settings.update(extruder_nozzle_stats=['Standard#1', 'Standard#1'], extruder_nozzle_stats_new=['Standard#1', 'Standard#1'])
-    if variant in {'front-flat', 'front-flat-single'}:
-        settings['support_filament'] = '2'
     overrides = {'support_filament': '2'} if variant in {'front-flat', 'front-flat-single'} else {}
-    if single:
-        overrides.update(filament_map=['1', '1', '1'], filament_map_mode='Manual', flush_into_support='0')
-        settings.update(overrides)
+    if variant == 'front-flat-single':
+        overrides['flush_into_support'] = '0'
+    settings.update(overrides)
     replacements = {**selected, 'Metadata/model_settings.config': ET.tostring(model, encoding='utf-8', xml_declaration=True),
                     'Metadata/project_settings.config': json.dumps(settings, ensure_ascii=False).encode()}
     output = Path(output)
@@ -140,11 +124,11 @@ def prepare(p: Path, revision: str, profiles: list[Path], mapping: dict, output:
             'selected_source_object_ids': ['2'] if variant in {'front-flat', 'front-flat-single'} else ['5', '7', '9'] if variant == 'main-without-front' else ['2', '5', '7', '9'],
             'selected_object_filament_assignments': {'2': 2} if variant in {'front-flat', 'front-flat-single'} else None,
             'process_overrides': overrides,
-            'logical_route': [1, 1, 1] if single else [1, 1, 2], 'print_authorized': False}
+            'print_authorized': False}
 
 
 def validate_output(path: Path, plate: int = 1, *, variant: str = 'complete') -> dict:
-    """Reject incomplete, out-of-bounds or differently routed sliced plates."""
+    """Reject incomplete or out-of-bounds sliced plates and incorrect materials."""
     if variant not in {'complete', 'main-without-front', 'front-flat', 'front-flat-single'}:
         raise core.WorkflowError('Unsupported reviewed P009 plate variant')
     expected_objects = 1 if variant in {'front-flat', 'front-flat-single'} else 3 if variant == 'main-without-front' else 4
@@ -159,12 +143,11 @@ def validate_output(path: Path, plate: int = 1, *, variant: str = 'complete') ->
     objects = selected.findall('object')
     if len(objects) != expected_objects or any(x.get('skipped') != 'false' for x in objects) or meta.get('outside') != 'false':
         raise core.WorkflowError('Manual slice is incomplete, skipped or outside plate')
-    nozzle = {int(n.get('id')): int(n.get('extruder_id')) for n in selected.findall('nozzle')}
-    rows = {int(f.get('id')): f for f in selected.findall('filament')}
-    single = variant == 'front-flat-single'
-    expected_route = {2: 1, 3: 1 if single else 2} if variant in {'front-flat', 'front-flat-single'} else {1: 1, 2: 1, 3: 2}
-    if set(rows) != set(expected_route) or {i: nozzle[int(f.get('group_id'))] for i, f in rows.items()} != expected_route:
-        raise core.WorkflowError('Manual slice actual nozzle route does not match verified route')
+    filaments = selected.findall('filament')
+    rows = {int(f.get('id')): f for f in filaments}
+    expected_ids = {2, 3} if variant in {'front-flat', 'front-flat-single'} else {1, 2, 3}
+    if len(rows) != len(filaments) or set(rows) != expected_ids:
+        raise core.WorkflowError('Manual slice filament IDs do not match the expected materials')
     if rows[3].get('tray_info_idx') != 'GFS05' or rows[3].get('used_for_object') != 'false' or settings.get('filament_is_support') != ['0', '0', '1']:
         raise core.WorkflowError('Manual slice support identity or usage is invalid')
     if any(float(rows[i].get('used_g', '0')) <= 0 for i in rows):
@@ -172,4 +155,4 @@ def validate_output(path: Path, plate: int = 1, *, variant: str = 'complete') ->
     if variant in {'front-flat', 'front-flat-single'} and (settings.get('support_filament') != '2' or
             rows[2].get('tray_info_idx') != 'GFA01' or rows[2].get('used_for_object') != 'true'):
         raise core.WorkflowError('Front slice lost the green body or matching support skeleton')
-    return {'object_count': expected_objects, 'plate_variant': variant, 'logical_nozzle_map': [1, 1, 1] if single else [1, 1, 2], 'support_id': 'GFS05', 'outside': False}
+    return {'object_count': expected_objects, 'plate_variant': variant, 'support_id': 'GFS05', 'outside': False}

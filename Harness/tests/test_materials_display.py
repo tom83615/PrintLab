@@ -33,15 +33,14 @@ def test_presence_bit_wins_and_identification_is_not_fabricated():
     assert materials.slot_state({})=='unknown'
 
 
-def test_slots_have_user_numbers_real_single_nozzle_route_and_invalid_remain_unknown():
+def test_slots_keep_user_numbers_and_hide_nozzle_routing():
     status={'id':1,'connected':True,'last_ams_update':1000,'ams_extruder_map':{'0':1},'ams':[{'id':0,'tray':[{'id':0,'exists':True,'state':11,'tray_type':'PETG','tray_sub_brands':'PETG Matte','remain':-1}]}]}
     result=materials.slot_overview(status,now=1010)
     slots=result['modules'][0]['slots']
     assert [s['slot_number'] for s in slots]==[1,2,3,4]
     assert slots[0]['reported_remaining_percent'] is None
-    assert slots[0]['route']['nozzle_number']==1
-    assert '左主噴嘴 1' in slots[0]['route']['text']
-    assert slots[0]['diagnostics']['physical_extruder_id']==1
+    assert 'route' not in slots[0]
+    assert 'physical_extruder_id' not in slots[0]['diagnostics']
     assert result['fresh'] is True
     assert slots[1]['state']=='unknown'
 
@@ -99,18 +98,10 @@ def test_exact_rgba_limits_unknown_color_duplicate_candidates_without_merging():
     assert materials.inventory_items(rows)[0]['possible_duplicate_ids']==[10]
 
 
-def test_two_ams_share_main_and_labels_survive_reordered_telemetry():
+def test_ams_labels_survive_reordered_telemetry():
     status={'id':1,'connected':True,'last_ams_update':1000,
             'ams_extruder_map':{'0':1,'1':1},
             'ams':[{'id':1,'tray':[]},{'id':0,'tray':[]}]}
     result=materials.slot_overview(status,now=1010)
     assert [m['name'] for m in result['modules']]==['AMS B','AMS A']
-    for module in result['modules']:
-        for slot in module['slots']:
-            assert slot['route']['nozzle_number']==1
-            assert slot['route']['firmware_extruder_id']==slot['diagnostics']['physical_extruder_id']==1
-    status['ams_extruder_map']={'1':0}
-    result=materials.slot_overview(status,now=1010)
-    assert result['modules'][0]['slots'][0]['route']['nozzle_number']==2
-    assert '右輔噴嘴 2' in result['modules'][0]['slots'][0]['route']['text']
-    assert result['modules'][1]['slots'][0]['route']['nozzle_number'] is None
+    assert [len(m['slots']) for m in result['modules']]==[4,4]

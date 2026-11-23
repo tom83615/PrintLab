@@ -60,16 +60,14 @@ def test_pinned_node_or_adapter_changed_is_rejected_before_process(workspace,mon
         native.run_client(jd,core.read_json(jd/'job.json'),'check')
 
 
-def test_mixed_ams_external_route_is_nozzle_bound_and_rejects_empty_or_unknown_slots(workspace):
+def test_mixed_ams_and_external_spool_reject_empty_or_unknown_slots(workspace):
     from test_workflow import ready
     s=ready();s['ams_extruder_map']={'0':1}
     s['vt_tray']=[{'id':255,'tray_type':'PETG','tray_color':'F72323FF'}]
-    mapping={'use_ams':True,'ams_mapping':[0,255],'extruder_mapping':[1,0],
-             'routing_verified':True,'fts_installed':False,'transport':'bambu_native'}
+    mapping={'use_ams':True,'ams_mapping':[0,255],'transport':'bambu_native'}
     bambuddy.validate_ready(s,mapping)
     assert bambuddy.reported_trays(s)[255]['tray_type']=='PETG'
-    with pytest.raises(core.WorkflowError,match='physical nozzle'):
-        bambuddy.validate_ready(s,{**mapping,'extruder_mapping':[1,1]})
+    bambuddy.validate_ready(s,{**mapping,'extruder_mapping':[1,1],'routing_verified':False})
     with pytest.raises(core.WorkflowError,match='missing, empty'):
         bambuddy.validate_ready({**s,'vt_tray':[]},mapping)
     with pytest.raises(core.WorkflowError,match='missing, empty'):

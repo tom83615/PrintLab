@@ -15,6 +15,11 @@ The workspace root is this checkout. The Mac CLI is `./Harness/bin/printlab`; Wi
 3. 報告專案、當前版本、已確認選擇、尚待驗證的部分與本輪下一步。
 4. 收尾用 `printlab handoff` 儲存完成結果、檢查、問題和下一步。查看當前幫助確認參數。
 
+## 開啟 PrintLab
+
+- 使用者要求開啟、查看或操作 PrintLab 時，預設開啟已部署的正式版 `http://localhost:10818/`。開啟瀏覽器或預覽前，先核對正式版服務與實際綁定的埠。
+- `8018` 僅用於修改、除錯或驗證 PrintLab 程式碼。正式版無法連線時，先檢查正式版部署與服務狀態，不得改開 `8018` 或啟動 `scripts/start-dev.ps1` 作為替代。
+
 ## 分工與持久化
 
 Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和流程。任務小組負責具體作品。提示詞見 `docs/ROLES.md`。角色通過共同文件和命令協作，模型選擇由使用者當前可用的 Codex 環境決定。只有使用者明確要求時才建立新會話或派發子 Agent。

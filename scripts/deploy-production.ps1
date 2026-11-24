@@ -8,8 +8,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
-$Workspace = Join-Path $env:LOCALAPPDATA 'PrintLab/production'
-$StateFile = Join-Path $Workspace 'release.json'
+$LocalState = Join-Path $env:LOCALAPPDATA 'PrintLab/production'
+$StateFile = Join-Path $LocalState 'release.json'
+$LocationFile = Join-Path $LocalState 'workspace-path.txt'
+$Runtime = Join-Path $LocalState 'Runtime'
 $Compose = Join-Path $Root 'compose.production.yaml'
 
 function Invoke-Docker {
@@ -34,15 +36,24 @@ function Test-Studio([string]$Base) {
 
 function Start-Release([string]$Image) {
     $env:PRINTLAB_IMAGE = $Image
-    $env:PRINTLAB_PRODUCTION_ROOT = $Workspace
     Invoke-Docker compose -f $Compose up -d --wait --wait-timeout 60
     Test-Studio 'http://127.0.0.1:10818'
 }
 
-New-Item -ItemType Directory -Path $Workspace -Force | Out-Null
-$lock = [IO.File]::Open((Join-Path $Workspace 'deployment.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+New-Item -ItemType Directory -Path $LocalState -Force | Out-Null
+$lock = [IO.File]::Open((Join-Path $LocalState 'deployment.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
 Push-Location $Root
 try {
+    $Workspace = $LocalState
+    if (Test-Path -LiteralPath $LocationFile) {
+        $location = (Get-Content -LiteralPath $LocationFile -Raw -Encoding UTF8).Trim()
+        if ($location -notmatch '^[A-Za-z]:[/\\]' -or !(Test-Path -LiteralPath $location -PathType Container)) {
+            throw 'workspace-path.txt 必須指定存在的 Windows 絕對資料目錄。'
+        }
+        $Workspace = (Resolve-Path -LiteralPath $location).ProviderPath
+    }
+    $env:PRINTLAB_PRODUCTION_ROOT = $Workspace
+    $env:PRINTLAB_PRODUCTION_RUNTIME = $Runtime
     $current = if (Test-Path $StateFile) { Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json }
     if ($Rollback) {
         if (!$current.previous) { throw '尚無上一個正式版本。' }
@@ -116,10 +127,10 @@ try {
     } finally { Invoke-Docker stop $candidate | Out-Null }
 
     $env:PRINTLAB_IMAGE = $image
-    $env:PRINTLAB_PRODUCTION_ROOT = $Workspace
-    foreach ($folder in @('Project', 'Context', 'Library', 'Runtime')) {
+    foreach ($folder in @('Project', 'Context', 'Library')) {
         New-Item -ItemType Directory -Path (Join-Path $Workspace $folder) -Force | Out-Null
     }
+    New-Item -ItemType Directory -Path $Runtime -Force | Out-Null
     Invoke-Docker compose -f $Compose run --rm --no-deps studio python scripts/init_workspace.py
     try {
         Start-Release $image

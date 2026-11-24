@@ -10,4 +10,4 @@ services:
       - ${PRINTLAB_PRODUCTION_ROOT:?Set the production workspace}/Project:/app/Project
       - ${PRINTLAB_PRODUCTION_ROOT}/Context:/app/Context
       - ${PRINTLAB_PRODUCTION_ROOT}/Library:/app/Library
-      - ${PRINTLAB_PRODUCTION_ROOT}/Runtime:/app/Runtime
+      - ${PRINTLAB_PRODUCTION_RUNTIME:?Set the local production runtime}:/app/Runtime

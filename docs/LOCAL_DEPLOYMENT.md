@@ -2,8 +2,8 @@
 
 | 用途 | 網址 | 資料目錄 |
 | --- | --- | --- |
-| Windows 原生開發 | `http://localhost:8018` | 獨立資料，或使用正式 API 讀寫共用資料 |
-| Docker 正式版 | `http://127.0.0.1:10818` | `%LOCALAPPDATA%\PrintLab\production` |
+| Windows 原生開發 | `http://localhost:8018` | 透過正式 API 讀寫共用資料 |
+| Docker 正式版 | `http://127.0.0.1:10818` | 預設 `%LOCALAPPDATA%\PrintLab\production`，可設定作品資料位置 |
 
 請使用表中的主機名稱開啟兩個入口，讓工作台的瀏覽器會話 Cookie 分開。兩個埠均限本機連線。
 
@@ -15,17 +15,11 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1
 ```
 
-Python 檔案存檔後會重載服務。前端建置完成後重新整理頁面。獨立開發工作區位於 `%LOCALAPPDATA%\PrintLab\development`，建置記錄位於其下的 `Runtime/logs`。首次啟動時會建立空白資料。執行開發用 CLI 時，先將 `PRINTLAB_ROOT` 指到獨立開發工作區，再呼叫 `Harness/bin/printlab.ps1`。
-
-若要在開發版讀寫正式作品與列印記錄，先停止使用 `8018` 的開發程序，再執行：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1 -SharedRecords
-```
-
-開發前端在 Windows 上建置和執行。共用模式把 API 請求交給 `10818`，兩個入口的資料操作使用同一套檔案鎖及同源驗證。正式版提供的操作可在兩邊執行。要測試尚未部署的 API 或新資料格式時，使用不帶 `-SharedRecords` 的啟動指令。
+Python 檔案存檔後會重載服務。前端建置完成後重新整理頁面。前端建置及 `Runtime/logs` 日誌存放在 `%LOCALAPPDATA%\PrintLab\development`。作品與列印記錄集中存放在正式工作區，`8018` 將 API 請求交給 `10818`，兩個入口的資料操作使用同一套檔案鎖及同源驗證。
 
 ## 正式更新
+
+正式資料位置可在 `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt` 指定。檔案只需一行已存在的 Windows 絕對路徑。搬移時，先停止正式服務，再複製 `Project`、`Library` 和 `Context` 至新位置。部署與回退都會讀取這個設定。`Runtime`、憑據及版本記錄使用原本的本機目錄。
 
 Docker Desktop 須在執行。將完整提交 SHA 傳給部署腳本：
 

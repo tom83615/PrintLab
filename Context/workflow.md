@@ -12,9 +12,12 @@
 
 ## 實際建模
 
-Text-to-CAD/build123d 適合參數化結構與介面，現有 CadQuery 源繼續使用，Blender 適合有機曲面。用實際實體匯出三視圖並對照目標。未知尺寸註明假設，關鍵配合先核對。通過選擇圖只能確認目標外形。
+每輪建模都先確認方法，包含空間草稿、新件和既有件改版。先說明本輪哪個特徵最影響選擇，再問「這次用參數化 CAD，還是 Blender 表面建模？」等使用者選定後，把版本、方法和適用部件記入專案 `decisions.md`。使用者在本輪要求中已指定方法時，直接記錄即可。
 
-一般迭代先用 Text-to-CAD 建立草稿並保留 Python 源碼；確認草稿方向後匯出 STEP，交由 AI 與使用者在 SolidCraft 中共同查看和修正。SolidCraft 的修改另存原生設計與 STEP，並記錄哪一版是目前正式幾何；兩邊不會自動同步。若設計變化太大，回到 Text-to-CAD 重建草稿，再重新交接 STEP。MCP 設定及操作見 `docs/SOLIDCRAFT_MCP.md`。
+- **參數化 CAD** 適合孔距、卡扣、滑槽等尺寸主導的結構。既有 CadQuery 源可接續編輯。使用 Text-to-CAD/build123d 時保留 Python 源碼，草稿確認後可經 STEP 交由 SolidCraft 精修。精修後另存原生設計與 STEP，標記正式版本。大幅改形可回草稿重建再交接。[SolidCraft 操作](../docs/SOLIDCRAFT_MCP.md)
+- **Blender 表面建模** 適合握把、角色或流線外殼等由輪廓和曲率主導的作品。保留控制網格與修改器，從同版幾何匯出預覽和列印網格。[Blender 建模筆記](../Library/References/Blender/surface-modeling.md)
+
+兩條路線都要用實際模型匯出三視圖並對照選定外形。未知尺寸註明假設，關鍵配合先核對。
 
 保留主腳本、參數、輸入、來源、毫米單位和匯出記錄。試模與成品呼叫相同介面幾何。變更共享參數後重建受影響文件。詳見 `cad-master-design.md`。
 

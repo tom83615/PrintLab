@@ -48,6 +48,8 @@ Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和
 
 ## 設計與列印
 
+每一輪建立或修改模型前，先依作品的外形與配合需求，和使用者確認採用參數化 CAD 或 Blender 表面建模。本輪已明確指定時直接記錄並執行，否則等使用者選擇後才開始草模或修改幾何。選擇記入專案 `decisions.md`。詳見 [建模流程](Context/workflow.md#實際建模)。
+
 遵循 `Context/image-to-print.md`，新外形兩次選圖後進入正式模型。真實模型按選定外形比較，介面、公差、裝入路徑、壁厚和承力分別檢查。保留可編輯源，試模與成品共用介面參數，詳見 `Context/cad-master-design.md`。
 
 每次最終製作檢查品質、可靠性、列印總時間、支撐、材料切換和後處理。記錄實際切片比較，模板見 `Templates/Project/Review/x2d-final-review.md`。

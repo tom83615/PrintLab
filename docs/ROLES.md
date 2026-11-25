@@ -19,6 +19,7 @@
 ### Chloe 必守：MakerWorld 上傳規則與限制
 
 1. **檔案形式、大小與 G-code 限制**
+   - **PrintLab 上傳目錄結構（本工作區規則）**：每個作品的 MakerWorld 上傳資料一律直接放在專案根目錄 `MakerWorld/`（如 `photos/`、`3mf/`、`README.md`），**不得另外建立版本子資料夾**（如 `MakerWorld/v023/`），每個作品只保留一套上傳版本；來源版本改以 `MakerWorld/source.json` 記錄（例如 `project_id` 與 `source_revision`）。
    - **預設發布格式（本工作區規則）**：**一律先以 `.3mf` 發布；除非使用者明確要求，否則不附加 `.stl` 或 `.step` 作為補充檔案。**
    - **必須上傳「專案 `.3mf`」，禁止 `.gcode.3mf` 與自訂 G-code**：
      - 在 Bambu Studio 切片驗證完畢後，須使用 **File → Save Project / Save Project As** 儲存乾淨的專案 `.3mf`（保留 3D 幾何、擺放、分色與參數供 MakerWorld 雲端切片）；**不得**上傳「匯出切片檔」產生的 **`.gcode.3mf`** 或裸 `.gcode` 檔（缺少模型幾何會被拒收）。

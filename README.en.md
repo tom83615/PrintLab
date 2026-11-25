@@ -10,7 +10,7 @@ PrintLab is the 3D-printing workbench and collaboration workflow AFang (Eric) us
 
 Give the repository URL and this prompt to Codex or another agent with local terminal and filesystem access.
 
-> Install https://github.com/AFangTeam/PrintLab on this computer. Read README.md, AGENTS.md, and docs/AGENT_START.md. Create a persistent workspace, start the workbench, and run the onboarding verification. Create Sara, the 3D-printing advisor, and Mike, the workflow designer, as chats sharing this workspace, and record their actual setup status. Create a task-group chat when I choose my first object. Install third-party tools independently from their original projects. Tell me the specific actions needed for device information, login, or system permissions. Report the workspace path, workbench URL, role entry points, verified results, and next steps.
+> Install https://github.com/AFangTeam/PrintLab on this computer. Read README.md, AGENTS.md, and docs/AGENT_START.md. Create a persistent workspace, start the workbench, and run the onboarding verification. Create Sarah, the 3D-printing advisor, Mike, the workflow designer, and Chloe, the marketing and model publishing advisor, as chats sharing this workspace, and record their actual setup status. Create a task-group chat when I choose my first object. Install third-party tools independently from their original projects. Tell me the specific actions needed for device information, login, or system permissions. Report the workspace path, workbench URL, role entry points, verified results, and next steps.
 
 The interaction guide explains what happens in chat, what happens in the web workbench, and how roles exchange project context. The agent guide provides executable setup steps and completion checks. Both guides use Traditional Chinese. [User interaction guide](docs/GETTING_STARTED.md) · [Agent onboarding guide](docs/AGENT_START.md)
 
@@ -46,10 +46,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1
 
 The Windows guide covers tool paths, verification, and official Studio handoff. [Windows guide](docs/WINDOWS.md)
 
-## Three collaboration roles
+## Collaboration roles
 
-- **Sara, 3D-printing advisor** helps track equipment, filament, common problems, and parts. Shopping lists span projects. Adding products to a shopping cart uses Codex browser capabilities after the user authorizes it.
+- **Sarah, 3D-printing advisor** helps track equipment, filament, common problems, and parts. Shopping lists span projects. Adding products to a shopping cart uses Codex browser capabilities after the user authorizes it.
 - **Mike, workflow designer** maintains tool connections, the workbench, and shared procedures. Mike handles installation, versions, interfaces, and workflow problems.
+- **Chloe, marketing & model publishing advisor** prepares models for sharing on model platforms: drafts descriptions and metadata, plans or generates showcase visuals, selects shareable file formats, and checks attribution and licenses before saving drafts.
 - **Task group, named after the object** gives each object its own chat and project. Requirements, selected references, source models, slices, and feedback stay together for later sessions.
 
 PrintLab provides context through files and commands. Available models and tools depend on the user's Codex installation. Copy the role prompts to start your own chats. [Role prompts](docs/ROLES.md)

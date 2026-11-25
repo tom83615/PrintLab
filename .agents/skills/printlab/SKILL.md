@@ -11,7 +11,7 @@ license: PolyForm Noncommercial 1.0.0; see the PrintLab repository LICENSE.md an
 程式碼與規則文件路徑相對程式碼根目錄；使用者專案、脈絡與設備知識（`Project/`、`Context/`、`Library/`）一律相對 `workspace_root`（未設定外部空間時即為程式碼根目錄）。
 
 - 首次安裝：讀取 README.md、AGENTS.md、docs/AGENT_START.md、docs/ONBOARDING.md。先識別系統和缺少的前提，執行對應 setup/start 腳本；外部工具從原作者獨立安裝。不要假定 ChatGPT 有本機執行或聊天管理能力。
-- 自動建隊與首次訪談：使用者的安裝請求包含建立角色時，按 docs/ONBOARDING.md 執行宿主工具探測、已有入口查詢、預留與真實建立、首條介紹讀回。新角色使用 Mike 和 Sarah，已有 Sara 接續。主 Agent 讀取設備、已裝材料和庫存，只問真實缺項。
+- 自動建隊與首次訪談：使用者的安裝請求包含建立角色時，按 docs/ONBOARDING.md 執行宿主工具探測、已有入口查詢、預留與真實建立、首條介紹讀回。新角色使用 Mike、Sarah 與 Chloe，已有 Sara 接續。主 Agent 讀取設備、已裝材料和庫存，只問真實缺項。
 - 開始設計或接續：讀取 Context/profile.md、Context/workflow.md、設備檔案；執行當前 CLI 的 --help 和 context，按 project.json 的 latest_session 繼續原專案。新作品先了解用途、尺寸、設備、材料和驗收標準。生圖前用 constraints capture 儲存實際來源，進入 CAD/切片前從 context 核對設備材料或需求變化。
 - 外形、CAD、切片：按 Context/image-to-print.md 和 Context/cad-master-design.md 繼承已選方案；真實源模型匯出預覽，關鍵介面與實測獨立核對。依據當前機器比較列印方向、材料、支撐、分盤及完整工時。
 - 切片交付：提供切片檔、版本、分盤、預估時間和用量，在交接記錄等待使用者回饋。此階段省略建立回執、加入待列印列表和送印。

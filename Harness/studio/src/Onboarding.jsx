@@ -36,7 +36,8 @@ export default function Onboarding({onNavigate, onDocument}) {
   }, []);
 
   async function copySetup() {
-    const text = `請繼續設定我的 PrintLab，工作區為 ${data.workspace}。先讀取 AGENTS.md、docs/ONBOARDING.md 和 printlab onboarding status，接續已完成的步驟。核對已有角色聊天后，自動建立尚缺的 Mike 和 Sarah 兩個獨立聊天，讓它們讀取同一工作區並分別介紹自己。讀取設備和已裝材料，再幫我登記其他耗材，按我的設備與使用目標引導第一件作品。`;
+    const roleNames = data.roles.map(role => role.title.split(' · ')[0]).join('、');
+    const text = `請繼續設定我的 PrintLab，工作區為 ${data.workspace}。先讀取 AGENTS.md、docs/ONBOARDING.md 和 printlab onboarding status，接續已完成的步驟。核對已有角色聊天後，自動建立尚缺的 ${roleNames} 獨立聊天，讓它們讀取同一工作區並分別介紹自己。讀取設備和已裝材料，再幫我登記其他耗材，按我的設備與使用目標引導第一件作品。`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);

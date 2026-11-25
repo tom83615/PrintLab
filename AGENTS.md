@@ -33,9 +33,9 @@ The code repository is this checkout. On Windows, `Harness/bin/printlab.ps1` aut
 
 ## 分工與持久化
 
-Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和流程。任務小組負責具體作品。提示詞見 `docs/ROLES.md`。角色通過共同文件和命令協作，模型選擇由使用者當前可用的 Codex 環境決定。只有使用者明確要求時才建立新會話或派發子 Agent。
+Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和流程。Chloe 負責 MakerWorld 等模型網站上架、生成描述文案、展示圖片規劃與適合分享的檔案形式（MakerWorld 上傳規則與限制見 `docs/ROLES.md` 與 `.agents/skills/makerworld-upload/SKILL.md`）。任務小組負責具體作品。提示詞見 `docs/ROLES.md`。角色通過共同文件和命令協作，模型選擇由使用者當前可用的 Codex 環境決定。只有使用者明確要求時才建立新會話或派發子 Agent。
 
-初始化生成 `Context/team.md`，保留實際團隊說明。可恢復的首次設定、角色入口及讀回證據儲存在 `Context/onboarding.json`。按 `docs/ONBOARDING.md` 查詢已有聊天、建立缺少的 Mike 和 Sarah，讀回實際首條介紹與共用資料。已有 Sara 入口接續為同一角色。使用者的安裝請求已經明確包含自動建隊時直接執行，宿主能力缺失時記錄真實待辦。專案分工繼續寫 `Review/team.md`。
+初始化生成 `Context/team.md`，保留實際團隊說明。可恢復的首次設定、角色入口及讀回證據儲存在 `Context/onboarding.json`。按 `docs/ONBOARDING.md` 查詢已有聊天、建立缺少的 Mike、Sarah 與 Chloe，讀回實際首條介紹與共用資料。已有 Sara 入口接續為同一角色。使用者的安裝請求已經明確包含自動建隊時直接執行，宿主能力缺失時記錄真實待辦。專案分工繼續寫 `Review/team.md`。
 
 共同文件的追加使用 `workspace note`，設備確認使用 `workspace device`，均帶當前哈希並在衝突後重讀。使用者確認的庫存通過 `material-intake` 登記到工作區設定的庫存來源（Spoolman 或 Bambuddy）。生圖前執行 `constraints capture 專案ID` 儲存本次設備材料及需求來源；CAD 和切片前通過 `context` 檢查變化，按實際影響更新設計資料。未知欄位保留待核實。
 

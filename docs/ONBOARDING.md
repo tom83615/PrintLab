@@ -1,6 +1,6 @@
 # 首次設定與中斷接續
 
-主 Agent 負責首次設定，Mike 和 Sarah 接續同一個工作區。先完成 `AGENT_START.md` 的安裝與啟動，然後執行 `printlab onboarding status --refresh`。其中 `version` 用於防止兩個會話同時覆蓋設定進度。所有示例的版本、哈希、專案 ID 和路徑均替換為實際讀回值。Windows 使用 `Harness/bin/printlab.ps1`。
+主 Agent 負責首次設定，Mike、Sarah 與 Chloe 接續同一個工作區。先完成 `AGENT_START.md` 的安裝與啟動，然後執行 `printlab onboarding status --refresh`。其中 `version` 用於防止兩個會話同時覆蓋設定進度。所有示例的版本、哈希、專案 ID 和路徑均替換為實際讀回值。Windows 使用 `Harness/bin/printlab.ps1`。
 
 ## 收集已經存在的答案
 
@@ -74,7 +74,7 @@
 
 先檢查庫存是否已有同一實物。兩個真實料卷分別登記，外觀相近不代表同一卷。請求標識在超時和接續時保持相同，命令會查回原操作標記。結果不明確時保留待對賬狀態。餘量未知時保持未知，名義標籤克數僅供賬面估算。
 
-## 自動建立兩個獨立聊天
+## 自動建立常駐角色獨立聊天
 
 先檢查宿主當前實際可用的工具，寫一份宿主能力 JSON。只有真實暴露且能使用的能力寫 `true`。
 
@@ -90,7 +90,7 @@
 ./Harness/bin/printlab onboarding host --file host.json --expect 當前版本
 ```
 
-依次處理 Mike 與 Sarah。已有 Sara 視為 Sarah 的舊名稱。先按實際工作區搜尋已有聊天並讀回，核對 `Context/team.md` 中的歷史入口。
+依次處理 Mike、Sarah 與 Chloe。已有 Sara 視為 Sarah 的舊名稱。先按實際工作區搜尋已有聊天並讀回，核對 `Context/team.md` 中的歷史入口。
 
 1. 已有相符聊天時，讀取它的工作區、真實 ID 和首條介紹，通過下述回執加 `--adopt-existing` 登記。已有介紹不足時，在該聊天發送完整首次任務並等待回覆。
 2. 缺少角色時執行 `onboarding reserve-role Mike --request-id 穩定建立標識 --expect 當前版本`。只有返回 `create_allowed: true` 的這一執行者負責建立。
@@ -115,7 +115,7 @@
 ./Harness/bin/printlab onboarding record-role Mike --file role-receipt.json --expect 當前版本
 ```
 
-Sarah 用同樣步驟完成。建立中斷時 `creating` 會阻止重複建立，先用儲存的 request ID 和工作區在宿主找回結果。確定已有聊天后繼續登記。缺少宿主工具時，工作台顯示具體待辦，提供角色提示詞和工作區路徑供使用者在支援環境繼續。
+Sarah 與 Chloe 用同樣步驟完成。建立中斷時 `creating` 會阻止重複建立，先用儲存的 request ID 和工作區在宿主找回結果。確定已有聊天後繼續登記。缺少宿主工具時，工作台顯示具體待辦，提供角色提示詞和工作區路徑供使用者在支援環境繼續。
 
 ## 共同事實與第一件作品
 

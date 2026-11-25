@@ -144,7 +144,7 @@ def test_capability_missing_does_not_reserve_or_create(root):
     assert onboarding.state()['roles'] == {}
 
 
-def test_two_roles_normalize_workspace_paths_and_reach_ready(root):
+def test_all_roles_normalize_workspace_paths_and_reach_ready(root):
     host()
     for role in ('Mike', 'Sarah'):
         request = 'test-' + role
@@ -154,7 +154,25 @@ def test_two_roles_normalize_workspace_paths_and_reach_ready(root):
                    'first_reply': '已讀共同狀態，設備未配置。',
                    'context_paths': [str(root / 'AGENTS.md'), 'Context\\profile.md', 'Context/workflow.md']}
         onboarding.record_role(role, receipt, onboarding.state()['version'])
+    mid_view = onboarding.view()
+    assert mid_view['team_ready'] is False
+    chloe_row = next(item for item in mid_view['roles'] if item['role'] == 'chloe')
+    assert chloe_row['status'] == 'pending'
+    assert chloe_row['title'] == 'Chloe · 行銷與模型發布顧問'
+    assert any(action.get('role') == 'chloe' for action in mid_view['next_actions'])
+
+    reserved = onboarding.reserve_role('Chloe', 'test-Chloe', onboarding.state()['version'])
+    assert reserved['create_allowed'] is True
+    assert 'MakerWorld' in reserved['role']['prompt'] and 'docs/ROLES.md' in reserved['role']['prompt']
+    assert '模型網站上架' in reserved['role']['prompt'] and '分享的檔案形式' in reserved['role']['prompt']
+    chloe_receipt = {'request_id': 'test-Chloe', 'thread_id': 'test-Chloe', 'host_id': 'local',
+                     'workspace': root.as_posix() + '/.', 'source': 'Simulated host readback',
+                     'first_reply': '已讀共同狀態，準備負責模型上架文案、展示圖片與分享檔案規格。',
+                     'context_paths': [str(root / 'AGENTS.md'), 'Context\\profile.md', 'Context/workflow.md']}
+    onboarding.record_role('chloe', chloe_receipt, onboarding.state()['version'])
     assert onboarding.view()['team_ready'] is True
+    with pytest.raises(core.WorkflowError, match='Chloe'):
+        onboarding.reserve_role('UnknownRole', 'test-unknown', onboarding.state()['version'])
     with pytest.raises(core.WorkflowError, match='another workspace'):
         onboarding.record_role('Sarah', {**receipt, 'context_paths': [str(root.parent / 'other' / 'AGENTS.md')]}, onboarding.state()['version'])
     with pytest.raises(core.WorkflowError, match='inside'):

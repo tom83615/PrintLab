@@ -11,7 +11,8 @@ from . import bambuddy, core, supplies, workspace
 
 STATE = 'Context/onboarding.json'
 ROLES = {'sarah': ('Sarah · 3D 列印顧問', '設備、材料、列印問題與製作建議'),
-         'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進')}
+         'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進'),
+         'chloe': ('Chloe · 行銷與模型發布顧問', 'MakerWorld 等模型網站上架、生成描述文案、規劃展示圖片與適合分享的檔案形式')}
 CAPABILITIES = {'local_files', 'terminal', 'chat_create', 'chat_read', 'desktop_control',
                 'image_generation', 'cad_viewer'}
 
@@ -75,14 +76,14 @@ def answer(key, text, source, expected):
 def _role(role):
     key = 'sarah' if role.lower() == 'sara' else role.lower()
     if key not in ROLES:
-        raise core.WorkflowError('Role must be Mike or Sarah (Sara is accepted for existing chats)')
+        raise core.WorkflowError('Role must be Mike, Sarah, or Chloe (Sara is accepted for existing chats)')
     return key
 
 
 def role_prompt(role, request_id):
     title, duties = ROLES[role]
     return (f'你是{title}。共同工作空間為 {core.ROOT}。職責為{duties}。'
-            '先讀取這個工作空間的 AGENTS.md，使用實際 CLI 執行 context，讀取設備、材料、'
+            '先讀取這個工作空間的 AGENTS.md 與 docs/ROLES.md，使用實際 CLI 執行 context，讀取設備、材料、'
             '用戶偏好、經驗與已有項目。首次回覆請介紹職責，列出真實讀到的配置、尚缺信息及一項下一步。'
             '沿用初始會話已經收集的答案，避免重複訪談。每次接手作品都先按穩定項目 ID 讀取 context，'
             '收尾保存交接。事實、經驗或偏好更新使用 workspace 命令的版本檢查，保留用戶原話與來源。'

@@ -9,7 +9,9 @@ description: 使用瀏覽器將本機 STL、CAD 或 Bambu Studio 3MF 上傳到 M
 
 確認要上傳的確切模型版本、檔案和圖片。使用現成的標題、描述、分類、標籤和實物照片，缺少文案時可依可驗證的資料起草。核對原創、改作或轉載的來源和授權，保留作者與來源連結。PrintLab 專案依其 AGENTS.md 核對版本與來源。只選取使用者指定或同意上傳的檔案。
 
-- 同一模型版本須準備兩份獨立的 Bambu Studio 專案 3MF，一份選用 PLA，另一份選用 PETG。各自套用對應材料設定並切片，檔名與 MakerWorld 列印設定標題標明材料與機型。只有 STL／CAD 或一般 3MF 時，先匯入 Bambu Studio 準備這兩份檔案。
+- 預設一律先以 `.3mf` 發布；除非使用者明確要求，否則不額外附加 `.stl` 或 `.step` 作為補充檔案。
+- 同一模型版本須準備兩份獨立的 Bambu Studio 專案 `.3mf`（以 **Save Project / Save Project As** 儲存，**不得上傳含預編譯 G-code 的 `.gcode.3mf` 或裸 `.gcode`**），一份選用 PLA，另一份選用 PETG。各自先套用對應材料設定完成切片驗證，檔名與 MakerWorld 列印設定標題標明材料與機型。只有 STL／CAD 或一般 3MF 時，先匯入 Bambu Studio 準備這兩份專案檔。
+- 上傳用 `.3mf` 須使用 **Bambu 官方系統預設** 或 **Generic 通用預設**（如 `Bambu PLA Basic`、`Generic PLA`、`Generic PETG`）與原廠系統機型預設；**不得**包含自訂耗材預設、自訂機型預設或自訂 Machine／Filament G-code。第三方耗材調校建議改寫在描述文字中；多色設定的色數與分色區須與實物照一致。
 - 依 **A1 mini → A1 → H2S** 的順序選機型。從 A1 mini 開始，在 Bambu Studio 檢查該機型的一個列印盤能否容納全部零件與切片所需的支撐、裙邊等，並確認 PLA 和 PETG 設定均可完成切片。兩份檔案都以第一個符合條件的機型儲存。若 H2S 也無法在單盤完成，回報卡住的零件或排版限制，等使用者決定如何調整。
 
 ## 上傳與讀回

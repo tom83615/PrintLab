@@ -159,6 +159,7 @@ def main():
                 page.get_by_role('heading', name='Sarah · 3D 列印顧問', exact=True).wait_for()
                 page.get_by_role('heading', name='Mike · 工作流設計師', exact=True).wait_for()
                 page.get_by_role('heading', name='Chloe · 行銷與模型發布顧問', exact=True).wait_for()
+                page.get_by_role('heading', name='Leo · 平面設計師', exact=True).wait_for()
                 assert page.get_by_role('button', name='讓 Agent 接著設定').count() == 1
                 page.get_by_role('button', name='Context/profile.md', exact=True).click()
                 page.get_by_role('dialog').wait_for()

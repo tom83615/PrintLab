@@ -12,7 +12,8 @@ from . import bambuddy, core, supplies, workspace
 STATE = 'Context/onboarding.json'
 ROLES = {'sarah': ('Sarah · 3D 列印顧問', '設備、材料、列印問題與製作建議'),
          'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進'),
-         'chloe': ('Chloe · 行銷與模型發布顧問', 'MakerWorld 等模型網站上架、生成描述文案、規劃展示圖片與適合分享的檔案形式')}
+         'chloe': ('Chloe · 行銷與模型發布顧問', 'MakerWorld 等模型網站上架、生成描述文案、規劃展示圖片與適合分享的檔案形式'),
+         'leo': ('Leo · 平面設計師', '協助修圖、裁切構圖、調整光線色彩與版面設計，製作作品展示圖與視覺素材')}
 CAPABILITIES = {'local_files', 'terminal', 'chat_create', 'chat_read', 'desktop_control',
                 'image_generation', 'cad_viewer'}
 
@@ -76,7 +77,7 @@ def answer(key, text, source, expected):
 def _role(role):
     key = 'sarah' if role.lower() == 'sara' else role.lower()
     if key not in ROLES:
-        raise core.WorkflowError('Role must be Mike, Sarah, or Chloe (Sara is accepted for existing chats)')
+        raise core.WorkflowError('Role must be Mike, Sarah, Chloe, or Leo (Sara is accepted for existing chats)')
     return key
 
 

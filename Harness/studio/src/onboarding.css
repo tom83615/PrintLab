@@ -4,7 +4,7 @@
 .onboarding-panel p, .onboarding-panel li { line-height: 1.7; }
 .onboarding-panel li + li { margin-top: 8px; }
 .onboarding-panel summary { cursor: pointer; padding: 8px 0; }
-.onboarding-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.onboarding-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
 .onboarding-roles .onboarding-panel { margin: 0; }
 .onboarding-panel dd { margin: 4px 0 16px; overflow-wrap: anywhere; }
 .onboarding-panel dt { color: var(--muted); font-size: 13px; }

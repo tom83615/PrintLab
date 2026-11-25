@@ -17,7 +17,7 @@ def test_project_team_is_copied_and_loaded_by_a_later_context(tmp_path, monkeypa
     directory = core.project_path(project['id'])
     team = directory / 'Review/team.md'
     team_text = team.read_text(encoding='utf-8')
-    assert 'Sara' in team_text and 'Chloe' in team_text
+    assert 'Sara' in team_text and 'Chloe' in team_text and 'Leo' in team_text
     team.write_text('Mike owns the tool check for this project', encoding='utf-8')
     result = core.context(project['id'])
     assert 'Context/team.md' in result['loaded']

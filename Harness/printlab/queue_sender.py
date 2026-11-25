@@ -16,7 +16,7 @@ def capability(report):
         blockers.append('隊列通道需要設備就緒為 IDLE；請核對上一盤與設備狀態')
     if report.get('transport', {}).get('sdcard') is not True:
         blockers.append('設備未報告可用存儲卡，文件傳輸條件待核對')
-    secret = core.read_json(core.ROOT / 'Runtime/private/bambuddy.json', {})
+    secret = core.read_json(core.runtime_root() / 'private/bambuddy.json', {})
     if not secret.get('write_api_key'):
         blockers.append('Bambuddy 寫入憑據尚未配置，需具備文件、隊列和啟動權限')
     return {'available': not blockers, 'kind': 'bambuddy_queue', 'blockers': blockers,

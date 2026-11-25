@@ -19,13 +19,29 @@ import math
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
-ROOT = Path(os.environ.get("PRINTLAB_ROOT", Path(__file__).resolve().parents[2])).expanduser().resolve()
+CODE_ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ.get("PRINTLAB_ROOT", CODE_ROOT)).expanduser().resolve()
+_INITIAL_ROOT = ROOT
+_ENV_RUNTIME_ROOT = os.environ.get("PRINTLAB_RUNTIME_ROOT")
 DEVICE_CARD_PATH = "Library/Devices/H2C/device.json"
 DEVICE_INSTALLED_PATH = "Library/Devices/H2C/installed.md"
 DEVICE_CARD = ROOT / DEVICE_CARD_PATH
 DEVICE_INSTALLED = ROOT / DEVICE_INSTALLED_PATH
 PROJECT_DIRS = ("Sources", "Design", "Exports", "Preview", "Print", "Review", "Sessions")
 PUBLIC_DIRS = {"Sources", "Design", "Exports", "Preview", "Print", "Review", "Sessions"}
+
+
+def runtime_root() -> Path:
+    if _ENV_RUNTIME_ROOT and ROOT == _INITIAL_ROOT:
+        return Path(_ENV_RUNTIME_ROOT).expanduser().resolve()
+    return ROOT / "Runtime"
+
+
+def code_path(rel: str) -> Path:
+    candidate = ROOT / rel
+    if candidate.exists():
+        return candidate
+    return CODE_ROOT / rel
 
 
 class WorkflowError(ValueError):
@@ -69,7 +85,7 @@ def digest(path: Path):
 def lock(name="workflow"):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
         name = hashlib.sha256(name.encode()).hexdigest()
-    d = ROOT / "Runtime" / "locks"
+    d = runtime_root() / "locks"
     d.mkdir(parents=True, exist_ok=True)
     with (d / f"{name}.lock").open("a") as f:
         portalocker.lock(f, portalocker.LOCK_EX)
@@ -80,7 +96,7 @@ def lock(name="workflow"):
 
 
 def config():
-    return read_json(ROOT / "Runtime/config.json", {})
+    return read_json(runtime_root() / "config.json", {})
 
 
 def selected_printer_id():
@@ -302,7 +318,7 @@ def new_project(name, kind="functional", brief="", summary_text=""):
                 "created_at": stamp, "updated_at": stamp, "current_revision": None,
                 "bambuddy_project_id": None, "summary": summary_text, "latest_session": "Sessions/handoff.md"}
         write_json(p / "project.json", data)
-        template = ROOT / "Templates/Project"
+        template = code_path("Templates/Project")
         for source in template.rglob("*.md"):
             rel = source.relative_to(template)
             if rel.as_posix() not in {"brief.md", "decisions.md"} and rel.parts[0] not in PROJECT_DIRS:
@@ -330,41 +346,44 @@ def new_project(name, kind="functional", brief="", summary_text=""):
 
 def context(pid=None):
     from . import shop, supplies
-    paths = [ROOT / x for x in ["AGENTS.md", "Context/profile.md", "Context/workflow.md", DEVICE_CARD_PATH, DEVICE_INSTALLED_PATH, "Context/lessons.md"]]
+    entries = [("AGENTS.md", code_path("AGENTS.md"))] + [
+        (x, ROOT / x) for x in ["Context/profile.md", "Context/workflow.md", DEVICE_CARD_PATH, DEVICE_INSTALLED_PATH, "Context/lessons.md"]
+    ]
     for rel in ("Context/image-to-print.md", "Context/agent-policy.json", "Context/taste.md", "Context/team.md", "Context/onboarding.json"):
         if (ROOT / rel).is_file():
-            paths.append(ROOT / rel)
+            entries.append((rel, ROOT / rel))
     if (ROOT / "Library/Shopping/README.md").is_file():
-        paths.append(ROOT / "Library/Shopping/README.md")
+        entries.append(("Library/Shopping/README.md", ROOT / "Library/Shopping/README.md"))
     if (ROOT / "Library/Materials/README.md").is_file():
-        paths.append(ROOT / "Library/Materials/README.md")
+        entries.append(("Library/Materials/README.md", ROOT / "Library/Materials/README.md"))
     if (ROOT / "Library/Publishing/README.md").is_file():
-        paths.append(ROOT / "Library/Publishing/README.md")
+        entries.append(("Library/Publishing/README.md", ROOT / "Library/Publishing/README.md"))
     if pid:
         p = project_path(pid)
-        paths += [p / "project.json", p / "brief.md", p / "decisions.md"]
+        project_files = [p / "project.json", p / "brief.md", p / "decisions.md"]
         for rel in ("Review/design-target.json", "Review/manufacturing-context.json", "Review/model-routing.md", "Review/model-routing.json", "Review/remix-plan.md", "Review/team.md"):
             if (p / rel).is_file():
-                paths.append(p / rel)
+                project_files.append(p / rel)
         pointer = read_json(p / "project.json").get("latest_session")
         if pointer is not None:
             if not isinstance(pointer, str) or not pointer.startswith("Sessions/") or Path(pointer).suffix.lower() != ".md" or Path(pointer).name.lower() == "readme.md":
                 raise WorkflowError("latest_session must identify a Markdown handoff inside Sessions")
-            paths.append(safe_path(p / "Sessions", pointer[len("Sessions/"):]))
+            project_files.append(safe_path(p / "Sessions", pointer[len("Sessions/"):]))
         else:
             sessions = sorted((x for x in (p / "Sessions").glob("*.md") if x.name.lower() != "readme.md" and not x.is_symlink()), key=lambda x: x.stat().st_mtime, reverse=True)
-            paths += sessions[:1]
-    result = {"project_id": read_json(p / "project.json")["id"] if pid else None, "loaded": [], "missing": [], "documents": [],
+            project_files += sessions[:1]
+        entries += [(item.relative_to(ROOT).as_posix(), item) for item in project_files]
+    result = {"workspace_root": str(ROOT), "runtime_root": str(runtime_root()),
+              "project_id": read_json(p / "project.json")["id"] if pid else None, "loaded": [], "missing": [], "documents": [],
               "shopping": shop.view(pid), "materials": supplies.inventory()}
     from . import onboarding
     result['onboarding'] = onboarding.view(inventory=result['materials'])
     from . import taste
     result["taste"] = taste.summary(pid)
-    for p in paths:
-        rel = p.relative_to(ROOT).as_posix()
-        if p.is_file():
+    for rel, path in entries:
+        if path.is_file():
             result["loaded"].append(rel)
-            result["documents"].append({"path": rel, "sha256": digest(p), "text": p.read_text(encoding="utf-8")[:24000]})
+            result["documents"].append({"path": rel, "sha256": digest(path), "text": path.read_text(encoding="utf-8")[:24000]})
         else:
             result["missing"].append(rel)
     if pid:
@@ -401,9 +420,12 @@ def build(pid, revision, engine):
     with project_write_lock(p) as project_id:
         if out.exists():
             raise WorkflowError("Built revisions are immutable; create a new revision")
+        build_env = {**os.environ, 'PRINTLAB_ROOT': str(ROOT)}
+        if runtime_root() != ROOT / "Runtime":
+            build_env['PRINTLAB_RUNTIME_ROOT'] = str(runtime_root())
         result = subprocess.run(command, capture_output=True, text=True, timeout=600,
-                                env={**os.environ, 'PRINTLAB_ROOT': str(ROOT)})
-        evidence = ROOT / "Runtime/evidence" / f"{project_id}-{revision}-build.log"
+                                env=build_env)
+        evidence = runtime_root() / "evidence" / f"{project_id}-{revision}-build.log"
         evidence.parent.mkdir(parents=True, exist_ok=True)
         evidence.write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
         if result.returncode != 0 or not out.exists():
@@ -936,7 +958,7 @@ def library():
 
 def doctor():
     cfg = config()
-    required = {"builder": ROOT / "Harness/build_model.py", "slicer": Path(cfg.get("slicer_path", platforms.tool_defaults()["slicer_path"]))}
+    required = {"builder": code_path("Harness/build_model.py"), "slicer": Path(cfg.get("slicer_path", platforms.tool_defaults()["slicer_path"]))}
     for k in ("cad_python", "blender_path"):
         required[k] = Path(cfg[k]) if cfg.get(k) else None
     from . import inspection
@@ -944,4 +966,4 @@ def doctor():
         inspector = inspection.self_test()
     except (WorkflowError, OSError) as error:
         inspector = {"available": False, "error": str(error), "fix": "Run the workspace Python with scripts/install_inspector.py", "executed": False}
-    return {"root": str(ROOT), "tools": {k: {"path": str(v) if v else None, "available": bool(v and v.is_file()), "verification": "file_exists_only"} for k, v in required.items()}, "offline_inspector": inspector, "printer_configured": selected_printer_id() is not None, "context": context().get("loaded"), "missing_context": context().get("missing")}
+    return {"root": str(ROOT), "workspace_root": str(ROOT), "runtime_root": str(runtime_root()), "tools": {k: {"path": str(v) if v else None, "available": bool(v and v.is_file()), "verification": "file_exists_only"} for k, v in required.items()}, "offline_inspector": inspector, "printer_configured": selected_printer_id() is not None, "context": context().get("loaded"), "missing_context": context().get("missing")}

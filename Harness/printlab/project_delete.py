@@ -25,6 +25,14 @@ def _workspace_path(relative):
     return path
 
 
+def _runtime_path(relative):
+    runtime = core.runtime_root()
+    path = core.safe_path(runtime, str(relative), require_file=False)
+    if path != runtime / relative:
+        raise core.WorkflowError('工作區路徑已重定向，無法安全清理')
+    return path
+
+
 def _project(pid):
     root = _workspace_path('Project')
     matches = list(root.glob(f'{pid}-*'))
@@ -62,10 +70,11 @@ def _job_states(project):
 
 def _workbench_files(pid, states):
     owned = []
+    runtime = core.runtime_root()
     for kind in ('operations', 'checks'):
-        folder = _workspace_path(f'Runtime/workbench/{kind}')
+        folder = _runtime_path(f'workbench/{kind}')
         for file in folder.glob('*.json'):
-            data = core.read_json(_workspace_path(file.relative_to(core.ROOT)))
+            data = core.read_json(_runtime_path(file.relative_to(runtime)))
             if data.get('project_id') != pid:
                 continue
             if kind == 'operations':
@@ -143,13 +152,14 @@ def _check_mounts(folder):
 
 
 def _remove_caches(pid, project):
-    for log in _workspace_path('Runtime/evidence').glob(f'{pid}-v*-build.log'):
+    runtime = core.runtime_root()
+    for log in _runtime_path('evidence').glob(f'{pid}-v*-build.log'):
         if re.fullmatch(rf'{pid}-v[0-9]{{3,}}-build\.log', log.name) and not log.is_dir():
             log.unlink()
-    for preview in _workspace_path('Runtime/studio-previews').glob('preview-*'):
+    for preview in _runtime_path('studio-previews').glob('preview-*'):
         if preview.is_symlink() or preview.resolve() != preview or not preview.is_dir():
             continue
-        manifest = _workspace_path(preview.relative_to(core.ROOT) / 'source.json')
+        manifest = _runtime_path(preview.relative_to(runtime) / 'source.json')
         source = core.read_json(manifest, {}).get('source')
         if isinstance(source, str) and Path(source).is_absolute() and Path(source).resolve().is_relative_to(project):
             _check_mounts(preview)

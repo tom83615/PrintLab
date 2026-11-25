@@ -435,7 +435,8 @@ def main(argv=None):
                 with core.lock("printer"):
                     result = bambuddy.reconcile(a.project, a.job)
         elif a.command == "status":
-            result = {"device": supplies.device(), "projects": core.list_projects()}
+            result = {"workspace_root": str(core.ROOT), "runtime_root": str(core.runtime_root()),
+                      "device": supplies.device(), "projects": core.list_projects()}
         elif a.command == "materials":
             result = supplies.inventory()
         elif a.command == "review":

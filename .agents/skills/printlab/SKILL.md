@@ -6,9 +6,9 @@ license: PolyForm Noncommercial 1.0.0; see the PrintLab repository LICENSE.md an
 
 需要本機文件與終端能力；工作台支援 macOS 和 Windows。CAD、設備連接及發送支援按實際安裝和機型核驗。
 
-找到使用者實際的 PrintLab 根目錄，特徵為 AGENTS.md、Harness/printlab 和 Context/workflow.md。當前目錄屬於已有工作區時接續它；不要建立第二份專案庫。若技能單獨安裝而工作台尚未安裝，從 https://github.com/AFangTeam/PrintLab 的明確 Release 開始，記錄版本，按其 README 安裝。
+找到使用者實際的 PrintLab 程式碼根目錄，特徵為 AGENTS.md、Harness/printlab 和 Context/workflow.md。若本機已設定外部正式資料空間（Windows 見 `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt`，程式碼根目錄亦設有 `Workspace/` 聯結指向該處），即使程式碼倉庫的 `Project/` 內沒有本機作品檔，也必須以該外部空間作為唯一設計資料空間；不要在程式碼倉庫內建立第二份專案庫。Windows CLI（`Harness/bin/printlab.ps1`）未顯式覆寫 `PRINTLAB_ROOT` 時會自動解析該外部資料空間與 `%LOCALAPPDATA%\PrintLab\production\Runtime`，並於 `status` / `context` / `doctor` 回報 `workspace_root` 與 `runtime_root`。若技能單獨安裝而工作台尚未安裝，從 https://github.com/AFangTeam/PrintLab 的明確 Release 開始，記錄版本，按其 README 安裝。
 
-所有下列路徑相對實際工作台根目錄，而非技能安裝目錄。
+程式碼與規則文件路徑相對程式碼根目錄；使用者專案、脈絡與設備知識（`Project/`、`Context/`、`Library/`）一律相對 `workspace_root`（未設定外部空間時即為程式碼根目錄）。
 
 - 首次安裝：讀取 README.md、AGENTS.md、docs/AGENT_START.md、docs/ONBOARDING.md。先識別系統和缺少的前提，執行對應 setup/start 腳本；外部工具從原作者獨立安裝。不要假定 ChatGPT 有本機執行或聊天管理能力。
 - 自動建隊與首次訪談：使用者的安裝請求包含建立角色時，按 docs/ONBOARDING.md 執行宿主工具探測、已有入口查詢、預留與真實建立、首條介紹讀回。新角色使用 Mike 和 Sarah，已有 Sara 接續。主 Agent 讀取設備、已裝材料和庫存，只問真實缺項。

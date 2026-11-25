@@ -19,7 +19,9 @@ Python 檔案存檔後會重載服務。前端建置完成後重新整理頁面�
 
 ## 正式更新
 
-正式資料位置可在 `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt` 指定。檔案只需一行已存在的 Windows 絕對路徑。搬移時，先停止正式服務，再複製 `Project`、`Library` 和 `Context` 至新位置。部署與回退都會讀取這個設定。`Runtime`、憑據及版本記錄使用原本的本機目錄。
+正式資料位置可在 `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt` 指定。檔案只需一行已存在的 Windows 絕對路徑。搬移時，先停止正式服務，再複製 `Project`、`Library` 和 `Context` 至新位置。部署、回退與 Windows CLI（`Harness/bin/printlab.ps1`）都會讀取這個設定：`printlab.ps1` 在未覆寫 `PRINTLAB_ROOT` 時會自動指向該外部資料目錄，並共用 `%LOCALAPPDATA%\PrintLab\production\Runtime`（含 `config.json`、鎖與憑據）。
+
+當正式資料目錄位於程式碼倉庫外部時，部署腳本也會在程式碼倉庫根目錄維護受 `.gitignore` 忽略的 `Workspace/` 目錄聯結指向該外部資料目錄，方便本機瀏覽與 AI 探索；即使程式碼倉庫內不含本機專案檔，AI 仍可透過 `workspace-path.txt`、`Workspace/` 或 `printlab.ps1 status` / `context` 回報的 `workspace_root` 找到唯一設計資料空間。`Runtime`、憑據及版本記錄使用原本的本機目錄。
 
 Docker Desktop 須在執行。將完整提交 SHA 傳給部署腳本：
 

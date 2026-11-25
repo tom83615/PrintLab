@@ -209,9 +209,10 @@ def detach_project(project_id):
 
     The caller holds the print-history lock through removal of the project.
     """
-    relative = 'Runtime/history/latest.json'
-    cache_path = core.safe_path(core.ROOT, relative, require_file=False)
-    if cache_path != core.ROOT / relative:
+    runtime = core.runtime_root()
+    relative = 'history/latest.json'
+    cache_path = core.safe_path(runtime, relative, require_file=False)
+    if cache_path != runtime / relative:
         raise core.WorkflowError('歷史緩存目錄已重定向，無法安全清理')
     cached = core.read_json(cache_path, {})
     items = cached.get('items', [])
@@ -229,7 +230,7 @@ def detach_project(project_id):
 
 
 def view(force=False, client_factory=None):
-    cache_path = core.ROOT / 'Runtime/history/latest.json'
+    cache_path = core.runtime_root() / 'history/latest.json'
     with core.lock('print-history'):
         cached = core.read_json(cache_path, {})
         pid = core.config().get('printer_id')

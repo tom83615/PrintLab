@@ -140,7 +140,7 @@ def update_device(changes, source, expected_sha256):
 
 
 def connection():
-    path = core.safe_path(core.ROOT, 'Runtime/config.json', require_file=False)
+    path = core.safe_path(core.runtime_root(), 'config.json', require_file=False)
     cfg = core.config()
     return {'sha256': core.digest(path) if path.is_file() else None,
             'bambuddy_url': cfg.get('bambuddy_url'), 'printer_id': cfg.get('printer_id'),
@@ -157,7 +157,7 @@ def configure_studio_device(name, model, serial, expected_sha256):
     serial = required_text(serial, 'Studio printer serial', 100)
     if any(ch in serial for ch in '\r\n\x00'):
         raise core.WorkflowError('Studio printer serial contains invalid characters')
-    path = core.safe_path(core.ROOT, 'Runtime/config.json', require_file=False)
+    path = core.safe_path(core.runtime_root(), 'config.json', require_file=False)
     with core.lock('studio-device-config'):
         check_version(path, expected_sha256)
         cfg = core.config()
@@ -175,7 +175,7 @@ def configure_connection(url, printer_id, expected_sha256):
     if type(printer_id) is not int or printer_id < 1:
         raise core.WorkflowError('Select a positive Bambuddy printer ID from discovery')
     with core.lock('shared-context'):
-        path = core.safe_path(core.ROOT, 'Runtime/config.json', require_file=False)
+        path = core.safe_path(core.runtime_root(), 'config.json', require_file=False)
         check_version(path, expected_sha256)
         cfg = core.config()
         cfg.update(bambuddy_url=url.rstrip('/'), printer_id=printer_id)

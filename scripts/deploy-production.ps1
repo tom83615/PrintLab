@@ -40,6 +40,24 @@ function Start-Release([string]$Image) {
     Test-Studio 'http://127.0.0.1:10818'
 }
 
+function Sync-WorkspaceLink([string]$RepoRoot, [string]$TargetWorkspace) {
+    $resolvedRepo = (Resolve-Path -LiteralPath $RepoRoot).ProviderPath.TrimEnd('\')
+    $resolvedTarget = (Resolve-Path -LiteralPath $TargetWorkspace).ProviderPath.TrimEnd('\')
+    if ($resolvedRepo -ieq $resolvedTarget) { return }
+    $linkPath = Join-Path $resolvedRepo 'Workspace'
+    if (Test-Path -LiteralPath $linkPath) {
+        $item = Get-Item -LiteralPath $linkPath -Force
+        if ($item.LinkType -notin @('Junction', 'SymbolicLink')) {
+            Write-Warning "略過更新 $linkPath：現有項目並非目錄聯結。"
+            return
+        }
+        $currentTarget = @($item.Target) | Select-Object -First 1
+        if ($currentTarget -and ($currentTarget.TrimEnd('\') -ieq $resolvedTarget)) { return }
+        [IO.Directory]::Delete($linkPath)
+    }
+    New-Item -ItemType Junction -Path $linkPath -Target $resolvedTarget | Out-Null
+}
+
 New-Item -ItemType Directory -Path $LocalState -Force | Out-Null
 $lock = [IO.File]::Open((Join-Path $LocalState 'deployment.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
 Push-Location $Root
@@ -54,6 +72,7 @@ try {
     }
     $env:PRINTLAB_PRODUCTION_ROOT = $Workspace
     $env:PRINTLAB_PRODUCTION_RUNTIME = $Runtime
+    Sync-WorkspaceLink -RepoRoot $Root -TargetWorkspace $Workspace
     $current = if (Test-Path $StateFile) { Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json }
     if ($Rollback) {
         if (!$current.previous) { throw '尚無上一個正式版本。' }

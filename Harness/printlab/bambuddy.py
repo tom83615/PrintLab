@@ -26,7 +26,7 @@ class Client:
         parsed = urlparse(base)
         if parsed.scheme not in {"http", "https"} or parsed.username or parsed.password:
             raise core.WorkflowError("Invalid Bambuddy service URL")
-        secret = core.read_json(core.ROOT / "Runtime/private/bambuddy.json", {})
+        secret = core.read_json(core.runtime_root() / "private/bambuddy.json", {})
         key = secret.get("write_api_key" if write else "read_api_key")
         if not key:
             raise core.WorkflowError("Bambuddy write credential is not configured" if write else "Bambuddy read-only credential is not configured")

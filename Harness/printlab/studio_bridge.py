@@ -66,15 +66,15 @@ def _helper_path():
 
 
 def _build_manifest_path():
-    return core.ROOT / 'Runtime/macos-build/studio-bridge-build.json'
+    return core.runtime_root() / 'macos-build/studio-bridge-build.json'
 
 
 def build_helper():
     """Build and install a dedicated local app; never requests privacy permission."""
     if sys.platform != "darwin":
         raise core.WorkflowError("發送助手構建需要 macOS。Windows 使用 docs/WINDOWS.md 中的官方 Studio 流程。")
-    source = core.ROOT / 'Harness/macos/StudioBridge.swift'
-    build_root = core.ROOT / 'Runtime/macos-build'
+    source = core.code_path('Harness/macos/StudioBridge.swift')
+    build_root = core.runtime_root() / 'macos-build'
     build_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='studio-bridge-build-', dir=build_root) as temporary:
         built = Path(temporary) / (HELPER_APP_NAME + '.app')
@@ -86,7 +86,7 @@ def build_helper():
               'CFBundleExecutable':'StudioBridge','CFBundlePackageType':'APPL','CFBundleShortVersionString':'1.0',
               'CFBundleVersion':'1','LSMinimumSystemVersion':'14.0','LSUIElement':True,'NSHighResolutionCapable':True,
               'NSPrincipalClass':'NSApplication','NSHumanReadableCopyright':'PrintLab 本機發送橋，不包含帳號或打印機憑據'}
-        icon=core.ROOT/'Harness/macos/Assets/PrintLab.icns'
+        icon=core.code_path('Harness/macos/Assets/PrintLab.icns')
         if icon.is_file():
             shutil.copy2(icon,resources/'PrintLab.icns');info['CFBundleIconFile']='PrintLab'
         (built/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
@@ -105,7 +105,7 @@ def build_helper():
 
 def _verify_bundle():
     manifest=core.read_json(_build_manifest_path(),{})
-    source=core.ROOT/'Harness/macos/StudioBridge.swift'
+    source=core.code_path('Harness/macos/StudioBridge.swift')
     if (not _helper_path().is_file() or manifest.get('source_sha256') != core.digest(source)
             or manifest.get('binary_sha256') != core.digest(_helper_path())
             or manifest.get('info_sha256') != core.digest(_bundle_path()/'Contents/Info.plist')
@@ -117,7 +117,7 @@ def _verify_bundle():
 def _run(*args, timeout=20):
     """Launch through LS so TCC belongs to the helper app, never uvicorn/Python."""
     _verify_bundle()
-    ipc_root=core.ROOT/'Runtime/studio-bridge-ipc'
+    ipc_root=core.runtime_root()/'studio-bridge-ipc'
     ipc_root.mkdir(parents=True,exist_ok=True);ipc_root.chmod(0o700)
     private=Path(tempfile.mkdtemp(prefix='request-',dir=ipc_root));private.chmod(0o700)
     receipt_read = False
@@ -234,7 +234,7 @@ def open_preview_file(path, expected_sha256):
         # A CLI slice can contain editable meshes. Studio then opens Prepare
         # instead of the executable preview. Use the same byte-checked copy
         # routine as official handoff; never reslice or alter the original.
-        preview_root = core.ROOT/'Runtime/studio-previews'
+        preview_root = core.runtime_root()/'studio-previews'
         preview_root.mkdir(parents=True, exist_ok=True)
         directory = Path(tempfile.mkdtemp(prefix='preview-', dir=preview_root))
         opened = directory/artifact.name

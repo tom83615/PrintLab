@@ -11,7 +11,7 @@ TTL = 120
 TERMINAL = {'blocked', 'observed', 'submitted', 'unknown'}
 
 def _base():
-    return core.ROOT / 'Runtime/workbench'
+    return core.runtime_root() / 'workbench'
 
 def _stamp_age(stamp):
     try:

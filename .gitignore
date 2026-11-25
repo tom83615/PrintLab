@@ -1,5 +1,6 @@
 /Runtime/
 /Project/
+/Workspace/
 Library/Devices/*/device.json
 Library/Devices/*/installed.md
 Library/Devices/*/SlicerProfiles/

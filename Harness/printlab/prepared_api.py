@@ -11,10 +11,10 @@ router = APIRouter(prefix='/api/prepared')
 _sessions = {}
 
 def _load_sessions():
-    return core.read_json(core.ROOT / 'Runtime/private/workbench-sessions.json', {})
+    return core.read_json(core.runtime_root() / 'private/workbench-sessions.json', {})
 
 def _save_sessions(rows):
-    path = core.ROOT / 'Runtime/private/workbench-sessions.json'
+    path = core.runtime_root() / 'private/workbench-sessions.json'
     core.write_json(path, rows)
     os.chmod(path, 0o600)
 

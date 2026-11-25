@@ -138,13 +138,17 @@ def _fetch(region, token):
     return {'items': list(items.values()), 'collections': folders}
 
 
+def _private_path():
+    return core.runtime_root() / PRIVATE.removeprefix('Runtime/')
+
+
 def _load():
-    data = core.read_json(core.ROOT / PRIVATE, {})
+    data = core.read_json(_private_path(), {})
     return data.get('credential', {}), data.get('snapshot', {})
 
 
 def _save(credential, snapshot):
-    core.write_json(core.ROOT / PRIVATE, {'credential': credential, 'snapshot': snapshot})
+    core.write_json(_private_path(), {'credential': credential, 'snapshot': snapshot})
 
 
 def _status(credential, snapshot):
@@ -167,7 +171,7 @@ def connect(region, token):
 
 
 def sync(force=False):
-    if not (core.ROOT / PRIVATE).is_file():
+    if not _private_path().is_file():
         return _status({}, {})
     with core.lock('makerworld-favorites'):
         credential, snapshot = _load()

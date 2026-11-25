@@ -6,12 +6,23 @@
 
 先讀 `docs/AGENT_START.md`，按其中步驟完成接手、安裝、驗證與角色建立。具體安裝見 `docs/SETUP.md`，第三方來源見 `docs/DEPENDENCIES.md`，設備適配見 `docs/PRINTING.md`。Agent 在使用者授權範圍內從原作者渠道獨立下載和安裝第三方工具，記錄版本與驗證結果。安裝程序會從 PyPI/npm 獲取工作台的軟體依賴。
 
-工作區根目錄為當前 checkout。CLI 是 `./Harness/bin/printlab`，每次用當前 `--help` 確認參數。已有模型、工具環境和使用者設定優先接續。
+工作區根目錄區分為「程式碼倉庫」（當前 checkout）與「外部設計資料空間」。CLI 是 `./Harness/bin/printlab`（Windows 為 `Harness/bin/printlab.ps1`），每次用當前 `--help` 確認參數。已有模型、工具環境和使用者設定優先接續。
 
-The workspace root is this checkout. The Mac CLI is `./Harness/bin/printlab`; Windows uses `Harness/bin/printlab.ps1`. Check current `--help` before choosing arguments. Continue existing models, environments and user configuration.
+### 設計資料空間定位（即使倉庫內沒有本機作品檔）
 
-1. 讀 `Context/profile.md`、`Context/workflow.md`、`Context/agent-policy.json`、`Context/taste.md` 和 `Library/Devices/H2C/device.json`。初始化後這些文件纔會齊備。
-2. 目標專案讀 `project.json`、`brief.md`、`decisions.md` 和 `latest_session` 指向的交接。`printlab context 專案` 彙集同一份資料。
+當本機已設定正式獨立資料空間時，所有設計作品與個人紀錄（`Project/`、`Context/`、`Library/`）一律存在該外部空間，程式碼倉庫內不會保留本機作品副本。AI 開始設計或查詢專案前，**必先確認實際資料根目錄**：
+
+1. 若環境變數已設定 `PRINTLAB_ROOT`，以該目錄為準。
+2. 檢查 Windows 正式資料設定檔 `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt`（對應本機 Runtime 位於 `%LOCALAPPDATA%\PrintLab\production\Runtime`）。
+3. 程式碼倉庫根目錄的外部連結 `Workspace/`（Windows 目錄聯結，指向同一外部資料空間；受 `.gitignore` 忽略）。
+4. 執行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\Harness\bin\printlab.ps1 status` 或 `context`：`printlab.ps1` 在未覆寫 `PRINTLAB_ROOT` 時會自動解析上述正式資料空間，並在輸出 JSON 明確回報 `workspace_root` 與 `runtime_root`。
+
+確認存在外部資料空間後，所有專案建立、模型檔、預覽、切片、交接與 `Context/`、`Library/` 讀寫皆須在 `workspace_root`（或透過 `Workspace/` 連結與 CLI）進行，不得在程式碼倉庫的 `Project/` 下建立第二份專案庫。
+
+The code repository is this checkout. On Windows, `Harness/bin/printlab.ps1` automatically resolves the configured external design workspace from `%LOCALAPPDATA%\PrintLab\production\workspace-path.txt` (and pairs it with `%LOCALAPPDATA%\PrintLab\production\Runtime`) unless `PRINTLAB_ROOT` is explicitly overridden, and the repository root provides a git-ignored `Workspace/` link pointing to that external directory. Check `printlab status` / `printlab context` (`workspace_root`) and `--help` before acting. Continue existing models, environments and user configuration.
+
+1. 從實際 `workspace_root` 讀 `Context/profile.md`、`Context/workflow.md`、`Context/agent-policy.json`、`Context/taste.md` 和 `Library/Devices/H2C/device.json`。初始化後這些文件纔會齊備。
+2. 目標專案從實際 `workspace_root` 讀 `project.json`、`brief.md`、`decisions.md` 和 `latest_session` 指向的交接。`printlab context 專案` 彙集同一份資料並回報 `workspace_root`。
 3. 報告專案、當前版本、已確認選擇、尚待驗證的部分與本輪下一步。
 4. 收尾用 `printlab handoff` 儲存完成結果、檢查、問題和下一步。查看當前幫助確認參數。
 

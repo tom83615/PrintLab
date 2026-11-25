@@ -149,3 +149,12 @@ def test_windows_cli_resolves_configured_production_workspace_and_respects_overr
     override_data = json.loads(override_result.stdout)
     assert override_data["workspace_root"] == str(override_dir.resolve())
     assert override_data["runtime_root"] == str((override_dir / "Runtime").resolve())
+
+
+def test_monkeypatched_root_does_not_leak_code_repo_templates(tmp_path, monkeypatch):
+    from printlab import core
+
+    monkeypatch.setattr(core, "ROOT", tmp_path)
+    core.new_project("Isolated unit test")
+    project = core.project_path("P001")
+    assert not (project / "Review/Publication").exists()

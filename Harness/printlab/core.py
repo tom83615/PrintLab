@@ -41,7 +41,9 @@ def code_path(rel: str) -> Path:
     candidate = ROOT / rel
     if candidate.exists():
         return candidate
-    return CODE_ROOT / rel
+    if _ENV_RUNTIME_ROOT and ROOT == _INITIAL_ROOT:
+        return CODE_ROOT / rel
+    return candidate
 
 
 class WorkflowError(ValueError):

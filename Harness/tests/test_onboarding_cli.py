@@ -17,13 +17,15 @@ def test_project_team_is_copied_and_loaded_by_a_later_context(tmp_path, monkeypa
     directory = core.project_path(project['id'])
     team = directory / 'Review/team.md'
     team_text = team.read_text(encoding='utf-8')
-    assert 'Sara' in team_text and 'Chloe' in team_text and 'Leo' in team_text
+    assert 'Sara' in team_text and 'Chloe' in team_text and 'Leo' in team_text and 'Nora' in team_text
+    assert '嚴格不涉入實際執行' in team_text and '徵求新角色' in team_text
     assert 'MakerWorld/' in team_text and '使用者自行上傳' in team_text
     assert '4:3' in team_text and '3:4' in team_text
     assert not (source / '.agents/skills/makerworld-upload').exists()
     roles_text = (source / 'docs/ROLES.md').read_text(encoding='utf-8')
     assert 'makerworld-upload' not in roles_text
     assert 'MakerWorld 上傳素材包準備流程與規則' in roles_text
+    assert 'Nora · 產品經理' in roles_text and '嚴格不可涉入實際執行' in roles_text and '徵求新增更多角色' in roles_text
     team.write_text('Mike owns the tool check for this project', encoding='utf-8')
     result = core.context(project['id'])
     assert 'Context/team.md' in result['loaded']

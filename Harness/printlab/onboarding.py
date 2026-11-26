@@ -13,7 +13,8 @@ STATE = 'Context/onboarding.json'
 ROLES = {'sarah': ('Sarah · 3D 列印顧問', '設備、材料、列印問題與製作建議'),
          'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進'),
          'chloe': ('Chloe · 行銷與模型發布顧問', '備齊 MakerWorld 等模型網站上傳素材包、可複製文案與標籤、展示與封面圖規劃、專案 .3mf 與合規核對清單（供使用者自行上傳）'),
-         'leo': ('Leo · 平面設計師', '協助修圖、裁切構圖、調整光線色彩與版面設計，製作作品展示圖與視覺素材')}
+         'leo': ('Leo · 平面設計師', '協助修圖、裁切構圖、調整光線色彩與版面設計，製作作品展示圖與視覺素材'),
+         'nora': ('Nora · 產品經理', '接收使用者指令，負責需求規劃、工作拆解與任務統籌指派給合適的團隊角色；嚴格不可涉入實際執行，缺乏合適人選時亦不得自行完成，須向使用者徵求新增更多角色')}
 CAPABILITIES = {'local_files', 'terminal', 'chat_create', 'chat_read', 'desktop_control',
                 'image_generation', 'cad_viewer'}
 
@@ -77,7 +78,7 @@ def answer(key, text, source, expected):
 def _role(role):
     key = 'sarah' if role.lower() == 'sara' else role.lower()
     if key not in ROLES:
-        raise core.WorkflowError('Role must be Mike, Sarah, Chloe, or Leo (Sara is accepted for existing chats)')
+        raise core.WorkflowError('Role must be Mike, Sarah, Chloe, Leo, or Nora (Sara is accepted for existing chats)')
     return key
 
 

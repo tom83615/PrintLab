@@ -10,7 +10,7 @@ PrintLab is the 3D-printing workbench and collaboration workflow AFang (Eric) us
 
 Give the repository URL and this prompt to Codex or another agent with local terminal and filesystem access.
 
-> Install https://github.com/AFangTeam/PrintLab on this computer. Read README.md, AGENTS.md, and docs/AGENT_START.md. Create a persistent workspace, start the workbench, and run the onboarding verification. Create Sarah, the 3D-printing advisor, Mike, the workflow designer, Chloe, the marketing and model publishing advisor, and Leo, the graphic designer, as chats sharing this workspace, and record their actual setup status. Create a task-group chat when I choose my first object. Install third-party tools independently from their original projects. Tell me the specific actions needed for device information, login, or system permissions. Report the workspace path, workbench URL, role entry points, verified results, and next steps.
+> Install https://github.com/AFangTeam/PrintLab on this computer. Read README.md, AGENTS.md, and docs/AGENT_START.md. Create a persistent workspace, start the workbench, and run the onboarding verification. Create Nora, the product manager, Sarah, the 3D-printing advisor, Mike, the workflow designer, Chloe, the marketing and model publishing advisor, and Leo, the graphic designer, as chats sharing this workspace, and record their actual setup status. Create a task-group chat when I choose my first object. Install third-party tools independently from their original projects. Tell me the specific actions needed for device information, login, or system permissions. Report the workspace path, workbench URL, role entry points, verified results, and next steps.
 
 The interaction guide explains what happens in chat, what happens in the web workbench, and how roles exchange project context. The agent guide provides executable setup steps and completion checks. Both guides use Traditional Chinese. [User interaction guide](docs/GETTING_STARTED.md) · [Agent onboarding guide](docs/AGENT_START.md)
 
@@ -48,6 +48,7 @@ The Windows guide covers tool paths, verification, and official Studio handoff. 
 
 ## Collaboration roles
 
+- **Nora, product manager** receives your instructions, plans and breaks down work, and dispatches tasks to the right team roles; she strictly never performs hands-on execution, and when no suitable role exists she asks you to add new roles instead of doing the work herself.
 - **Sarah, 3D-printing advisor** helps track equipment, filament, common problems, and parts. Shopping lists span projects. Adding products to a shopping cart uses Codex browser capabilities after the user authorizes it.
 - **Mike, workflow designer** maintains tool connections, the workbench, and shared procedures. Mike handles installation, versions, interfaces, and workflow problems.
 - **Chloe, marketing & model publishing advisor** prepares complete MakerWorld upload asset packs in `MakerWorld/`: drafts copy-paste descriptions, tags, and Boost Me copy, coordinates showcase and 4:3/3:4 cover visuals with Leo, prepares compliant `.3mf` project files and structured JSON metadata, and checks attribution and licenses so the user can upload and publish directly.

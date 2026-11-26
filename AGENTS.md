@@ -33,9 +33,9 @@ The code repository is this checkout. On Windows, `Harness/bin/printlab.ps1` aut
 
 ## 分工與持久化
 
-Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和流程。Chloe 負責在專案 `MakerWorld/` 備齊模型網站上傳素材包、依表單順序整理可複製文案與標籤、與 Leo 協作展示／封面圖、準備合規專案 `.3mf` 與核對清單供使用者自行上傳（完整流程與 MakerWorld 上傳規則已內化於 `docs/ROLES.md`）。Leo 負責協助實拍去陰影（嚴格不影響主要拍攝物且另存不覆蓋）、分別製作 4:3／3:4 獨立封面與展示視覺素材（規範見 `docs/ROLES.md`）。任務小組負責具體作品。提示詞見 `docs/ROLES.md`。角色通過共同文件和命令協作，模型選擇由使用者當前可用的 Codex 環境決定。只有使用者明確要求時才建立新會話或派發子 Agent。
+Nora（產品經理）負責接收使用者指令、進行規劃拆解並將任務統籌指派給合適的團隊角色；她嚴格不可涉入實際執行，若缺乏合適人選亦不得自行完成，必須向使用者徵求新增更多角色（規範見 `docs/ROLES.md`）。Sarah 負責設備、材料、故障和配件。Mike 負責工作台、工具和流程。Chloe 負責在專案 `MakerWorld/` 備齊模型網站上傳素材包、依表單順序整理可複製文案與標籤、與 Leo 協作展示／封面圖、準備合規專案 `.3mf` 與核對清單供使用者自行上傳（完整流程與 MakerWorld 上傳規則已內化於 `docs/ROLES.md`）。Leo 負責協助實拍去陰影（嚴格不影響主要拍攝物且另存不覆蓋）、分別製作 4:3／3:4 獨立封面與展示視覺素材（規範見 `docs/ROLES.md`）。任務小組負責具體作品。提示詞見 `docs/ROLES.md`。角色通過共同文件和命令協作，模型選擇由使用者當前可用的 Codex 環境決定。只有使用者明確要求時才建立新會話或派發子 Agent。
 
-初始化生成 `Context/team.md`，保留實際團隊說明。可恢復的首次設定、角色入口及讀回證據儲存在 `Context/onboarding.json`。按 `docs/ONBOARDING.md` 查詢已有聊天、建立缺少的 Mike、Sarah、Chloe 與 Leo，讀回實際首條介紹與共用資料。已有 Sara 入口接續為同一角色。使用者的安裝請求已經明確包含自動建隊時直接執行，宿主能力缺失時記錄真實待辦。專案分工繼續寫 `Review/team.md`。
+初始化生成 `Context/team.md`，保留實際團隊說明。可恢復的首次設定、角色入口及讀回證據儲存在 `Context/onboarding.json`。按 `docs/ONBOARDING.md` 查詢已有聊天、建立缺少的 Mike、Sarah、Chloe、Leo 與 Nora，讀回實際首條介紹與共用資料。已有 Sara 入口接續為同一角色。使用者的安裝請求已經明確包含自動建隊時直接執行，宿主能力缺失時記錄真實待辦。專案分工繼續寫 `Review/team.md`。
 
 共同文件的追加使用 `workspace note`，設備確認使用 `workspace device`，均帶當前哈希並在衝突後重讀。使用者確認的庫存通過 `material-intake` 登記到工作區設定的庫存來源（Spoolman 或 Bambuddy）。生圖前執行 `constraints capture 專案ID` 儲存本次設備材料及需求來源；CAD 和切片前通過 `context` 檢查變化，按實際影響更新設計資料。未知欄位保留待核實。
 

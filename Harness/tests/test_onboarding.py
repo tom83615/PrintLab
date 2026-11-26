@@ -146,7 +146,7 @@ def test_capability_missing_does_not_reserve_or_create(root):
 
 def test_all_roles_normalize_workspace_paths_and_reach_ready(root):
     host()
-    for role in ('Mike', 'Sarah', 'Chloe'):
+    for role in ('Mike', 'Sarah', 'Chloe', 'Leo'):
         request = 'test-' + role
         onboarding.reserve_role(role, request, onboarding.state()['version'])
         receipt = {'request_id': request, 'thread_id': request, 'host_id': 'local',
@@ -156,10 +156,10 @@ def test_all_roles_normalize_workspace_paths_and_reach_ready(root):
         onboarding.record_role(role, receipt, onboarding.state()['version'])
     mid_view = onboarding.view()
     assert mid_view['team_ready'] is False
-    leo_row = next(item for item in mid_view['roles'] if item['role'] == 'leo')
-    assert leo_row['status'] == 'pending'
-    assert leo_row['title'] == 'Leo · 平面設計師'
-    assert any(action.get('role') == 'leo' for action in mid_view['next_actions'])
+    nora_row = next(item for item in mid_view['roles'] if item['role'] == 'nora')
+    assert nora_row['status'] == 'pending'
+    assert nora_row['title'] == 'Nora · 產品經理'
+    assert any(action.get('role') == 'nora' for action in mid_view['next_actions'])
 
     chloe_row = next(item for item in mid_view['roles'] if item['role'] == 'chloe')
     assert chloe_row['status'] == 'introduced'
@@ -167,17 +167,22 @@ def test_all_roles_normalize_workspace_paths_and_reach_ready(root):
     assert '上傳素材包' in chloe_row['prompt'] and '供使用者自行上傳' in chloe_row['prompt']
     assert 'docs/ROLES.md' in chloe_row['prompt']
 
-    reserved = onboarding.reserve_role('Leo', 'test-Leo', onboarding.state()['version'])
+    leo_row = next(item for item in mid_view['roles'] if item['role'] == 'leo')
+    assert leo_row['status'] == 'introduced'
+    assert leo_row['title'] == 'Leo · 平面設計師'
+    assert '修圖' in leo_row['prompt'] and '視覺素材' in leo_row['prompt']
+
+    reserved = onboarding.reserve_role('Nora', 'test-Nora', onboarding.state()['version'])
     assert reserved['create_allowed'] is True
-    assert '平面設計師' in reserved['role']['prompt'] and 'docs/ROLES.md' in reserved['role']['prompt']
-    assert '修圖' in reserved['role']['prompt'] and '視覺素材' in reserved['role']['prompt']
-    leo_receipt = {'request_id': 'test-Leo', 'thread_id': 'test-Leo', 'host_id': 'local',
-                   'workspace': root.as_posix() + '/.', 'source': 'Simulated host readback',
-                   'first_reply': '已讀共同狀態，準備負責修圖、裁切構圖與展示視覺素材調整。',
-                   'context_paths': [str(root / 'AGENTS.md'), 'Context\\profile.md', 'Context/workflow.md']}
-    onboarding.record_role('leo', leo_receipt, onboarding.state()['version'])
+    assert '產品經理' in reserved['role']['prompt'] and 'docs/ROLES.md' in reserved['role']['prompt']
+    assert '不可涉入實際執行' in reserved['role']['prompt'] and '徵求新增更多角色' in reserved['role']['prompt']
+    nora_receipt = {'request_id': 'test-Nora', 'thread_id': 'test-Nora', 'host_id': 'local',
+                    'workspace': root.as_posix() + '/.', 'source': 'Simulated host readback',
+                    'first_reply': '已讀共同狀態，負責接收指令、規劃拆解與任務指派，絕不涉入實際執行，缺人時向使用者徵求新增角色。',
+                    'context_paths': [str(root / 'AGENTS.md'), 'Context\\profile.md', 'Context/workflow.md']}
+    onboarding.record_role('nora', nora_receipt, onboarding.state()['version'])
     assert onboarding.view()['team_ready'] is True
-    with pytest.raises(core.WorkflowError, match='Leo'):
+    with pytest.raises(core.WorkflowError, match='Nora'):
         onboarding.reserve_role('UnknownRole', 'test-unknown', onboarding.state()['version'])
     with pytest.raises(core.WorkflowError, match='another workspace'):
         onboarding.record_role('Sarah', {**receipt, 'context_paths': [str(root.parent / 'other' / 'AGENTS.md')]}, onboarding.state()['version'])

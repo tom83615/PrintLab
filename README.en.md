@@ -50,7 +50,7 @@ The Windows guide covers tool paths, verification, and official Studio handoff. 
 
 - **Sarah, 3D-printing advisor** helps track equipment, filament, common problems, and parts. Shopping lists span projects. Adding products to a shopping cart uses Codex browser capabilities after the user authorizes it.
 - **Mike, workflow designer** maintains tool connections, the workbench, and shared procedures. Mike handles installation, versions, interfaces, and workflow problems.
-- **Chloe, marketing & model publishing advisor** prepares models for sharing on model platforms: drafts descriptions and metadata, plans or generates showcase visuals, selects shareable file formats, and checks attribution and licenses before saving drafts.
+- **Chloe, marketing & model publishing advisor** prepares complete MakerWorld upload asset packs in `MakerWorld/`: drafts copy-paste descriptions, tags, and Boost Me copy, coordinates showcase and 4:3/3:4 cover visuals with Leo, prepares compliant `.3mf` project files and structured JSON metadata, and checks attribution and licenses so the user can upload and publish directly.
 - **Leo, graphic designer** retouches photos, adjusts framing, lighting, and color, and composes showcase graphics or callout cards for presentation while preserving original photos and never misrepresenting actual printed geometry.
 - **Task group, named after the object** gives each object its own chat and project. Requirements, selected references, source models, slices, and feedback stay together for later sessions.
 

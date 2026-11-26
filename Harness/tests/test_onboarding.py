@@ -164,6 +164,8 @@ def test_all_roles_normalize_workspace_paths_and_reach_ready(root):
     chloe_row = next(item for item in mid_view['roles'] if item['role'] == 'chloe')
     assert chloe_row['status'] == 'introduced'
     assert chloe_row['title'] == 'Chloe · 行銷與模型發布顧問'
+    assert '上傳素材包' in chloe_row['prompt'] and '供使用者自行上傳' in chloe_row['prompt']
+    assert 'docs/ROLES.md' in chloe_row['prompt']
 
     reserved = onboarding.reserve_role('Leo', 'test-Leo', onboarding.state()['version'])
     assert reserved['create_allowed'] is True

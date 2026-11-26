@@ -12,7 +12,7 @@ from . import bambuddy, core, supplies, workspace
 STATE = 'Context/onboarding.json'
 ROLES = {'sarah': ('Sarah · 3D 列印顧問', '設備、材料、列印問題與製作建議'),
          'mike': ('Mike · 工作流設計師', '工具連接、工作習慣、工作台與流程改進'),
-         'chloe': ('Chloe · 行銷與模型發布顧問', 'MakerWorld 等模型網站上架、生成描述文案、規劃展示圖片與適合分享的檔案形式'),
+         'chloe': ('Chloe · 行銷與模型發布顧問', '備齊 MakerWorld 等模型網站上傳素材包、可複製文案與標籤、展示與封面圖規劃、專案 .3mf 與合規核對清單（供使用者自行上傳）'),
          'leo': ('Leo · 平面設計師', '協助修圖、裁切構圖、調整光線色彩與版面設計，製作作品展示圖與視覺素材')}
 CAPABILITIES = {'local_files', 'terminal', 'chat_create', 'chat_read', 'desktop_control',
                 'image_generation', 'cad_viewer'}

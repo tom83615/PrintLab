@@ -15,8 +15,8 @@ def project(tmp_path, monkeypatch):
 
 def inventory():
     return {'state': 'online', 'updated_at': core.now(), 'items': [
-        {'id': 1, 'material': 'PLA', 'color_name': 'White', 'archived_at': None},
-        {'id': 2, 'material': 'PETG', 'color_name': 'Black', 'archived_at': None},
+        {'id': 1, 'material': 'PLA', 'color_name': 'White', 'transmission_distance': 6.3, 'archived_at': None},
+        {'id': 2, 'material': 'PETG', 'color_name': 'Black', 'transmission_distance': 0.0, 'archived_at': None},
         {'id': 3, 'material': 'ABS', 'archived_at': '2020-01-01'}]}
 
 
@@ -55,6 +55,9 @@ def test_offline_refresh_keeps_last_known_inventory(project):
     assert second['record']['facts']['material_source']['state'] == 'last_known'
     changed = copy.deepcopy(inventory())
     changed['items'][0]['material'] = 'PETG'
+    assert 'owned_materials' in constraints.view(project, changed)['changed']
+    changed = copy.deepcopy(inventory())
+    changed['items'][0]['transmission_distance'] = 4.2
     assert 'owned_materials' in constraints.view(project, changed)['changed']
     changed = copy.deepcopy(inventory())
     changed['items'][0]['remaining_weight'] = 500

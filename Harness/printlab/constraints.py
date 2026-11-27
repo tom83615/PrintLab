@@ -58,7 +58,7 @@ def current(pid, inventory=None):
                           'source': workspace.DOCUMENTS['device']}
     inventory = inventory if inventory is not None else supplies.inventory()
     owned = [{key: item.get(key) for key in ('id', 'brand', 'material', 'subtype', 'color_name',
-              'rgba', 'material_number', 'storage_location', 'possible_duplicate_ids')}
+              'rgba', 'material_number', 'transmission_distance', 'storage_location', 'possible_duplicate_ids')}
              for item in inventory.get('items', []) if not item.get('archived_at')]
     owned.sort(key=lambda item: str(item.get('id')))
     cfg = workspace.connection()

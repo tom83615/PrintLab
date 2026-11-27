@@ -4,7 +4,10 @@ import pytest
 from printlab import core, supplies
 
 
-def spool(spool_id, remaining, archived=False):
+def spool(spool_id, remaining, archived=False, td='6.3'):
+    extra = {}
+    if td is not None:
+        extra['td'] = td
     return {
         'id': spool_id,
         'archived': archived,
@@ -19,6 +22,7 @@ def spool(spool_id, remaining, archived=False):
             'color_hex': 'FFFFFF',
             'weight': 1000,
             'vendor': {'name': 'Bambu Lab'},
+            'extra': extra,
         },
     }
 
@@ -26,7 +30,7 @@ def spool(spool_id, remaining, archived=False):
 def test_spoolman_inventory_maps_active_spools_and_unknown_weight(monkeypatch):
     monkeypatch.setattr(core, 'config', lambda: {'spoolman_url': 'https://spoolman.local'})
     monkeypatch.setattr(supplies, '_get', lambda url: httpx.Response(200, json=[
-        spool(11, None), spool(12, 420), spool(13, 500, archived=True)
+        spool(11, None, td='6.3'), spool(12, 420, td='0'), spool(13, 500, archived=True, td='2.0')
     ]))
 
     result = supplies.inventory()
@@ -36,8 +40,32 @@ def test_spoolman_inventory_maps_active_spools_and_unknown_weight(monkeypatch):
     assert [item['id'] for item in result['items']] == [11, 12]
     assert result['items'][0]['remaining_weight'] is None
     assert result['items'][0]['quantity_basis'] == 'unknown'
+    assert result['items'][0]['transmission_distance'] == 6.3
     assert result['items'][1]['remaining_weight'] == 420
     assert result['items'][1]['quantity_basis'] == 'inventory_estimate'
+    assert result['items'][1]['transmission_distance'] == 0.0
+
+
+@pytest.mark.parametrize('raw_td,expected', [
+    ('6.3', 6.3),
+    ('"2.25"', 2.25),
+    ('0', 0.0),
+    (100, 100.0),
+    (None, None),
+    ('', None),
+    ('""', None),
+    ('null', None),
+    ('-1.2', None),
+    ('true', None),
+    ('NaN', None),
+    ('not-a-number', None),
+])
+def test_spoolman_transmission_distance_parsing(monkeypatch, raw_td, expected):
+    monkeypatch.setattr(core, 'config', lambda: {'spoolman_url': 'https://spoolman.local'})
+    monkeypatch.setattr(supplies, '_get', lambda url: httpx.Response(200, json=[spool(11, 500, td=raw_td)]))
+
+    item = supplies.inventory()['items'][0]
+    assert item['transmission_distance'] == expected
 
 
 def test_configured_spoolman_failure_does_not_fall_back_to_bambuddy(monkeypatch):
@@ -103,9 +131,11 @@ def test_openspoolman_slots_keep_snapshot_limits_and_duplicate_reference(monkeyp
     assert snapshot['source_timestamp'] is None
     slots = snapshot['modules'][0]['slots']
     assert slots[0]['spool_id'] == 11
+    assert slots[0]['transmission_distance'] == 6.3
     assert slots[0]['remaining_basis'] == 'unknown'
     assert 'route' not in slots[0]
     assert slots[1]['state'] == 'empty'
+    assert slots[1]['transmission_distance'] is None
 
 
 def test_openspoolman_duplicate_slot_cards_are_rejected(monkeypatch):

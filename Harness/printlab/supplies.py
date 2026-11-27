@@ -55,6 +55,28 @@ def _spoolman_rows(base):
     return [row for row in rows if not row.get('archived')]
 
 
+def _transmission_distance(filament):
+    extra = filament.get('extra') if isinstance(filament, dict) else None
+    raw = extra.get('td') if isinstance(extra, dict) else None
+    if isinstance(raw, str):
+        raw = raw.strip()
+        if not raw:
+            return None
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            pass
+    if isinstance(raw, bool) or raw is None:
+        return None
+    if isinstance(raw, str):
+        try:
+            raw = float(raw.strip())
+        except ValueError:
+            return None
+    value = materials.number(raw)
+    return float(value) if value is not None and value >= 0 else None
+
+
 def _ledger_row(row):
     f = row['filament']
     vendor = f.get('vendor') or {}
@@ -63,8 +85,8 @@ def _ledger_row(row):
             'color_name': f.get('name'), 'rgba': f.get('color_hex'),
             'label_weight': row.get('initial_weight') if row.get('initial_weight') is not None else f.get('weight'),
             'core_weight': row.get('spool_weight') if row.get('spool_weight') is not None else f.get('spool_weight'),
-            'material_number': f.get('article_number'), 'weight_used': row.get('used_weight'),
-            'storage_location': row.get('location'), 'data_origin': 'Spoolman'}
+            'material_number': f.get('article_number'), 'transmission_distance': _transmission_distance(f),
+            'weight_used': row.get('used_weight'), 'storage_location': row.get('location'), 'data_origin': 'Spoolman'}
 
 
 def inventory():
@@ -189,7 +211,7 @@ def _slots(page, rows):
                            ) if tag and tag.endswith(f'_{aid}_{tid}') else []
         state = 'empty' if card.get('empty') else 'loaded' if material else 'unidentified' if spool_id else 'unknown'
         item = {'material': material, 'brand': entry.get('brand'), 'color_name': entry.get('color_name'),
-                'rgba': card.get('rgba')}
+                'rgba': card.get('rgba'), 'transmission_distance': entry.get('transmission_distance')}
         module['slots'].append({**item, 'slot_number': 1 if external else tid + 1, 'state': state,
             'english_label': materials.english_label(item) if state in {'loaded', 'unidentified'} else None,
             'spool_id': spool_id, 'ledger_conflict_ids': conflicts, 'fresh': False,

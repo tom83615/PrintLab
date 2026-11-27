@@ -12,7 +12,7 @@ import math
 PUBLIC_FIELDS = {
     "id", "name", "brand", "material", "subtype", "color_name", "rgba", "label_weight",
     "core_weight", "weight_used", "last_used", "last_scale_weight", "last_weighed_at",
-    "data_origin", "archived_at", "storage_location", "material_number",
+    "data_origin", "archived_at", "storage_location", "material_number", "transmission_distance",
 }
 
 
@@ -152,6 +152,7 @@ def slot_overview(status, assignments=(), inventory_rows=(), observed_at=None, n
                           "brand": live_item.get("brand"), "material": live_item.get("material"),
                           "subtype": live_item.get("subtype"), "color_name": live_item.get("color_name"), "rgba": color,
                           "material_number": text(spool.get("material_number")) if matched else None,
+                          "transmission_distance": number(spool.get("transmission_distance")) if matched and number(spool.get("transmission_distance")) is not None and number(spool.get("transmission_distance")) >= 0 else None,
                           "spool_id": spool_id if matched else None, "assignment_matches": matched,
                           "reported_remaining_percent": remain, "remaining_basis": "device_report" if remain is not None else "unknown",
                           "actual_remaining_weight": None, "fresh": fresh, "source_timestamp": status.get("last_ams_update"),

@@ -46,10 +46,10 @@ export function materialEnglishLabel(material) {
   const family = !subtype || materialName.toLowerCase().includes(subtype.toLowerCase()) ? materialName : `${materialName} ${subtype}`;
   return `${brand} ${family} — ${material.color_name || 'Color not identified'}`;
 }
-export function deviceRemainingLabel(slot) {
-  const value = slot.reported_remaining_percent;
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return '設備餘量未知';
-  return `${slot.fresh ? '設備報告' : '上次設備報告'} ${value}% · 可能滯後`;
+export function transmissionDistanceLabel(material) {
+  const value = material?.transmission_distance;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
+  return `透光值 TD ${Number(value.toFixed(2))}`;
 }
 export function inventoryRemainingLabel(material) {
   const grams = material.estimated_remaining_weight ?? material.remaining_weight;

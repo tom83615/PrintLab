@@ -11,9 +11,10 @@ def test_history_never_becomes_current_full_spool():
 
 
 def test_packaging_english_and_codes_are_not_guessed():
-    item=materials.inventory_items([{'id':1,'brand':'Bambu Lab','material':'PETG','subtype':'Matte','color_name':'Turquoise','material_number':'35603'}])[0]
+    item=materials.inventory_items([{'id':1,'brand':'Bambu Lab','material':'PETG','subtype':'Matte','color_name':'Turquoise','material_number':'35603','transmission_distance':6.3}])[0]
     assert item['english_label']=='Bambu Lab PETG Matte — Turquoise'
     assert item['material_number']=='35603'
+    assert item['transmission_distance']==6.3
     assert 'Color not identified' in materials.english_label({'brand':'Bambu Lab','material':'PETG Matte'})
 
 
@@ -55,10 +56,19 @@ def test_device_report_100_does_not_derive_actual_grams_and_staleness_is_explici
 def test_mismatching_assignment_cannot_supply_color_or_material_number():
     status={'id':1,'connected':True,'last_ams_update':1000,'ams':[{'id':0,'tray':[{'id':0,'exists':True,'state':11,'tray_type':'PETG','tray_color':'FF0000FF'}]}]}
     assignments=[{'printer_id':1,'ams_id':0,'tray_id':0,'spool_id':2}]
-    inventory=[{'id':2,'brand':'Bambu Lab','material':'PLA','color_name':'Green','material_number':'wrong'}]
+    inventory=[{'id':2,'brand':'Bambu Lab','material':'PLA','color_name':'Green','material_number':'wrong','transmission_distance':1.8}]
     slot=materials.slot_overview(status,assignments,inventory,now=1010)['modules'][0]['slots'][0]
     assert slot['assignment_matches'] is False and slot['material_number'] is None
     assert slot['color_name'] is None and slot['spool_id'] is None
+    assert slot['transmission_distance'] is None
+
+
+def test_matching_assignment_carries_transmission_distance():
+    status={'id':1,'connected':True,'last_ams_update':1000,'ams':[{'id':0,'tray':[{'id':0,'exists':True,'state':11,'tray_type':'PETG','tray_color':'FFFFFFFF'}]}]}
+    assignments=[{'printer_id':1,'ams_id':0,'tray_id':0,'spool_id':102}]
+    inventory=[{'id':102,'brand':'R3D','material':'PETG','color_name':'White','rgba':'FFFFFFFF','transmission_distance':6.3}]
+    slot=materials.slot_overview(status,assignments,inventory,now=1010)['modules'][0]['slots'][0]
+    assert slot['assignment_matches'] is True and slot['transmission_distance']==6.3
 
 
 def test_private_tag_data_never_leaves_normalizer():

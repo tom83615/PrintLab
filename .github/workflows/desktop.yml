@@ -9,24 +9,141 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-2022
-            python: '3.11'
-            interpreter: Runtime/venv/Scripts/python.exe
-          - os: windows-2025
-            python: '3.13'
-            interpreter: Runtime/venv/Scripts/python.exe
-          - os: macos-latest
-            python: '3.13'
-            interpreter: Runtime/venv/bin/python
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+  docker-verify:
+    name: Docker image verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - name: Build production Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: printlab-studio:ci
+          build-args: |
+            PRINTLAB_REVISION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke-test production container
+        shell: bash
+        run: |
+          set -euo pipefail
+          cid=$(docker run --detach --rm --publish 127.0.0.1:10818:10818 printlab-studio:ci)
+          trap 'docker stop "$cid" >/dev/null 2>&1 || true' EXIT
+          python3 - <<'PY'
+          import json
+          import re
+          import time
+          import urllib.request
+
+          base = 'http://127.0.0.1:10818'
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(f'{base}/api/health', timeout=2) as response:
+                      if json.load(response).get('ok') is True:
+                          break
+              except OSError:
+                  time.sleep(0.5)
+          else:
+              raise SystemExit('Container /api/health check timed out')
+
+          with urllib.request.urlopen(f'{base}/', timeout=5) as response:
+              html = response.read().decode('utf-8')
+          match = re.search(r'src="(/assets/[^" ]+\.js)"', html)
+          assert match, 'Frontend JavaScript asset missing from /'
+          with urllib.request.urlopen(base + match.group(1), timeout=5) as response:
+              assert response.status == 200 and len(response.read()) > 0
+          print('Container smoke check passed:', match.group(1))
+          PY
+          docker exec "$cid" python -m printlab.cli status >/dev/null
+      - name: Run container runtime pytest subset
+        shell: bash
+        run: |
+          docker run --rm -e PRINTLAB_STUDIO_PORT=8018 printlab-studio:ci python -m pytest -q \
+            Harness/tests/test_api.py \
+            Harness/tests/test_supplies.py \
+            Harness/tests/test_prepared.py \
+            Harness/tests/test_prepared_api.py \
+            Harness/tests/test_workflow.py \
+            Harness/tests/test_public_inspector.py \
+            Harness/tests/test_preview_recovery.py::test_normal_cli_entry_point_with_http_archive_source \
+            Harness/tests/test_public_setup.py::test_initializer_preserves_local_data_and_uses_new_root
+
+  linux-verify:
+    name: Linux tests & browser verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       PYTHONUTF8: '1'
+      PRINTLAB_SKIP_RELEASE_CHECK: '1'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: scripts/requirements.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            Harness/studio/package-lock.json
+            scripts/inspector-dependencies/package-lock.json
+      - name: Install through documented entry point
+        run: |
+          export PRINTLAB_PYTHON="$(command -v python3)"
+          bash scripts/setup.sh
+      - name: Run full test suite, onboarding, and native inspection
+        run: |
+          mkdir -p Runtime/verification
+          Runtime/venv/bin/python -m pytest Harness/tests -q -rs --junitxml=Runtime/verification/pytest.xml
+          Runtime/venv/bin/python scripts/verify_onboarding.py
+          node --test Harness/tests/native-inspection.test.mjs
+      - name: Install Playwright
+        id: playwright
+        run: |
+          Runtime/venv/bin/python -m pip install playwright
+          version=$(Runtime/venv/bin/python -c "import importlib.metadata; print(importlib.metadata.version('playwright'))")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Ensure Playwright Chromium is ready
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
+            Runtime/venv/bin/python -m playwright install --with-deps chromium
+          else
+            Runtime/venv/bin/python -m playwright install-deps chromium
+          fi
+      - name: Verify actual server and browser
+        run: Runtime/venv/bin/python scripts/verify_browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-python-3.13
+          path: Runtime/verification/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  windows-host-verify:
+    name: Windows host verification
+    runs-on: windows-2025
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      PRINTLAB_SKIP_RELEASE_CHECK: '1'
     defaults:
       run:
         shell: pwsh
@@ -36,35 +153,39 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: scripts/requirements.lock
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            Harness/studio/package-lock.json
+            scripts/inspector-dependencies/package-lock.json
       - name: Install through documented entry point
         run: |
           $env:PRINTLAB_PYTHON = (Get-Command python).Source
-          if ($IsWindows) { & ./scripts/setup.ps1 } else { & bash scripts/setup.sh }
+          & ./scripts/setup.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Run tests and independent-process onboarding
+      - name: Run Windows host tests and onboarding
         run: |
-          & './${{ matrix.interpreter }}' -m pytest Harness/tests -q -rs --junitxml=Runtime/verification/pytest.xml
+          New-Item -ItemType Directory -Path Runtime/verification -Force | Out-Null
+          & './Runtime/venv/Scripts/python.exe' -m pytest `
+            Harness/tests/test_platform_runtime.py `
+            Harness/tests/test_windows_private_acl.py `
+            Harness/tests/test_external_workspace.py `
+            Harness/tests/test_public_setup.py `
+            Harness/tests/test_workbench_recovery.py `
+            Harness/tests/test_backup.py `
+            -q -rs --junitxml=Runtime/verification/pytest.xml
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & './${{ matrix.interpreter }}' scripts/verify_onboarding.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node --test Harness/tests/native-inspection.test.mjs
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Install isolated browser test dependencies
-        run: |
-          & './${{ matrix.interpreter }}' -m pip install playwright
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & './${{ matrix.interpreter }}' -m playwright install chromium
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Verify actual server and browser
-        run: |
-          & './${{ matrix.interpreter }}' scripts/verify_browser.py
+          & './Runtime/venv/Scripts/python.exe' scripts/verify_onboarding.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: desktop-${{ matrix.os }}-python-${{ matrix.python }}
+          name: windows-host-python-3.13
           path: Runtime/verification/
+          retention-days: 7
+          if-no-files-found: ignore

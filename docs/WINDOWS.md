@@ -57,6 +57,8 @@ Windows 的待列印頁按任務綁定的通道處理。既有且已設定 Bambu
 
 任務準備與對帳詳見 [列印流程](PRINTING.md)。首次接入自己的印表機需現場驗證設備、切片與發送。
 
-## 虛擬機驗證
+## CI 與虛擬機驗證
 
-倉庫的 Desktop VM verification 工作流在 GitHub 託管 Windows Server 2022、Windows Server 2025 與 macOS 環境執行安裝、自動測試、獨立進程交接和 Chromium 頁面檢查。每次執行儲存測試結果、服務日誌與截圖。Windows 10/11 桌面、使用者安裝的 CAD/切片軟體以及實體列印需要相應環境驗證。具體已完成結果見 [驗證記錄](VERIFICATION.md)。
+倉庫的 **Desktop VM verification**（`.github/workflows/desktop.yml`）在每次 push 與 PR 時並行執行三項快速驗證：於 `ubuntu-latest` 建置並冒煙測試正式 `Dockerfile` 映像、於 `ubuntu-latest` 執行完整自動測試與 Chromium 頁面檢查、以及於 `windows-2025`（Python 3.13）驗證 `scripts/setup.ps1`、PowerShell CLI、外部正式資料空間、Windows ACL 與獨立進程交接。
+
+需要跨平台（Windows Server 2025 與 macOS）或重型上游工具（ZIP 發佈重裝、Text-to-CAD、Bambuddy、Bambu Studio 與 macOS StudioBridge）完整回歸時，可在 GitHub Actions 手動觸發 **Full cross-platform release verification**（`.github/workflows/full-release-matrix.yml`）。Windows 10/11 桌面、使用者安裝的 CAD/切片軟體以及實體列印仍需相應實機環境驗證。具體已完成結果見 [驗證記錄](VERIFICATION.md)。

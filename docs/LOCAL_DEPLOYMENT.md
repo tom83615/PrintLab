@@ -29,7 +29,7 @@ Docker Desktop 須在執行。將完整提交 SHA 傳給部署腳本：
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-production.ps1 -Revision <40位SHA>
 ```
 
-部署程式檢查 `tom83615/PrintLab` 的 `tom83615` 分支，以及該 push 的 **Desktop VM verification** 是否成功。若 GitHub API 需要登入，可在執行腳本的終端提供已有讀取權限的 `GH_TOKEN`。腳本從 Git 匯出指定提交，在空白容器中檢查 API、首頁及前端資產，再切換正式容器。程式、前端與模板來自映像，正式專案、設定與憑據保存在宿主機。新容器未通過檢查時會嘗試恢復上一個映像。
+部署程式檢查 `tom83615/PrintLab` 的 `tom83615` 分支，以及該 push 的 **Desktop VM verification**（`.github/workflows/desktop.yml`，並行驗證正式 Docker 映像、Linux 全套測試與 Chromium 瀏覽器驗收、以及 Windows 宿主機核心工具鏈）是否成功。若 GitHub API 需要登入，可在執行腳本的終端提供已有讀取權限的 `GH_TOKEN`。腳本從 Git 匯出指定提交，在空白容器中檢查 API、首頁及前端資產，再切換正式容器。程式、前端與模板來自映像，正式專案、設定與憑據保存在宿主機。新容器未通過檢查時會嘗試恢復上一個映像。需要完整 Windows / macOS 與重型上游工具（CAD、Bambuddy、Bambu Studio、ZIP 重裝）驗證時，可手動觸發 `.github/workflows/full-release-matrix.yml`。
 
 首次建立可對本機 `tom83615` 上的已提交版本加 `-Bootstrap`。腳本會額外執行本機工作台測試。若需接續現有工作區，在首次啟用前將 `Project`、`Context`、`Library` 和所需的 `Runtime` 設定及資料複製至正式資料目錄，並保護 `Runtime/private` 的存取權。Windows 虛擬環境、第三方工具、鎖、快取和瀏覽器會話請留在原環境。
 
